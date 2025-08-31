@@ -1,4 +1,4 @@
-package piq.piqproject.config;
+package piq.piqproject.config.swagger;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

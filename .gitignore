@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### 개인 사용 파일 ###
+JWT동작방식.txt
