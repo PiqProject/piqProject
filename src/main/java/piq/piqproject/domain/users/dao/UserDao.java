@@ -7,11 +7,11 @@ import piq.piqproject.domain.users.repository.UserRepository;
 
 import java.util.Optional;
 
-@Repository // 데이터 접근 계층의 컴포넌트임을 명시하고, 예외 변환을 돕습니다.
+@Repository
 @RequiredArgsConstructor
 public class UserDao {
 
-    private final UserRepository userRepository; // 실제 DB와 통신하는 JpaRepository
+    private final UserRepository userRepository;
 
     /**
      * 새로운 사용자 정보를 데이터베이스에 저장합니다.

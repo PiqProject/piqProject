@@ -27,8 +27,8 @@ public class SecurityConfig {
 
     // [추가] 인증 없이 접근을 허용할 경로 목록
     private static final String[] AUTH_WHITELIST = {
-            "/api/signup",
-            "/api/login",
+            "/api/v1/auth/signup",
+            "/api/v1/auth/login",
             "/h2-console/**", // H2 콘솔 접근 허용
             "/swagger-ui/**", // Swagger UI 접근 허용
             "/v3/api-docs/**" // Swagger API 문서 접근 허용
@@ -80,6 +80,9 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .frameOptions(frameOptions -> frameOptions.sameOrigin()));
 
+        // 다른 필터를 추가할 경우 여기에 추가할것
+        // JWT Filter(custom Filter)를 Spring Security 이전에 추가
+        http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
