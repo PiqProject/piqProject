@@ -2,12 +2,14 @@ package piq.piqproject.domain.users.entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -82,10 +84,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     // Builder 패턴을 사용하여 객체 생성 가능 (new로 불가)
     @Builder
-    public UserEntity(Long id, String email, String password, String kakaoTalkId, String instagramId,
+    public UserEntity(String email, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
             Integer pqPoint, String introduce, Boolean isActive, List<String> roles) {
-        this.id = id; // ID는 @GeneratedValue 이지만, 테스트 등에서 직접 지정할 수 있도록 포함 나중에 제거할것
         this.email = email;
         this.password = password;
         this.kakaoTalkId = kakaoTalkId;
@@ -100,6 +101,33 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.roles = roles;
     }
 
+    /**
+     * DTO 객체를 UserEntity로 변환하는 메소드 -> 현재 이 Dto는 회원가입 요청에 사용되므로 회원가입 관련 기본정보가 포함됨
+     * Service 레이어에서 이 메소드를 호출하여 엔티티를 생성하고 저장
+     * 비밀번호 암호화 로직을 포함합니다.
+     *
+     * @param RequestDto fields, password는 암호화되어야 함
+     * @return UserEntity
+     */
+    public static UserEntity of (String email, String password, String kakaoTalkId, String instagramId,
+            Integer age, Gender gender, String mbti, Double score,
+            Integer pqPoint, String introduce, Boolean isActive, List<String> roles) {
+        return UserEntity.builder()
+                .email(email)
+                .password(password)
+                .kakaoTalkId(kakaoTalkId)
+                .instagramId(instagramId)
+                .age(age)
+                .gender(gender)
+                .mbti(mbti)
+                .score(.0)
+                .introduce(introduce)
+                // ▼ 회원가입 시 서버에서 설정해주는 기본값들
+                .pqPoint(0)
+                .isActive(true) // 예시: 가입 시 바로 활성 상태
+                .roles(roles) // 예시: 기본 권한 'USER' 부여
+                .build();
+    }
     
     /**
      * 사용자가 가진 권한 목록을 반환합니다.

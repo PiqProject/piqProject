@@ -1,12 +1,16 @@
 package piq.piqproject.config.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,6 +32,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class JwtTokenProvider {
     // jwt속성을 갖고있는 클래스 주입
     private final JwtProperties jwtProperties;
@@ -57,9 +62,9 @@ public class JwtTokenProvider {
                 .setIssuer(jwtProperties.getIssuer()) // 발급자 정보
                 .setIssuedAt(now) // 발급 시간
                 .setExpiration(expiry) // 만료 시간
-                // .setSubject(user.getEmail()) // 토큰 제목 (사용자 식별값)
-                // .claim("id", user.getId()) // 비공개 클레임. key-value 형태로 추가 정보 저장
-                // .claim("auth", user.getRoles())
+                .setSubject(user.getEmail()) // 토큰 제목 (사용자 식별값)
+                .claim("id", user.getId()) // 비공개 클레임. key-value 형태로 추가 정보 저장
+                .claim("auth", user.getRoles())
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -78,7 +83,12 @@ public class JwtTokenProvider {
                     .build() // parser instance 생성
                     .parseClaimsJws(token); // parser로 token인증 -서명 검증, 만료시간검증, 구문분석(JWT형식인지) ->하나라도 이상하면 exception
             return true;
-        } catch (Exception e) { // 복호화 과정에서 에러가 나면 유효하지 않은 토큰
+        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException
+                | IllegalArgumentException e) {
+            log.error("JWT token validation error: {}", e.getMessage());
+            return false;
+        } catch (Exception e) {
+            log.error("JWT token validation unpredicted error: {}", e.getMessage());
             return false;
         }
     }
@@ -93,7 +103,6 @@ public class JwtTokenProvider {
      * @param token 인증 정보가 담긴 JWT 토큰
      * @return Spring Security가 이해하는 형태의 Authentication 객체
      */
-
     public Authentication getAuthentication(String token) {
         Claims claims = getClaims(token); // Claims는 key-value로 데이터를 담고있음
         @SuppressWarnings("unchecked")
