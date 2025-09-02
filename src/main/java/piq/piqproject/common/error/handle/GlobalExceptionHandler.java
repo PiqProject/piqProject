@@ -12,6 +12,7 @@ import piq.piqproject.common.error.exception.CustomException;
 import piq.piqproject.common.error.dto.ErrorResponseDto;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @RestControllerAdvice - 전역 예외 처리(Global Exception Handling)를 위한 컨트롤러 어드바이스
@@ -34,6 +35,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> CustomExceptionHandler(CustomException e) {
 
         HttpStatus status = e.getErrorCode().getStatus();
+        int statusCode = e.getErrorCode().getStatus().value();
         String code = e.getErrorCode().name();
         String message = e.getErrorCode().getMessage();
 
@@ -41,14 +43,15 @@ public class GlobalExceptionHandler {
                 """
                         CustomException occurred
                         ------------------------
-                        status= {}
+                        status= {} ({})
                         code= {}
                         message= {}
                         
                         """,
-                status,  // HTTP 상태 코드 값 (예: Conflict)
-                code,    // ErrorCode의 이름 (예: ALREADY_EXISTS_USER)
-                message, // ErrorCode에 정의된 메시지 (예: "이미 가입된 유저입니다.)
+                status,      // HTTP 상태 코드 값 (예: Conflict)
+                statusCode,  // HTTP 상태 코드 값 (예: 409)
+                code,        // ErrorCode의 이름 (예: ALREADY_EXISTS_USER)
+                message,     // ErrorCode에 정의된 메시지 (예: "이미 가입된 유저입니다.)
                 e
         );
 
@@ -59,7 +62,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDto> MethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
 
-        int status = e.getStatusCode().value();
+        String status = HttpStatus.BAD_REQUEST.getReasonPhrase();
+        int statusCode = e.getStatusCode().value();
 
         //validation 에러의 경우 여러개가 발생할 수 있습니다.
         //BindingResult를 통해 필드별 에러 목록을 가져옵니다.
@@ -70,18 +74,24 @@ public class GlobalExceptionHandler {
             return ErrorDetailsDto.of(error.getField(), error.getDefaultMessage());
         }).toList();
 
+        // 로그에 출력할 에러 상세 목록을 포맷팅합니다.
+        String formattedErrorDetails = errorDetails.stream()
+                .map(detail -> String.format("    - Field: %-15s Message: %s", detail.getField(), detail.getMessage()))
+                .collect(Collectors.joining("\n")); // 각 항목을 줄바꿈 문자로 연결
+
         log.error(
                 """
                         Validation error occurred (MethodArgumentNotValidException)
                         -----------------------------------------------------------
-                        status={}
-                        errorDetails={}
-                        
+                        status={} ({})
+                        Errors=
+                        {}
                         """,
-                status,        // HTTP 상태 코드 값 (예: 400)
-                errorDetails,  // 발생한 모든 에러 상세 정보
+                status,        // HTTP 상태 코드 값 (예: BadRequest)
+                statusCode,    // HTTP 상태 코드 값 (예: 400)
+                formattedErrorDetails,  // 발생한 모든 에러 상세 정보
                 e);
 
-        return ResponseEntity.status(status).body(ErrorResponseDto.ofValidationErrors(HttpStatus.valueOf("BAD_REQUEST"), errorDetails));
+        return ResponseEntity.status(statusCode).body(ErrorResponseDto.ofValidationErrors(HttpStatus.valueOf("BAD_REQUEST"), errorDetails));
     }
 }

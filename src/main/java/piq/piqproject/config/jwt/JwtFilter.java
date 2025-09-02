@@ -1,5 +1,6 @@
 package piq.piqproject.config.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -7,13 +8,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import piq.piqproject.common.error.dto.ErrorResponseDto;
+import piq.piqproject.common.error.exception.CustomException;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 /**
  * JWT 토큰을 검증하는 필터입니다.
@@ -24,6 +26,7 @@ import java.util.logging.Logger;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final ObjectMapper objectMapper;
 
     // HTTP 요청이 들어올 때마다 실행되는 메소드
     @Override
@@ -37,20 +40,65 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // 2. TokenProvider를 사용하여 토큰의 유효성을 검증합니다.
         // 토큰이 존재하고, 유효성 검증에 성공한 경우에만 인증 정보를 처리합니다.
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            // 3. 토큰이 유효하면, 토큰에서 인증 정보를 가져옵니다.
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
+        /**
+         * 공통 예외처리를 위해 추가했던 RestControllerAdvice는 DispatcherServlet 범위 내에서만 예외를 처리하기 때문에
+         * 그 밖에 있는 Filter단에서는 공통 처리가 불가능 합니다.
+         *
+         * 따라서, 공통 처리를 위해 ObjectMapper를 JSON으로 매핑한 후 응답합니다.
+         *
+         */
+        try {
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                // 3. 토큰이 유효하면, 토큰에서 인증 정보를 가져옵니다.
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
 
-            // 4. 가져온 인증 정보를 Spring Security의 SecurityContextHolder에 저장합니다.
-            // SecurityContextHolder는 현재 실행 중인 스레드에 대한 보안 컨텍스트를 관리합니다.
-            // 여기에 인증 정보가 저장되면, 해당 요청을 처리하는 동안 @PreAuthorize 등의 어노테이션 기반 보안 검사가 동작할 수 있습니다.
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                // 4. 가져온 인증 정보를 Spring Security의 SecurityContextHolder에 저장합니다.
+                // SecurityContextHolder는 현재 실행 중인 스레드에 대한 보안 컨텍스트를 관리합니다.
+                // 여기에 인증 정보가 저장되면, 해당 요청을 처리하는 동안 @PreAuthorize 등의 어노테이션 기반 보안 검사가 동작할 수 있습니다.
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (CustomException e) {
+            //JwtTokenProvider.validateToken()에서 발생한 CustomException을 직접 처리합니다.
+            log.error("""
+                            JWT Filter caught exception:
+                            ---------------------------
+                            Status       = {} ({})
+                            Code         = {}
+                            Message      = {}
+                            """,
+                    e.getErrorCode().getStatus(),         //HTTP 상태 코드 값 (예: BadRequest)
+                    e.getErrorCode().getStatus().value(), //HTTP 상태 코드 값 (예: 400)
+                    e.getErrorCode().name(),              // ErrorCode의 이름 (예: JWT_TOKEN_EXPIRED)
+                    e.getErrorCode().getMessage(),        // ErrorCode에 정의된 메시지 (예: "JWT 토큰이 만료되었습니다.")
+                    e
+            );
+
+            //커스텀 에러 응답을 생성하여 클라이언트에게 전송합니다.
+            setErrorResponse(response, e);
+
+            //모든 과정이 완료되면 필터를 중단하고 응답을 보냅니다.
+            return;
         }
+
 
         // 5. 다음 필터로 요청을 전달합니다.
         // JWT 검증 여부와 상관없이, 요청은 항상 다음 필터로 이어져야 합니다.
         // 만약 여기서 체인을 멈추면, 실제 API 컨트롤러까지 요청이 도달하지 못합니다.
         filterChain.doFilter(request, response);
+    }
+
+    private void setErrorResponse(HttpServletResponse response, CustomException e) throws IOException {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setStatus(e.getErrorCode().getStatus().value());
+
+        ErrorResponseDto errorResponse = ErrorResponseDto.of(
+                e.getErrorCode().getStatus(),
+                e.getErrorCode().name(),
+                e.getErrorCode().getMessage()
+        );
+
+        // ObjectMapper를 사용하여 ErrorResponseDto를 JSON 문자열로 변환하고 응답 본문에 작성합니다.
+        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }
 
     /**
