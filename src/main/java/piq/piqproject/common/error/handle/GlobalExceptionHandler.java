@@ -3,10 +3,15 @@ package piq.piqproject.common.error.handle;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import piq.piqproject.common.error.dto.ErrorDetailsDto;
 import piq.piqproject.common.error.exception.CustomException;
 import piq.piqproject.common.error.dto.ErrorResponseDto;
+
+import java.util.List;
 
 /**
  * @RestControllerAdvice - 전역 예외 처리(Global Exception Handling)를 위한 컨트롤러 어드바이스
@@ -32,18 +37,51 @@ public class GlobalExceptionHandler {
         String code = e.getErrorCode().name();
         String message = e.getErrorCode().getMessage();
 
-        log.error("CustomException occurred:\n" +
-                        "  status={}\n" +
-                        "  code={}\n" +
-                        "  message={}",
-                status,  // HTTP 상태 코드 값 (예: 409)
+        log.error(
+                """
+                        CustomException occurred
+                        ------------------------
+                        status= {}
+                        code= {}
+                        message= {}
+                        
+                        """,
+                status,  // HTTP 상태 코드 값 (예: Conflict)
                 code,    // ErrorCode의 이름 (예: ALREADY_EXISTS_USER)
-                message,  // ErrorCode에 정의된 메시지 (예: "이미 가입된 유저입니다.)
+                message, // ErrorCode에 정의된 메시지 (예: "이미 가입된 유저입니다.)
                 e
         );
 
-        return ResponseEntity
-                .status(status)
-                .body(ErrorResponseDto.of(status, code, message));
+        return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
+    }
+
+    //유효성 검사에 대한 에러 처리
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponseDto> MethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
+
+        int status = e.getStatusCode().value();
+
+        //validation 에러의 경우 여러개가 발생할 수 있습니다.
+        //BindingResult를 통해 필드별 에러 목록을 가져옵니다.
+        List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
+
+        //각 FieldError를 ErrorDetailDto로 매핑하여 필드명과 에러 메시지를 구조화합니다. ("어떤 필드에서", "어떤 오류 메시지"가 발생했는지)
+        List<ErrorDetailsDto> errorDetails = fieldErrors.stream().map(error -> {
+            return ErrorDetailsDto.of(error.getField(), error.getDefaultMessage());
+        }).toList();
+
+        log.error(
+                """
+                        Validation error occurred (MethodArgumentNotValidException)
+                        -----------------------------------------------------------
+                        status={}
+                        errorDetails={}
+                        
+                        """,
+                status,        // HTTP 상태 코드 값 (예: 400)
+                errorDetails,  // 발생한 모든 에러 상세 정보
+                e);
+
+        return ResponseEntity.status(status).body(ErrorResponseDto.ofValidationErrors(HttpStatus.valueOf("BAD_REQUEST"), errorDetails));
     }
 }
