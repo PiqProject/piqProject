@@ -1,13 +1,12 @@
-package piq.piqproject.common.handle;
+package piq.piqproject.common.error.handle;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import piq.piqproject.common.CustomException;
-import piq.piqproject.common.ErrorCode;
-import piq.piqproject.common.dto.ErrorResponseDto;
+import piq.piqproject.common.error.exception.CustomException;
+import piq.piqproject.common.error.dto.ErrorResponseDto;
 
 /**
  * @RestControllerAdvice - 전역 예외 처리(Global Exception Handling)를 위한 컨트롤러 어드바이스

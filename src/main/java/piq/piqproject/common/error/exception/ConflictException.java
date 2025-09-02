@@ -1,7 +1,4 @@
-package piq.piqproject.common.exception;
-
-import piq.piqproject.common.CustomException;
-import piq.piqproject.common.ErrorCode;
+package piq.piqproject.common.error.exception;
 
 /**
  * 정의해두었던 CustomException을 상속받습니다.

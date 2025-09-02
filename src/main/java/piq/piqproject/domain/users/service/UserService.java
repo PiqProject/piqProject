@@ -4,16 +4,11 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
 
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import piq.piqproject.common.ErrorCode;
-import piq.piqproject.common.exception.ConflictException;
+import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.config.jwt.JwtTokenProvider;
 import piq.piqproject.domain.users.dao.UserDao;
 import piq.piqproject.domain.users.dto.LoginRequestDto;
@@ -22,7 +17,7 @@ import piq.piqproject.domain.users.dto.SignUpResponseDto;
 import piq.piqproject.domain.users.dto.TokenResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 
-import static piq.piqproject.common.ErrorCode.ALREADY_EXISTS_USER;
+import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_USER;
 
 @Service
 @RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)

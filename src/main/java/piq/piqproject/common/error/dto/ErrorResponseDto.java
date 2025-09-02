@@ -1,4 +1,4 @@
-package piq.piqproject.common.dto;
+package piq.piqproject.common.error.dto;
 
 import lombok.Builder;
 import lombok.Getter;

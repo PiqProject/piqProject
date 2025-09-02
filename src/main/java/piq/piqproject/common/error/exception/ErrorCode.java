@@ -1,4 +1,4 @@
-package piq.piqproject.common;
+package piq.piqproject.common.error.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
