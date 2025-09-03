@@ -81,8 +81,8 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
-        // 3. (선택사항) 계정 활성화 상태 확인
-        if (!user.isEnabled()) { // UserEntity의 isEnabled() 메서드 활용
+        // 3. 계정 활성화 상태 확인
+        if (!(user.isEnabled() && user.isAccountNonLocked())) { // UserEntity의 isEnabled() 메서드 활용
             throw new IllegalStateException("비활성화된 계정입니다.");
         }
 
