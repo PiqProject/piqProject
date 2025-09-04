@@ -31,7 +31,8 @@ public class SecurityConfig {
             "/api/v1/auth/login",
             "/h2-console/**", // H2 콘솔 접근 허용
             "/swagger-ui/**", // Swagger UI 접근 허용
-            "/v3/api-docs/**" // Swagger API 문서 접근 허용
+            "/v3/api-docs/**", // Swagger API 문서 접근 허용
+
     };
 
     // 1. 비밀번호 암호화를 위한 PasswordEncoder Bean 등록
