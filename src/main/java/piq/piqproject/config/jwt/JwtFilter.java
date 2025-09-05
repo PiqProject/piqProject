@@ -14,8 +14,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * JWT 토큰을 검증하는 필터입니다.
- * OncePerRequestFilter를 상속받아, 클라이언트의 모든 요청에 대해 한 번씩만 실행되도록 보장합니다.
+ * JWT 토큰을 검증하는 필터
+ * OncePerRequestFilter를 상속해, 클라이언트의 모든 요청에 대해 한 번씩만 실행되는 커스텀필터 구현
+ * 클라이언트의 요청이 들어오면 doFilterInternal이 실행
+ * request 객체에서 필요한 정보(ex: JWT 토큰)를 꺼내어 로직을 수행
+ * response 객체를 통해 클라이언트에게 응답을 보냄
+ * filterChain 객체를 사용해 다음 필터로 요청을 전달
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -34,14 +38,15 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         // 2. TokenProvider를 사용하여 토큰의 유효성을 검증합니다.
-        // 토큰이 존재하고, 유효성 검증에 성공한 경우에만 인증 정보를 처리합니다.
-        if (token != null && jwtTokenProvider.validateToken(token)) {
+        if (token != null) {
+            // validateToken 에서 exceptin 발생 시 JwtExceptionFilter 제어가 넘어간다.
+            jwtTokenProvider.validateToken(token);
             // 3. 토큰이 유효하면, 토큰에서 인증 정보를 가져옵니다.
             Authentication authentication = jwtTokenProvider.getAuthentication(token);
 
             // 4. 가져온 인증 정보를 Spring Security의 SecurityContextHolder에 저장합니다.
             // SecurityContextHolder는 현재 실행 중인 스레드에 대한 보안 컨텍스트를 관리합니다.
-            // 여기에 인증 정보가 저장되면, 해당 요청을 처리하는 동안 @PreAuthorize 등의 어노테이션 기반 보안 검사가 동작할 수 있습니다.
+            // 여기에 인증 정보가 저장되면, 해당 요청을 처리하는 동안 @PreAuthorize 등의 어노테이션 기반 보안 검사가 동작할 수 있습니다.ㄴ
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 

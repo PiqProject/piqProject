@@ -3,6 +3,7 @@ package piq.piqproject.config.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Header;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -92,26 +93,29 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 토큰의 유효성을 검사
+     * 토큰의 유효성을 검증하는 메소드.
+     * 유효하지 않은 경우 JwtException의 하위 예외들을 발생시킵니다.
      * 
-     * @author PJT
-     * @param token 검사할 JWT 토큰(String)
-     * @return 토큰이 유효하면 true, 아니면 false
+     * @param token 검증할 토큰
+     * @return 유효하면 true, 아니면 exception 발생 - runtime exception들은 예외처리를 확인하지 않으므로
+     *         throws에서 제외시켜도 알아서 전파됨
      */
-    public boolean validateToken(String token) {
+    public boolean validateToken(String token) throws JwtException {
         try {
-            Jwts.parserBuilder() // JWT parsing (해석기) 생성을 위한 빌더
-                    .setSigningKey(key) // 서명을 검증할 때 사용할 비밀키 설정
-                    .build() // parser instance 생성
-                    .parseClaimsJws(token); // parser로 token인증 -서명 검증, 만료시간검증, 구문분석(JWT형식인지) ->하나라도 이상하면 exception
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
-        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException
-                | IllegalArgumentException e) {
-            log.error("JWT token validation error: {}", e.getMessage());
-            return false;
-        } catch (Exception e) {
-            log.error("JWT token validation unpredicted error: {}", e.getMessage());
-            return false;
+        } catch (SecurityException | MalformedJwtException e) {
+            log.info("잘못된 JWT 서명입니다.");
+            throw new JwtException("잘못된 JWT 서명입니다.");
+        } catch (ExpiredJwtException e) {
+            log.info("만료된 JWT 토큰입니다.");
+            throw new JwtException("만료된 JWT 토큰입니다.");
+        } catch (UnsupportedJwtException e) {
+            log.info("지원되지 않는 JWT 토큰입니다.");
+            throw new JwtException("지원되지 않는 JWT 토큰입니다.");
+        } catch (IllegalArgumentException e) {
+            log.info("JWT 토큰이 잘못되었습니다.");
+            throw new JwtException("JWT 토큰이 잘못되었습니다.");
         }
     }
 

@@ -82,8 +82,12 @@ public class SecurityConfig {
                         .frameOptions(frameOptions -> frameOptions.sameOrigin()));
 
         // 다른 필터를 추가할 경우 여기에 추가할것
-        // JWT Filter(custom Filter)를 Spring Security 이전에 추가
-        http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+        http
+                // JWT Filter(custom Filter)를 Spring Security 이전에 추가
+                .addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+                // JWT 예외 처리를 위한 필터를 JWT 필터 앞에 추가
+                .addFilterBefore(new JwtExceptionFilter(), JwtFilter.class);
+
         return http.build();
     }
 }
