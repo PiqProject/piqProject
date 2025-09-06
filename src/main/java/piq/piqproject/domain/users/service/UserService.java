@@ -11,7 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import piq.piqproject.common.error.exception.ConflictException;
+import piq.piqproject.common.error.exception.*;
 import piq.piqproject.config.jwt.JwtTokenProvider;
 import piq.piqproject.domain.users.dao.UserDao;
 import piq.piqproject.domain.users.dto.LoginRequestDto;
@@ -23,7 +23,7 @@ import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.RefreshTokenRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
 
-import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_USER;
+import static piq.piqproject.common.error.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)
@@ -82,16 +82,16 @@ public class UserService {
     public TokensResponseDto login(LoginRequestDto loginRequestDto) {
         // 1. 이메일을 기반으로 사용자 조회
         UserEntity user = userDao.findByEmail(loginRequestDto.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         // 2. 사용자의 비밀번호와 입력된 비밀번호가 일치하는지 확인
         if (!passwordEncoder.matches(loginRequestDto.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            throw new UnauthorizedException(PASSWORD_MISMATCH);
         }
 
         // 3. 계정 활성화 상태 확인
         if (!(user.isEnabled() && user.isAccountNonLocked())) { // UserEntity의 isEnabled() 메서드 활용
-            throw new IllegalStateException("비활성화된 계정입니다.");
+            throw new ForbiddenException(DISABLED_ACCOUNT_USER);
         }
 
         // 4. 인증이 성공하면 JWT 생성
@@ -109,7 +109,7 @@ public class UserService {
     }
 
     /**
-     * 
+     *
      * @param refreshToken
      * @return
      */
@@ -122,7 +122,7 @@ public class UserService {
 
     /**
      * Access Token 재발급 로직
-     * 
+     *
      * @param refreshToken 클라이언트로부터 받은 Refresh Token
      * @return 새로 생성된 Access Token
      */
@@ -130,7 +130,7 @@ public class UserService {
     public String reissueAccessToken(String refreshToken) {
         // 1. Refresh Token의 유효성을 먼저 검증
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 리프레시 토큰입니다.");
+            throw new UnauthorizedException(INVALID_REFRESH_TOKEN);
         }
 
         // 2. Refresh Token에서 사용자의 이메일을 추출
@@ -138,17 +138,17 @@ public class UserService {
 
         // 3. Redis에 저장된 Refresh Token을 이메일로 조회
         RefreshTokenEntity storedRefreshToken = refreshTokenRepository.findById(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("리프레시 토큰이 존재하지 않습니다. 다시 로그인해주세요."));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_REFRESH_TOKEN));
 
         // 4. 클라이언트로부터 받은 Refresh Token과 Redis에 저장된 토큰이 일치하는지 확인
         if (!storedRefreshToken.getRefreshToken().equals(refreshToken)) {
-            throw new IllegalArgumentException("리프레시 토큰이 일치하지 않습니다. 다시 로그인해주세요.");
+            throw new UnauthorizedException(REFRESH_TOKEN_MISMATCH);
         }
 
         // 5. 새로운 Access Token을 생성하기 위해 사용자 정보를 DB에서 조회
         // (보안 상 이유로, 토큰에 모든 정보를 담기보다 DB에서 최신 정보를 가져오는 것이 안전)
         UserEntity user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         // 6. 새로운 Access Token을 생성하여 반환
         return jwtTokenProvider.createAccessToken(user);
