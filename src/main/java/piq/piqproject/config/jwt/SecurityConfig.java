@@ -1,5 +1,6 @@
 package piq.piqproject.config.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +25,7 @@ public class SecurityConfig {
 
     // JWT 토큰 제공자 및 필터를 주입받습니다.
     private final JwtTokenProvider jwtTokenProvider;
+    private final ObjectMapper objectMapper;
 
     // [추가] 인증 없이 접근을 허용할 경로 목록
     private static final String[] AUTH_WHITELIST = {
@@ -69,11 +71,11 @@ public class SecurityConfig {
 
         // HTTP 요청에 대한 접근 권한을 설정합니다.
         http.authorizeHttpRequests(authorize -> authorize
-                // "/api/signup", "/api/login" 엔드포인트는 인증 없이 누구나 접근할 수 있도록 허용합니다.
-                .requestMatchers(AUTH_WHITELIST)
-                .permitAll()
-                // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
-                .anyRequest().authenticated())
+                        // "/api/signup", "/api/login" 엔드포인트는 인증 없이 누구나 접근할 수 있도록 허용합니다.
+                        .requestMatchers(AUTH_WHITELIST)
+                        .permitAll()
+                        // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
+                        .anyRequest().authenticated())
 
                 // [추가] H2 콘솔을 위한 헤더 설정
                 // H2 콘솔은 iframe을 사용하므로, X-Frame-Options 헤더를 비활성화하거나 동일 출처(sameOrigin)로 설정해야
@@ -83,7 +85,7 @@ public class SecurityConfig {
 
         // 다른 필터를 추가할 경우 여기에 추가할것
         // JWT Filter(custom Filter)를 Spring Security 이전에 추가
-        http.addFilterBefore(new JwtFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(new JwtFilter(jwtTokenProvider, objectMapper), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

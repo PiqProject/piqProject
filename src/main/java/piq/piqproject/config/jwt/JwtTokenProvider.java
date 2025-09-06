@@ -1,16 +1,12 @@
 package piq.piqproject.config.jwt;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.SignatureException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.error.exception.*;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -47,10 +43,10 @@ public class JwtTokenProvider {
 
     /**
      * 사용자 정보와 만료 기간을 기반으로 JWT 토큰을 생성.
-     * 
-     * @author PJT
+     *
      * @param user User Entity
      * @return 받은 User Entity에 대한 JWT 토큰 문자열
+     * @author PJT
      */
     public String createAccessToken(UserEntity user) {
         // JWT 토큰 생성 로직
@@ -93,10 +89,10 @@ public class JwtTokenProvider {
 
     /**
      * 토큰의 유효성을 검사
-     * 
-     * @author PJT
+     *
      * @param token 검사할 JWT 토큰(String)
      * @return 토큰이 유효하면 true, 아니면 false
+     * @author PJT
      */
     public boolean validateToken(String token) {
         try {
@@ -105,25 +101,30 @@ public class JwtTokenProvider {
                     .build() // parser instance 생성
                     .parseClaimsJws(token); // parser로 token인증 -서명 검증, 만료시간검증, 구문분석(JWT형식인지) ->하나라도 이상하면 exception
             return true;
-        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException
-                | IllegalArgumentException e) {
-            log.error("JWT token validation error: {}", e.getMessage());
-            return false;
+        } catch (SignatureException e) {
+            throw new UnauthorizedException(ErrorCode.INVALID_JWT_SIGNATURE);
+        } catch (ExpiredJwtException e) {
+            throw new UnauthorizedException(ErrorCode.JWT_TOKEN_EXPIRED);
+        } catch (UnsupportedJwtException e) {
+            throw new UnauthorizedException(ErrorCode.UNSUPPORTED_JWT_TOKEN);
+        } catch (MalformedJwtException e) {
+            throw new UnauthorizedException(ErrorCode.MALFORMED_JWT_TOKEN);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRequestException(ErrorCode.JWT_TOKEN_MISSING);
         } catch (Exception e) {
-            log.error("JWT token validation unpredicted error: {}", e.getMessage());
-            return false;
+            throw new InternalServerException(ErrorCode.JWT_PROCESSING_ERROR);
         }
     }
 
     /**
      * token을 받아 spring security가 이해하는 Authentication객체로 변환
-     * 
+     * <p>
      * Spring security는 jwt를 직접 이해 못함. security는 Authentication이라는 객체를 통해 현재 사용자가
      * 누구인가를 판단함 따라서 token(암호화된 문자열)을 Authentication 객체로 변환해야 함
-     * 
-     * @author PJT
+     *
      * @param token 인증 정보가 담긴 JWT 토큰
      * @return Spring Security가 이해하는 형태의 Authentication 객체
+     * @author PJT
      */
     public Authentication getAuthentication(String token) {
         Claims claims = getClaims(token); // Claims는 key-value로 데이터를 담고있음
@@ -146,10 +147,10 @@ public class JwtTokenProvider {
 
     /**
      * 토큰에서 사용자 ID를 추출합니다.
-     * 
-     * @author PJT
+     *
      * @param token 사용자 정보가 담긴 JWT 토큰
      * @return 토큰에서 추출한 사용자 ID(Long 타입)
+     * @author PJT
      */
     public Long getUserId(String token) {
         Claims claims = getClaims(token);
