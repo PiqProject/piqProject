@@ -48,7 +48,7 @@ public class JwtTokenProvider {
      * @return 받은 User Entity에 대한 JWT 토큰 문자열
      * @author PJT
      */
-    public String createToken(UserEntity user) {
+    public String createAccessToken(UserEntity user) {
         // JWT 토큰 생성 로직
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtProperties.getExpiration());
@@ -59,8 +59,30 @@ public class JwtTokenProvider {
                 .setIssuedAt(now) // 발급 시간
                 .setExpiration(expiry) // 만료 시간
                 .setSubject(user.getEmail()) // 토큰 제목 (사용자 식별값)
-                .claim("id", user.getId()) // 비공개 클레임. key-value 형태로 추가 정보 저장
+                .claim("id", user.getId()) // 비공개 클레임(사용자 정의 클레임) key-value 형태로 추가 정보 저장
                 .claim("auth", user.getRoles())
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    /**
+     * Refresh Token 생성
+     * Refresh Token은 사용자 식별 정보 외에 다른 claim을 담지 않는 것이 일반적
+     * 
+     * @author PJT
+     * @param UserEntity user
+     * @return 받은 User Entity에 대한 JWT 토큰 문자열
+     */
+    public String createRefreshToken(UserEntity user) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + jwtProperties.getRefreshExpiration());
+
+        return Jwts.builder()
+                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+                .setIssuer(jwtProperties.getIssuer())
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .setSubject(user.getEmail()) // Access Token 재발급 시 사용자 식별을 위해 필요 - redis에서 key값으로 사용
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -133,6 +155,13 @@ public class JwtTokenProvider {
     public Long getUserId(String token) {
         Claims claims = getClaims(token);
         return claims.get("id", Long.class);
+    }
+
+    /**
+     * 토큰에서 Subject(사용자 이메일)를 추출합니다.
+     */
+    public String getUserEmail(String token) {
+        return getClaims(token).getSubject();
     }
 
     // 토큰의 클레임 정보(payload의 부분)를 추출하는 private 메소드
