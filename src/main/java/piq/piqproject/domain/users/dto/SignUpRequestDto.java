@@ -55,5 +55,4 @@ public class SignUpRequestDto {
 
     @NotBlank(message = "자기소개는 필수 입력 값입니다.")
     private final String introduce;
-
 }
