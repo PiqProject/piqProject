@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import piq.piqproject.common.error.dto.ErrorDetailsDto;
+import piq.piqproject.common.error.dto.ValidErrorResponseDto;
 import piq.piqproject.common.error.exception.CustomException;
 import piq.piqproject.common.error.dto.ErrorResponseDto;
 
@@ -60,7 +61,7 @@ public class GlobalExceptionHandler {
 
     //유효성 검사에 대한 에러 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponseDto> MethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
+    public ResponseEntity<ValidErrorResponseDto> MethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
 
         String status = HttpStatus.BAD_REQUEST.getReasonPhrase();
         int statusCode = e.getStatusCode().value();
@@ -92,6 +93,6 @@ public class GlobalExceptionHandler {
                 formattedErrorDetails,  // 발생한 모든 에러 상세 정보
                 e);
 
-        return ResponseEntity.status(statusCode).body(ErrorResponseDto.ofValidationErrors(HttpStatus.valueOf("BAD_REQUEST"), errorDetails));
+        return ResponseEntity.status(statusCode).body(ValidErrorResponseDto.of(HttpStatus.valueOf("BAD_REQUEST"), errorDetails));
     }
 }
