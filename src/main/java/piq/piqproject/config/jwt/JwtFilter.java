@@ -47,39 +47,16 @@ public class JwtFilter extends OncePerRequestFilter {
          * 따라서, 공통 처리를 위해 ObjectMapper를 JSON으로 매핑한 후 응답합니다.
          *
          */
-        try {
-            if (token != null && jwtTokenProvider.validateToken(token)) {
-                // 3. 토큰이 유효하면, 토큰에서 인증 정보를 가져옵니다.
-                Authentication authentication = jwtTokenProvider.getAuthentication(token);
 
-                // 4. 가져온 인증 정보를 Spring Security의 SecurityContextHolder에 저장합니다.
-                // SecurityContextHolder는 현재 실행 중인 스레드에 대한 보안 컨텍스트를 관리합니다.
-                // 여기에 인증 정보가 저장되면, 해당 요청을 처리하는 동안 @PreAuthorize 등의 어노테이션 기반 보안 검사가 동작할 수 있습니다.
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
-        } catch (CustomException e) {
-            //JwtTokenProvider.validateToken()에서 발생한 CustomException을 직접 처리합니다.
-            log.error("""
-                            JWT Filter caught exception:
-                            ---------------------------
-                            Status       = {} ({})
-                            Code         = {}
-                            Message      = {}
-                            """,
-                    e.getErrorCode().getStatus(),         //HTTP 상태 코드 값 (예: BadRequest)
-                    e.getErrorCode().getStatus().value(), //HTTP 상태 코드 값 (예: 400)
-                    e.getErrorCode().name(),              // ErrorCode의 이름 (예: JWT_TOKEN_EXPIRED)
-                    e.getErrorCode().getMessage(),        // ErrorCode에 정의된 메시지 (예: "JWT 토큰이 만료되었습니다.")
-                    e
-            );
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            // 3. 토큰이 유효하면, 토큰에서 인증 정보를 가져옵니다.
+            Authentication authentication = jwtTokenProvider.getAuthentication(token);
 
-            //커스텀 에러 응답을 생성하여 클라이언트에게 전송합니다.
-            setErrorResponse(response, e);
-
-            //모든 과정이 완료되면 필터를 중단하고 응답을 보냅니다.
-            return;
+            // 4. 가져온 인증 정보를 Spring Security의 SecurityContextHolder에 저장합니다.
+            // SecurityContextHolder는 현재 실행 중인 스레드에 대한 보안 컨텍스트를 관리합니다.
+            // 여기에 인증 정보가 저장되면, 해당 요청을 처리하는 동안 @PreAuthorize 등의 어노테이션 기반 보안 검사가 동작할 수 있습니다.
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
-
 
         // 5. 다음 필터로 요청을 전달합니다.
         // JWT 검증 여부와 상관없이, 요청은 항상 다음 필터로 이어져야 합니다.
@@ -94,8 +71,7 @@ public class JwtFilter extends OncePerRequestFilter {
         ErrorResponseDto errorResponse = ErrorResponseDto.of(
                 e.getErrorCode().getStatus(),
                 e.getErrorCode().name(),
-                e.getErrorCode().getMessage()
-        );
+                e.getErrorCode().getMessage());
 
         // ObjectMapper를 사용하여 ErrorResponseDto를 JSON 문자열로 변환하고 응답 본문에 작성합니다.
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
