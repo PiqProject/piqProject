@@ -46,7 +46,8 @@ public class UserService {
         // 1. 이메일 중복 확인
         if (userDao.existsByEmail(signUpRequestDto.getEmail())) {
             // 실무에서는 custom exception을 정의하여 사용하는 것이 좋습니다.
-            //ErrorCode Enum으로 정의해두었던 값을 사용하여 CustomException을 상속받고 있는 ConflictException에게 넘겨줍니다.
+            // ErrorCode Enum으로 정의해두었던 값을 사용하여 CustomException을 상속받고 있는 ConflictException에게
+            // 넘겨줍니다.
             throw new ConflictException(ALREADY_EXISTS_USER);
         }
 
@@ -129,9 +130,7 @@ public class UserService {
     @Transactional
     public String reissueAccessToken(String refreshToken) {
         // 1. Refresh Token의 유효성을 먼저 검증
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new UnauthorizedException(INVALID_REFRESH_TOKEN);
-        }
+        jwtTokenProvider.validateToken(refreshToken);
 
         // 2. Refresh Token에서 사용자의 이메일을 추출
         String userEmail = jwtTokenProvider.getUserEmail(refreshToken);
@@ -141,9 +140,7 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REFRESH_TOKEN));
 
         // 4. 클라이언트로부터 받은 Refresh Token과 Redis에 저장된 토큰이 일치하는지 확인
-        if (!storedRefreshToken.getRefreshToken().equals(refreshToken)) {
-            throw new UnauthorizedException(REFRESH_TOKEN_MISMATCH);
-        }
+        storedRefreshToken.getRefreshToken().equals(refreshToken);
 
         // 5. 새로운 Access Token을 생성하기 위해 사용자 정보를 DB에서 조회
         // (보안 상 이유로, 토큰에 모든 정보를 담기보다 DB에서 최신 정보를 가져오는 것이 안전)

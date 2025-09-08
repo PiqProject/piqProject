@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import piq.piqproject.common.error.dto.ErrorResponseDto;
 import piq.piqproject.common.error.exception.CustomException;
@@ -21,12 +22,11 @@ import java.io.IOException;
  * JWT 토큰을 검증하는 필터입니다.
  * OncePerRequestFilter를 상속받아, 클라이언트의 모든 요청에 대해 한 번씩만 실행되도록 보장합니다.
  */
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
-
     private final JwtTokenProvider jwtTokenProvider;
-    private final ObjectMapper objectMapper;
 
     // HTTP 요청이 들어올 때마다 실행되는 메소드
     @Override
@@ -35,20 +35,13 @@ public class JwtFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        // 1. HTTP 요청 헤더에서 JWT 토큰을 추출합니다.
+        // 1. HTTP 요청 헤더에서 JWT 토큰을 추출
         String token = resolveToken(request);
 
-        // 2. TokenProvider를 사용하여 토큰의 유효성을 검증합니다.
-        // 토큰이 존재하고, 유효성 검증에 성공한 경우에만 인증 정보를 처리합니다.
-        /**
-         * 공통 예외처리를 위해 추가했던 RestControllerAdvice는 DispatcherServlet 범위 내에서만 예외를 처리하기 때문에
-         * 그 밖에 있는 Filter단에서는 공통 처리가 불가능 합니다.
-         *
-         * 따라서, 공통 처리를 위해 ObjectMapper를 JSON으로 매핑한 후 응답합니다.
-         *
-         */
+        // 2.토큰이 존재하면 TokenProvider를 사용하여 토큰의 유효성을 검증, CustomException 발생 가능(runtime exception)         @formatter:off 
+        if (token != null) {
+            jwtTokenProvider.validateToken(token);
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
             // 3. 토큰이 유효하면, 토큰에서 인증 정보를 가져옵니다.
             Authentication authentication = jwtTokenProvider.getAuthentication(token);
 
@@ -64,20 +57,8 @@ public class JwtFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void setErrorResponse(HttpServletResponse response, CustomException e) throws IOException {
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(e.getErrorCode().getStatus().value());
-
-        ErrorResponseDto errorResponse = ErrorResponseDto.of(
-                e.getErrorCode().getStatus(),
-                e.getErrorCode().name(),
-                e.getErrorCode().getMessage());
-
-        // ObjectMapper를 사용하여 ErrorResponseDto를 JSON 문자열로 변환하고 응답 본문에 작성합니다.
-        response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
-    }
-
     /**
+     * 
      * HTTP 요청 헤더에서 'Authorization' 헤더를 찾아 Bearer 토큰을 추출하는 private 메소드입니다.
      *
      * @param request HttpServletRequest 객체
