@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,10 +23,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity // Spring Security를 활성화하고 웹 보안 설정을 구성함을 나타냅니다.
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     // JWT 토큰 제공자 및 필터를 주입받습니다.
-    private final JwtTokenProvider jwtTokenProvider;
-    private final ObjectMapper objectMapper;
+    private final JwtFilter jwtFilter;
+    private final JwtExceptionFilter jwtExceptionFilter;
 
     // [추가] 인증 없이 접근을 허용할 경로 목록
     private static final String[] AUTH_WHITELIST = {
@@ -85,7 +85,8 @@ public class SecurityConfig {
 
         // 다른 필터를 추가할 경우 여기에 추가할것
         // JWT Filter(custom Filter)를 Spring Security 이전에 추가
-        http.addFilterBefore(new JwtFilter(jwtTokenProvider, objectMapper), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtExceptionFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

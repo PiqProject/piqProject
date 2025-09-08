@@ -34,11 +34,14 @@ public class JwtTokenProvider {
     private final JwtProperties jwtProperties;
     // JWT secret key
     private Key key;
+    // JWT parser, 토큰 검증 시 사용
+    private JwtParser jwtParser;
 
     @PostConstruct
     protected void init() {
         byte[] keyBytes = jwtProperties.getSecretKey().getBytes(StandardCharsets.UTF_8);
         this.key = Keys.hmacShaKeyFor(keyBytes);
+        jwtParser = Jwts.parserBuilder().setSigningKey(key).build();
     }
 
     /**
@@ -96,10 +99,7 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder() // JWT parsing (해석기) 생성을 위한 빌더
-                    .setSigningKey(key) // 서명을 검증할 때 사용할 비밀키 설정
-                    .build() // parser instance 생성
-                    .parseClaimsJws(token); // parser로 token인증 -서명 검증, 만료시간검증, 구문분석(JWT형식인지) ->하나라도 이상하면 exception
+            jwtParser.parseClaimsJws(token);
             return true;
         } catch (SignatureException e) {
             throw new UnauthorizedException(ErrorCode.INVALID_JWT_SIGNATURE);
