@@ -117,6 +117,7 @@ public class UserController {
      */
     @PostMapping("/reissue")
     public ResponseEntity<AccessTokenResponseDto> reissue(@CookieValue("refreshToken") String refreshToken) {
+        log.info("reissue 요청이 controller에 도달");
         // 1. Refresh Token 유효성 검사 및 새로운 Access Token 발급
         String newAccessToken = userService.reissueAccessToken(refreshToken);
         // 2. 새로운 Access Token을 응답 DTO에 저장

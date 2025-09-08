@@ -88,7 +88,7 @@ public class JwtTokenProvider {
     }
 
     /**
-     * 토큰의 유효성을 검사
+     * 토큰의 3가지 유효성(서명, 만료시간, 구조)을 검증
      *
      * @param token 검사할 JWT 토큰(String)
      * @return 토큰이 유효하면 true, 아니면 false
