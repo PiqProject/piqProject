@@ -32,6 +32,7 @@ public class SecurityConfig {
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/reissue",
+            "/api/v1/reviews",
             "/h2-console/**", // H2 콘솔 접근 허용
             "/swagger-ui/**", // Swagger UI 접근 허용
             "/v3/api-docs/**", // Swagger API 문서 접근 허용
@@ -71,11 +72,11 @@ public class SecurityConfig {
 
         // HTTP 요청에 대한 접근 권한을 설정합니다.
         http.authorizeHttpRequests(authorize -> authorize
-                // "/api/signup", "/api/login" 엔드포인트는 인증 없이 누구나 접근할 수 있도록 허용합니다.
-                .requestMatchers(AUTH_WHITELIST)
-                .permitAll()
-                // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
-                .anyRequest().authenticated())
+                        // "/api/signup", "/api/login" 엔드포인트는 인증 없이 누구나 접근할 수 있도록 허용합니다.
+                        .requestMatchers(AUTH_WHITELIST)
+                        .permitAll()
+                        // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
+                        .anyRequest().authenticated())
 
                 // [추가] H2 콘솔을 위한 헤더 설정
                 // H2 콘솔은 iframe을 사용하므로, X-Frame-Options 헤더를 비활성화하거나 동일 출처(sameOrigin)로 설정해야
