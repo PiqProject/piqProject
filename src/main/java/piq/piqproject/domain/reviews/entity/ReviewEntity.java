@@ -1,6 +1,7 @@
 package piq.piqproject.domain.reviews.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -47,5 +48,11 @@ public class ReviewEntity extends BaseEntity {
                 .content(content)
                 .rate(rate)
                 .build();
+    }
+
+    public void updateReview(String title, String content, int rate) {
+        this.title=title;
+        this.content=content;
+        this.rate=rate;
     }
 }

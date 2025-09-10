@@ -7,6 +7,8 @@ import org.springframework.stereotype.Repository;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
 import piq.piqproject.domain.reviews.repository.ReviewRepository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class ReviewDao {
@@ -19,5 +21,9 @@ public class ReviewDao {
 
     public Page<ReviewEntity> getReviews(Pageable pageable) {
         return reviewRepository.findAllWithUser(pageable);
+    }
+
+    public Optional<ReviewEntity> findReview(Long reviewId) {
+        return reviewRepository.findByIdWithUser(reviewId);
     }
 }

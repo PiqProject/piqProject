@@ -54,5 +54,24 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReviews(pageable));
     }
 
-
+    /**
+     * @param userDetails 인증된 유저 정보
+     * @param reviewRequestDto 수정된 리뷰 정보
+     * @param reviewId 수정할 리뷰 아이디
+     * @return //수정 완료된 리뷰 정보
+     * @summary 리뷰 수정 API
+     *
+     * PutMapping 사용 이유
+     * 클라이언트 측에서 변경되지 않은 정보도 함께 전달하여 기존 데이터를 모두 덮어쓰는 PUT 방식을 채택하였습니다.
+     * 이는 관리 효율성을 높이고, 향후 필드가 많아질 경우 PATCH 방식에서 발생할 수 있는 변경되지 않은 필드에 대한 비즈니스 로직 예외 처리 부담을 줄이고자 함입니다.
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PutMapping("/{reviewId}")
+    public ResponseEntity<ReviewResponseDto> updateReview(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody ReviewRequestDto reviewRequestDto,
+            @PathVariable Long reviewId
+    ) {
+        return ResponseEntity.ok(reviewService.updateReview(userDetails.getUsername(), reviewRequestDto, reviewId));
+    }
 }

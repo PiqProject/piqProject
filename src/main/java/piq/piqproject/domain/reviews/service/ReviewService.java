@@ -2,11 +2,10 @@ package piq.piqproject.domain.reviews.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.reviews.dao.ReviewDao;
 import piq.piqproject.domain.reviews.dto.ReviewRequestDto;
@@ -17,7 +16,7 @@ import piq.piqproject.domain.users.entity.UserEntity;
 
 import java.time.format.DateTimeFormatter;
 
-import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_USER;
+import static piq.piqproject.common.error.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -79,5 +78,41 @@ public class ReviewService {
                     review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
             );
         });
+    }
+
+    /**
+     * @param email 인증된 유저 이메일
+     * @param reviewRequestDto 수정된 리뷰 정보
+     * @param reviewId 수정할 리뷰 아이디
+     * @return 최종 수정된 리뷰 정보
+     *
+     * [논의 사항]
+     * 문제점: 현재 userDao를 통해 User 엔티티를 조회할 때 orElseThrow 로직이 여러 곳에서 중복적으로 사용
+     * 해결 방안?: 유저 조회 시 예외 처리를 담당하는 전용 메서드를 UserService 내부에 구현하고,
+     * 이를 다른 서비스 로직에서 호출하여 사용하는 방식도 좋을 것 같음.
+     */
+    @Transactional
+    public ReviewResponseDto updateReview(String email, ReviewRequestDto reviewRequestDto, Long reviewId) {
+        UserEntity user = userDao.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
+
+        ReviewEntity review = reviewDao.findReview(reviewId)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
+
+        //본인 리뷰만 수정 가능
+        if(!review.getUser().getUsername().equals(user.getUsername())) {
+            throw new ForbiddenException(NOT_REVIEW_OWNER);
+        }
+
+        review.updateReview(reviewRequestDto.getTitle(), reviewRequestDto.getContent(), reviewRequestDto.getRate());
+
+        return ReviewResponseDto.toDto(
+                review.getId(),
+                user.getUsername(),
+                review.getTitle(),
+                review.getContent(),
+                review.getRate(),
+                review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
+        );
     }
 }

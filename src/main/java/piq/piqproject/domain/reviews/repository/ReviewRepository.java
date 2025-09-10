@@ -1,10 +1,13 @@
 package piq.piqproject.domain.reviews.repository;
 
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
+
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
 
@@ -18,4 +21,7 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
     @Query(value = "SELECT r FROM ReviewEntity r JOIN FETCH r.user u",
             countQuery = "SELECT COUNT(r) FROM ReviewEntity r")
     Page<ReviewEntity> findAllWithUser(Pageable pageable);
+
+    @Query("SELECT r FROM ReviewEntity r JOIN FETCH r.user u WHERE r.id = :reviewId")
+    Optional<ReviewEntity> findByIdWithUser(@Param("reviewId") Long reviewId);
 }
