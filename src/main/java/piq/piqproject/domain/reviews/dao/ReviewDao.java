@@ -26,4 +26,8 @@ public class ReviewDao {
     public Optional<ReviewEntity> findReview(Long reviewId) {
         return reviewRepository.findByIdWithUser(reviewId);
     }
+
+    public void deleteReview(ReviewEntity review) {
+        reviewRepository.delete(review);
+    }
 }

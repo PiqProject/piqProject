@@ -9,12 +9,15 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import piq.piqproject.domain.reviews.dto.ReviewRequestDto;
 import piq.piqproject.domain.reviews.dto.ReviewResponseDto;
 import piq.piqproject.domain.reviews.service.ReviewService;
+
+import java.util.Collection;
 
 @RestController
 @RequiredArgsConstructor
@@ -73,5 +76,21 @@ public class ReviewController {
             @PathVariable Long reviewId
     ) {
         return ResponseEntity.ok(reviewService.updateReview(userDetails.getUsername(), reviewRequestDto, reviewId));
+    }
+
+    /**
+     * @param userDetails 인증된 유저 정보
+     * @param reviewId 삭제할 리뷰 아이디
+     * @return 성공 메세지
+     *
+     * 사용자가 부적절한 리뷰를 작성하는 경우를 대비하여 admin도 삭제 기능을 사용할 수 있도록 하였습니다.
+     */
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<String> deleteReview(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long reviewId
+    ) {
+        reviewService.deleteReview(userDetails.getUsername(),userDetails.getAuthorities(), reviewId);
+        return ResponseEntity.ok("리뷰가 삭제되었습니다.");
     }
 }

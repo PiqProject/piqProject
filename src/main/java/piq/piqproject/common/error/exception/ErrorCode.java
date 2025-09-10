@@ -26,7 +26,7 @@ public enum ErrorCode {
 
     // FORBIDDEN (403) : 권한 없는 접근,
     DISABLED_ACCOUNT_USER(HttpStatus.FORBIDDEN, "비활성화된 계정입니다."),
-    NOT_REVIEW_OWNER(HttpStatus.FORBIDDEN, "자신의 리뷰만 수정 가능합니다."),
+    NOT_REVIEW_OWNER(HttpStatus.FORBIDDEN, "자신의 리뷰만 수정 및 삭제 가능합니다."),
 
     // NOT_FOUND (404) : 찾을 수 없음
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "가입되지 않은 이메일입니다."),
