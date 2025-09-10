@@ -11,8 +11,8 @@ import piq.piqproject.domain.users.entity.UserEntity;
 @Getter
 public class SignUpResponseDto {
 
-    private final Long userId;
-    private final String email;
+    private Long userId;
+    private String email;
 
     @Builder
     private SignUpResponseDto(Long userId, String email) {
