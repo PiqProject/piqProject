@@ -32,6 +32,10 @@ public class SignUpRequestDto {
     @Email(message = "이메일 형식에 맞지 않습니다.")
     private String email;
 
+    @NotBlank(message = "닉네임은 필수 입력 값입니다.")
+    @Size(min = 2, max = 10, message = "닉네임은 2~10자 길이여야 합니다.")
+    private String nickname;
+
     @NotBlank(message = "비밀번호는 필수 입력 값입니다.")
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,20}$", message = "비밀번호는 8~20자 길이의 영문, 숫자, 특수문자 조합이어야 합니다.")
     private String password;

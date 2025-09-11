@@ -40,6 +40,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name = "id")
     private Long id;
 
+    @Column(name="nickname", nullable = false, length = 50)
+    private String nickname;
+
     @Column(name="email", nullable = false, unique = true, length = 100) // email을 로그인 ID로 사용할 것임
     private String email;
 
@@ -74,7 +77,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name="is_active", nullable = false) 
     private Boolean isActive; // 활성화 여부
 
-      // roles 필드를 위한 올바른 JPA 매핑
+    // roles 필드를 위한 올바른 JPA 매핑
     @ElementCollection(fetch = FetchType.EAGER) // User 조회 시 권한 정보도 항상 함께 조회
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id")) // 'user_roles' 테이블 생성, 'user_id'로 조인
     @Column(name = "role") // 'user_roles' 테이블의 컬럼명은 'role'
@@ -84,10 +87,11 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     // Builder 패턴을 사용하여 객체 생성 가능 (new로 불가)
     @Builder
-    public UserEntity(String email, String password, String kakaoTalkId, String instagramId,
+    public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
             Integer pqPoint, String introduce, Boolean isActive, List<String> roles) {
         this.email = email;
+        this.nickname = nickname;
         this.password = password;
         this.kakaoTalkId = kakaoTalkId;
         this.instagramId = instagramId;
@@ -109,11 +113,12 @@ public class UserEntity extends BaseEntity implements UserDetails {
      * @param RequestDto fields, password는 암호화되어야 함
      * @return UserEntity
      */
-    public static UserEntity of (String email, String password, String kakaoTalkId, String instagramId,
+    public static UserEntity of (String email, String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
             Integer pqPoint, String introduce, Boolean isActive, List<String> roles) {
         return UserEntity.builder()
                 .email(email)
+                .nickname(nickname)
                 .password(password)
                 .kakaoTalkId(kakaoTalkId)
                 .instagramId(instagramId)
