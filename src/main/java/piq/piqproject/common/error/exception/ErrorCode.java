@@ -35,6 +35,7 @@ public enum ErrorCode {
 
     // CONFLICT (409) : 충돌
     ALREADY_EXISTS_USER(HttpStatus.CONFLICT, "이미 가입된 유저입니다."),
+    ALREADY_EXISTS_REVIEW(HttpStatus.CONFLICT, "서비스에 대한 리뷰는 1회만 가능합니다."),
 
     // INTERNAL_SERVER_ERROR (500) : 서버 오류
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다."),

@@ -43,6 +43,18 @@ public class ReviewController {
     }
 
     /**
+     * @summary 본인이 작성한 리뷰 조회
+     * todo: 매칭 상대방에 대한 평가 내역 조회 추가 필요 (추후 구현)
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @GetMapping("/me")
+    public ResponseEntity<ReviewResponseDto> findMyReview(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return ResponseEntity.ok(reviewService.findMyReview(userDetails.getUsername()));
+    }
+
+    /**
      * @param pageable 페이지네이션 정보 (page, size, sort)
      * @return 페이지네이션된 리뷰 목록
      * @summary 서비스에 대한 리뷰 전체 조회 API

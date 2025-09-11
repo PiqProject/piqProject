@@ -19,6 +19,10 @@ public class ReviewDao {
         return reviewRepository.save(review);
     }
 
+    public Optional<ReviewEntity> findByUserEmail(String email) {
+        return reviewRepository.findByUserEmail(email);
+    }
+
     public Page<ReviewEntity> getReviews(Pageable pageable) {
         return reviewRepository.findAllWithUser(pageable);
     }
@@ -29,5 +33,9 @@ public class ReviewDao {
 
     public void deleteReview(ReviewEntity review) {
         reviewRepository.delete(review);
+    }
+
+    public boolean existsByUserEmail(String email) {
+        return reviewRepository.existsByUserEmail(email);
     }
 }

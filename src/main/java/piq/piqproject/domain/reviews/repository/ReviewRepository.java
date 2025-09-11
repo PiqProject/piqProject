@@ -24,4 +24,9 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
 
     @Query("SELECT r FROM ReviewEntity r JOIN FETCH r.user u WHERE r.id = :reviewId")
     Optional<ReviewEntity> findByIdWithUser(@Param("reviewId") Long reviewId);
+
+    @Query("SELECT r FROM ReviewEntity r WHERE r.user.email = :email")
+    Optional<ReviewEntity> findByUserEmail(@Param("email") String email);
+
+    boolean existsByUserEmail(String email);
 }

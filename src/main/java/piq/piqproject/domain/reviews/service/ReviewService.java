@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.reviews.dao.ReviewDao;
@@ -45,6 +46,10 @@ public class ReviewService {
         UserEntity user = userDao.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
+        if (reviewDao.existsByUserEmail(email)) {
+            throw new ConflictException(ALREADY_EXISTS_REVIEW);
+        }
+
         ReviewEntity review = ReviewEntity.of(
                 user,
                 reviewRequestDto.getTitle(),
@@ -61,6 +66,21 @@ public class ReviewService {
                 savedReview.getContent(),
                 savedReview.getRate(),
                 savedReview.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ReviewResponseDto findMyReview(String email) {
+        ReviewEntity review = reviewDao.findByUserEmail(email)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
+
+        return ReviewResponseDto.toDto(
+                review.getId(),
+                email,
+                review.getTitle(),
+                review.getContent(),
+                review.getRate(),
+                review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
         );
     }
 
