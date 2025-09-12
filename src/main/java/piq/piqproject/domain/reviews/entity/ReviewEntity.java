@@ -1,7 +1,6 @@
 package piq.piqproject.domain.reviews.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,7 +8,6 @@ import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
 import piq.piqproject.domain.users.entity.UserEntity;
 
-@Entity
 @Table(name = "reviews")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -51,8 +49,8 @@ public class ReviewEntity extends BaseEntity {
     }
 
     public void updateReview(String title, String content, int rate) {
-        this.title=title;
-        this.content=content;
-        this.rate=rate;
+        this.title = title;
+        this.content = content;
+        this.rate = rate;
     }
 }
