@@ -1,4 +1,4 @@
-package piq.piqproject.config.jwt;
+package piq.piqproject.config.springsecurity;
 
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.domain.users.repository.UserRepository;

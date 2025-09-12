@@ -1,6 +1,9 @@
-package piq.piqproject.config.jwt;
+package piq.piqproject.config.springsecurity;
 
 import lombok.RequiredArgsConstructor;
+import piq.piqproject.config.jwt.JwtExceptionFilter;
+import piq.piqproject.config.jwt.JwtFilter;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +27,8 @@ public class SecurityConfig {
     // JWT 토큰 제공자 및 필터를 주입받습니다.
     private final JwtFilter jwtFilter;
     private final JwtExceptionFilter jwtExceptionFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     // [추가] 인증 없이 접근을 허용할 경로 목록
     private static final String[] AUTH_WHITELIST = {
@@ -67,6 +72,11 @@ public class SecurityConfig {
         // 세션 관리 정책을 STATELESS로 설정합니다.
         // 이는 서버가 세션을 생성하거나 사용하지 않음을 의미하며, 모든 요청을 독립적으로 처리합니다. (JWT의 핵심)
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint(customAuthenticationEntryPoint) // 인증 실패 시 처리
+                .accessDeniedHandler(customAccessDeniedHandler) // 인가 실패 시 처리
+        );
 
         // HTTP 요청에 대한 접근 권한을 설정합니다.
         http.authorizeHttpRequests(authorize -> authorize
