@@ -11,13 +11,14 @@ import piq.piqproject.domain.users.entity.UserEntity;
 @Table(name = "reviews")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 public class ReviewEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //todo: user 탈퇴 시 review 삭제 필요 (유저 삭제 시 리뷰 삭제 로직 추가)
+    // todo: user 탈퇴 시 review 삭제 필요 (유저 삭제 시 리뷰 삭제 로직 추가)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private UserEntity user;

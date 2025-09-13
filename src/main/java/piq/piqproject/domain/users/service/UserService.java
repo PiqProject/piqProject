@@ -6,14 +6,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
-<<<<<<< HEAD
 import java.util.List;
 import java.util.stream.Collectors;
-=======
-import java.util.function.Predicate;
->>>>>>> 9828f7a02314e9d4ed89c26ac1c0feb589387989
 
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -161,7 +156,6 @@ public class UserService {
         // 6. 새로운 Access Token을 생성하여 반환
         return jwtTokenProvider.createAccessToken(user);
     }
-<<<<<<< HEAD
 
     public MyProfileResponseDto findMyProfile(UserEntity userEntity) {
         // userEntity가 이미 DB에서 조회된 객체이므로 별도 조회가 필요 없습니다.
@@ -195,6 +189,4 @@ public class UserService {
         return UserProfileResponseDto.from(user);
     }
 
-=======
->>>>>>> 9828f7a02314e9d4ed89c26ac1c0feb589387989
 }
