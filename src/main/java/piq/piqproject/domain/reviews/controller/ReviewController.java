@@ -94,7 +94,7 @@ public class ReviewController {
      *
      * 사용자가 부적절한 리뷰를 작성하는 경우를 대비하여 admin도 삭제 기능을 사용할 수 있도록 하였습니다.
      */
-    @DeleteMapping("/{reviewId}")
+    @PostMapping("/{reviewId}/delete")
     public ResponseEntity<String> deleteReview(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long reviewId

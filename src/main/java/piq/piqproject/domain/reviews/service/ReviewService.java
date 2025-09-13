@@ -151,7 +151,7 @@ public class ReviewService {
         ReviewEntity review = reviewDao.findReview(reviewId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
 
-        //유저일 경우에만 아래의 조건 검증 (todo: 추후 authService부분으로 빼는게 좋을 듯)
+        //유저일 경우에만 아래의 조건 검증 (todo: common에 옮기기)
         boolean isUser = authorities.stream()
                 .map(GrantedAuthority::getAuthority) //유저의 모든 role 정보 가져오기
                 .anyMatch(Predicate.isEqual("ROLE_USER"));
