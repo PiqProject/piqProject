@@ -6,7 +6,9 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Collections;
+import java.util.function.Predicate;
 
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -150,5 +152,4 @@ public class UserService {
         // 6. 새로운 Access Token을 생성하여 반환
         return jwtTokenProvider.createAccessToken(user);
     }
-
 }
