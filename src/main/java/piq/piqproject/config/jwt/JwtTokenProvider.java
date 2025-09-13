@@ -11,7 +11,8 @@ import piq.piqproject.domain.users.entity.UserEntity;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 /*
@@ -22,9 +23,6 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +34,8 @@ public class JwtTokenProvider {
     private Key key;
     // JWT parser, 토큰 검증 시 사용
     private JwtParser jwtParser;
+    // UserDetailsService 주입
+    private final UserDetailsService userDetailsService;
 
     @PostConstruct
     protected void init() {
@@ -117,32 +117,26 @@ public class JwtTokenProvider {
     }
 
     /**
-     * token을 받아 spring security가 이해하는 Authentication객체로 변환
-     * <p>
-     * Spring security는 jwt를 직접 이해 못함. security는 Authentication이라는 객체를 통해 현재 사용자가
-     * 누구인가를 판단함 따라서 token(암호화된 문자열)을 Authentication 객체로 변환해야 함
+     * token을 받아 Spring security가 이해하는 Authentication객체로 변환
      *
      * @param token 인증 정보가 담긴 JWT 토큰
      * @return Spring Security가 이해하는 형태의 Authentication 객체
-     * @author PJT
      */
     public Authentication getAuthentication(String token) {
-        Claims claims = getClaims(token); // Claims는 key-value로 데이터를 담고있음
-        @SuppressWarnings("unchecked")
-        List<String> roles = claims.get("auth", List.class); // "auth"의 값이 2개이상일 수 있으므로 List로 받음
-        // spring security는 권한을 grantedAuthority interface로 표현, simpleGrantedAuthority는
-        // 그 간단한 구현체
-        Set<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(SimpleGrantedAuthority::new) // 각 role 문자열을 new SimpleGrantedAuthority("role")로 변환
-                .collect(Collectors.toSet());
+        // 2. 토큰에서 사용자의 이메일(Subject)을 추출합니다.
+        String userEmail = getClaims(token).getSubject();
 
-        // claims.getSubject()는 토큰의 제목, 즉 사용자 이메일을 반환합니다.
-        // new org.springframework.security.core.userdetails.User 객체를 사용해 인증 객체를 만듭니다.
-        // 비밀번호는 인증된 상태이므로 빈 문자열("")을 넣습니다.
+        // 3. UserDetailsService를 통해 DB에서 실제 UserEntity(UserDetails) 객체를 조회합니다.
+        // 이 과정에서 매 요청마다 DB 조회가 발생합니다.
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+
+        // 4. 조회된 UserDetails(실제로는 UserEntity 객체)를 principal로 사용하여 Authentication 객체를
+        // 생성합니다.
+        // 권한 정보는 DB에서 조회한 userDetails 객체의 것을 사용하므로, 토큰의 권한 정보는 사용하지 않습니다.
         return new UsernamePasswordAuthenticationToken(
-                new org.springframework.security.core.userdetails.User(claims.getSubject(), "", authorities),
-                token,
-                authorities);
+                userDetails, // principal: DB에서 조회한 UserEntity 객체
+                "", // credentials: 비밀번호는 보통 비워둡니다.
+                userDetails.getAuthorities()); // authorities: DB에서 조회한 실제 권한 목록
     }
 
     /**

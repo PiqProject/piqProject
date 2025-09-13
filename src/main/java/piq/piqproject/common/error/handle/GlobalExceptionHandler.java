@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import piq.piqproject.common.error.dto.ErrorDetailsDto;
+import piq.piqproject.common.error.dto.ErrorResponseDto;
 import piq.piqproject.common.error.dto.ValidErrorResponseDto;
 import piq.piqproject.common.error.exception.CustomException;
-import piq.piqproject.common.error.dto.ErrorResponseDto;
 
 import java.util.List;
 import java.util.stream.Collectors;

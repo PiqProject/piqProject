@@ -2,9 +2,12 @@ package piq.piqproject.domain.users.dao;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+
+import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -40,6 +43,19 @@ public class UserDao {
      * @return Optional<UserEntity>
      */
     public Optional<UserEntity> findByEmail(String email) {
+
         return userRepository.findByEmail(email);
+    }
+
+    public void deleteByUserEntity(UserEntity userEntity) {
+        userRepository.delete(userEntity);
+    }
+
+    public List<UserEntity> findAllByGender(Gender gender) {
+        return userRepository.findAllByGender(gender);
+    }
+
+    public Optional<UserEntity> findById(Long id) {
+        return userRepository.findById(id);
     }
 }

@@ -1,6 +1,5 @@
 package piq.piqproject.domain.users.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 

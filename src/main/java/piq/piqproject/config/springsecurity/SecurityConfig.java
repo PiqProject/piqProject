@@ -1,10 +1,11 @@
-package piq.piqproject.config.jwt;
+package piq.piqproject.config.springsecurity;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import piq.piqproject.config.jwt.JwtExceptionFilter;
+import piq.piqproject.config.jwt.JwtFilter;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,12 +27,15 @@ public class SecurityConfig {
     // JWT 토큰 제공자 및 필터를 주입받습니다.
     private final JwtFilter jwtFilter;
     private final JwtExceptionFilter jwtExceptionFilter;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     // [추가] 인증 없이 접근을 허용할 경로 목록
     private static final String[] AUTH_WHITELIST = {
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/reissue",
+            "/api/v1/user/profiles",
             "/api/v1/reviews",
             "/h2-console/**", // H2 콘솔 접근 허용
             "/swagger-ui/**", // Swagger UI 접근 허용
@@ -70,13 +74,18 @@ public class SecurityConfig {
         // 이는 서버가 세션을 생성하거나 사용하지 않음을 의미하며, 모든 요청을 독립적으로 처리합니다. (JWT의 핵심)
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
+        http.exceptionHandling(ex -> ex
+                .authenticationEntryPoint(customAuthenticationEntryPoint) // 인증 실패 시 처리
+                .accessDeniedHandler(customAccessDeniedHandler) // 인가 실패 시 처리
+        );
+
         // HTTP 요청에 대한 접근 권한을 설정합니다.
         http.authorizeHttpRequests(authorize -> authorize
-                        // "/api/signup", "/api/login" 엔드포인트는 인증 없이 누구나 접근할 수 있도록 허용합니다.
-                        .requestMatchers(AUTH_WHITELIST)
-                        .permitAll()
-                        // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
-                        .anyRequest().authenticated())
+                // "/api/signup", "/api/login" 엔드포인트는 인증 없이 누구나 접근할 수 있도록 허용합니다.
+                .requestMatchers(AUTH_WHITELIST)
+                .permitAll()
+                // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
+                .anyRequest().authenticated())
 
                 // [추가] H2 콘솔을 위한 헤더 설정
                 // H2 콘솔은 iframe을 사용하므로, X-Frame-Options 헤더를 비활성화하거나 동일 출처(sameOrigin)로 설정해야
