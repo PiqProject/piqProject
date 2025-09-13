@@ -35,7 +35,7 @@ public class SecurityConfig {
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/reissue",
-            "/api/v1/user/profiles",
+            "/api/v1/users/profiles",
             "/api/v1/reviews",
             "/h2-console/**", // H2 콘솔 접근 허용
             "/swagger-ui/**", // Swagger UI 접근 허용
