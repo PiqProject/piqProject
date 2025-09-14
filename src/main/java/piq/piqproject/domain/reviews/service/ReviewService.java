@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.NotFoundException;
+import piq.piqproject.common.util.RoleUtils;
 import piq.piqproject.domain.reviews.dao.ReviewDao;
 import piq.piqproject.domain.reviews.dto.ReviewRequestDto;
 import piq.piqproject.domain.reviews.dto.ReviewResponseDto;
@@ -151,13 +152,8 @@ public class ReviewService {
         ReviewEntity review = reviewDao.findReview(reviewId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
 
-        //유저일 경우에만 아래의 조건 검증 (todo: common에 옮기기)
-        boolean isUser = authorities.stream()
-                .map(GrantedAuthority::getAuthority) //유저의 모든 role 정보 가져오기
-                .anyMatch(Predicate.isEqual("ROLE_USER"));
-
-        //본인 리뷰만 삭제 가능
-        if (!review.getUser().getUsername().equals(user.getUsername()) && isUser) {
+        //본인 리뷰만 삭제 가능 (유저일 경우에만 조건 검증)
+        if (!review.getUser().getUsername().equals(user.getUsername()) && RoleUtils.isUser(authorities)) {
             throw new ForbiddenException(NOT_REVIEW_OWNER);
         }
 
