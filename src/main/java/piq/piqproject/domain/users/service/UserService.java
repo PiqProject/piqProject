@@ -15,6 +15,9 @@ import piq.piqproject.domain.users.dto.UserSimpleProfileResponseDto;
 import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)
 public class UserService {
@@ -31,10 +34,12 @@ public class UserService {
         userDao.deleteByUserEntity(userEntity);
     }
 
-    public List<UserSimpleProfileResponseDto> findAllProfilesByGender(Gender gender) {
-        return userDao.findAllByGender(gender).stream()
-                .map((user) -> UserSimpleProfileResponseDto.from(user))
-                .collect(Collectors.toList());
+    public Page<UserSimpleProfileResponseDto> findAllProfilesByGender(Gender gender, Pageable pageable) {
+        // 1. DAO를 호출하여 Page<UserEntity>를 받습니다.
+        Page<UserEntity> userEntityPage = userDao.findAllByGender(gender, pageable);
+
+        // 2. Page 객체가 제공하는 map() 함수를 사용하여 내용물(Entity)을 DTO로 변환합니다.
+        return userEntityPage.map(user -> UserSimpleProfileResponseDto.from(user));
     }
 
     /**

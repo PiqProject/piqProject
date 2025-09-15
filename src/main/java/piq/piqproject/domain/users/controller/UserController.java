@@ -1,7 +1,9 @@
 package piq.piqproject.domain.users.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.users.dto.MyProfileResponseDto;
 import piq.piqproject.domain.users.dto.UserProfileResponseDto;
 import piq.piqproject.domain.users.dto.UserSimpleProfileResponseDto;
@@ -30,16 +31,19 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * 성별에 따라 필터링된 전체 사용자 프로필 목록을 조회합니다.
+     * 성별에 따라 필터링된 전체 사용자 프로필 목록을 페이지네이션으로 조회합니다.
+     * 클라이언트는 page, size, sort 파라미터를 통해 페이징을 제어할 수 있습니다.
+     * 예: /api/v1/users/profiles?gender=FEMALE&page=0&size=10&sort=createdAt,desc
      * 
      * @param Gender "MALE" 또는 "FEMALE"
      * @return 프로필 DTO 목록
      */
     @GetMapping("/profiles")
-    public ResponseEntity<ListResponseDto<UserSimpleProfileResponseDto>> getAllProfiles(
-            @RequestParam("gender") Gender gender) {
-        List<UserSimpleProfileResponseDto> profiles = userService.findAllProfilesByGender(gender);
-        return ResponseEntity.ok(ListResponseDto.from(profiles));
+    public ResponseEntity<Page<UserSimpleProfileResponseDto>> getAllProfiles(
+            @RequestParam("gender") Gender gender,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<UserSimpleProfileResponseDto> profilesPage = userService.findAllProfilesByGender(gender, pageable);
+        return ResponseEntity.ok(profilesPage);
     }
 
     /**

@@ -7,8 +7,9 @@ import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
 
-import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 @RequiredArgsConstructor
@@ -51,11 +52,16 @@ public class UserDao {
         userRepository.delete(userEntity);
     }
 
-    public List<UserEntity> findAllByGender(Gender gender) {
-        return userRepository.findAllByGender(gender);
+    public Page<UserEntity> findAllByGender(Gender gender, Pageable pageable) {
+        // Repository에 pageable 객체를 그대로 전달합니다.
+        return userRepository.findAllByGender(gender, pageable);
     }
 
     public Optional<UserEntity> findById(Long id) {
         return userRepository.findById(id);
+    }
+
+    public boolean existsByNickname(String nickname) {
+        return userRepository.existsByNickname(nickname);
     }
 }

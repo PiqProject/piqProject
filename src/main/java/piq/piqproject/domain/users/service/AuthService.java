@@ -48,7 +48,8 @@ public class AuthService {
     @Transactional // 데이터베이스에 변경 작업을 하므로 트랜잭션 처리
     public SignUpResponseDto signUp(SignUpRequestDto signUpRequestDto) {
         // 1. 이메일 중복 확인
-        if (userDao.existsByEmail(signUpRequestDto.getEmail())) {
+        if (userDao.existsByEmail(signUpRequestDto.getEmail())
+                && userDao.existsByNickname(signUpRequestDto.getNickname())) {
             // 실무에서는 custom exception을 정의하여 사용하는 것이 좋습니다.
             // ErrorCode Enum으로 정의해두었던 값을 사용하여 CustomException을 상속받고 있는 ConflictException에게
             // 넘겨줍니다.
@@ -164,12 +165,6 @@ public class AuthService {
     public void deleteUser(UserEntity userEntity) {
         // ID를 사용하거나 엔티티 자체를 사용하여 삭제 로직을 수행합니다.
         userDao.deleteByUserEntity(userEntity);
-    }
-
-    public List<UserSimpleProfileResponseDto> findAllProfilesByGender(Gender gender) {
-        return userDao.findAllByGender(gender).stream()
-                .map((user) -> UserSimpleProfileResponseDto.from(user))
-                .collect(Collectors.toList());
     }
 
     /**

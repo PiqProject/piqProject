@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
@@ -21,9 +23,10 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
      * Spring Data JPA가 메소드 이름을 분석하여 아래와 같은 JPQL을 자동으로 생성합니다.
      * "SELECT u FROM UserEntity u WHERE u.gender = :gender"
      *
-     * @param gender 검색할 성별 (Gender Enum 타입)
+     * @param gender 검색할 성별 (Gender Enum 타입), Pageable pageable
      * @return 해당 성별을 가진 UserEntity의 리스트
      */
-    List<UserEntity> findAllByGender(Gender gender);
+    Page<UserEntity> findAllByGender(Gender gender, Pageable pageable);
 
+    boolean existsByNickname(String nickname);
 }
