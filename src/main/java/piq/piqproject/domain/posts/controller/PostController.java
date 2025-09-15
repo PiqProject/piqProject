@@ -18,7 +18,7 @@ import piq.piqproject.domain.users.entity.UserEntity;
 public class PostController {
     private final PostService postService;
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    //@PreAuthorize("hasRole('ROLE_ADMIN')") todo: 권한 추가 후 주석 제거
     @PostMapping
     public ResponseEntity<PostResponseDto> createPost(
             @AuthenticationPrincipal UserEntity user,

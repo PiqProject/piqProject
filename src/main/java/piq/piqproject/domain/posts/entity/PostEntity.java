@@ -54,6 +54,8 @@ public class PostEntity extends BaseEntity {
                 .title(postRequestDto.getTitle())
                 .user(user)
                 .content(postRequestDto.getContent())
+                .startDate(postRequestDto.getStartDate())
+                .endDate(postRequestDto.getEndDate())
                 .type(type)
                 .build();
     }

@@ -11,7 +11,7 @@ public class PostDao {
 
     private final PostRepository postRepository;
 
-    public void savePost(PostEntity post) {
-        postRepository.save(post);
+    public PostEntity savePost(PostEntity post) {
+        return postRepository.save(post);
     }
 }

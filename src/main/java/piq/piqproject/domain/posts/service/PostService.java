@@ -3,7 +3,6 @@ package piq.piqproject.domain.posts.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.posts.dao.PostDao;
 import piq.piqproject.domain.posts.dto.PostRequestDto;
@@ -32,14 +31,18 @@ public class PostService {
 
         PostEntity post = PostEntity.of(user, type, postRequestDto);
 
-        postDao.savePost(post);
+        //todo: startDate, endDate 검증 로직 추가
+
+        PostEntity savedPost = postDao.savePost(post);
 
         return PostResponseDto.of(
-                post.getTitle(),
-                post.getContent(),
-                post.getStartDate().format(DateTimeFormatter.ISO_DATE_TIME),
-                post.getEndDate().format(DateTimeFormatter.ISO_DATE_TIME),
-                post.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
+                savedPost.getId(),
+                savedPost.getTitle(),
+                savedPost.getContent(),
+                savedPost.getType(),
+                savedPost.getStartDate() != null ? post.getStartDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "",
+                savedPost.getEndDate() != null ? post.getEndDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "",
+                savedPost.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
         );
     }
 }
