@@ -6,13 +6,17 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
-import piq.piqproject.domain.posts.dto.PostRequestDto;
+import piq.piqproject.domain.posts.dto.request.CreateAnnouncementRequestDto;
+import piq.piqproject.domain.posts.dto.request.CreateEventRequestDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 import java.time.LocalDateTime;
 
+import static piq.piqproject.domain.posts.entity.PostType.ANNOUNCEMENT;
+import static piq.piqproject.domain.posts.entity.PostType.EVENT;
+
 @Entity
-@Table(name="evnets")
+@Table(name = "posts")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class PostEntity extends BaseEntity {
@@ -49,14 +53,23 @@ public class PostEntity extends BaseEntity {
         this.type = type;
     }
 
-    public static PostEntity of(UserEntity user, PostType type, PostRequestDto postRequestDto ) {
+    public static PostEntity createAnnouncement(UserEntity user, String title, String content) {
         return PostEntity.builder()
-                .title(postRequestDto.getTitle())
                 .user(user)
-                .content(postRequestDto.getContent())
-                .startDate(postRequestDto.getStartDate())
-                .endDate(postRequestDto.getEndDate())
-                .type(type)
+                .title(title)
+                .content(content)
+                .type(ANNOUNCEMENT)
+                .build();
+    }
+
+    public static PostEntity createEvent(UserEntity user, String title, String content, LocalDateTime startDate, LocalDateTime endDate) {
+        return PostEntity.builder()
+                .user(user)
+                .title(title)
+                .content(content)
+                .startDate(startDate)
+                .endDate(endDate)
+                .type(EVENT)
                 .build();
     }
 }

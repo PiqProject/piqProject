@@ -1,6 +1,7 @@
-package piq.piqproject.domain.posts.dto;
+package piq.piqproject.domain.posts.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -10,8 +11,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @RequiredArgsConstructor
-public class PostRequestDto {
-
+public class CreateEventRequestDto {
     //todo: 제목 최대 길이에 대한 확정 필요 (현재 임시 50자)
     @NotBlank(message = "제목을 입력해주세요.")
     @Size(max = 50, message = "제목은 50자 이하로 입력해주세요.")
@@ -29,4 +29,12 @@ public class PostRequestDto {
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
     private final LocalDateTime endDate;
+
+    @AssertTrue(message = "시작일은 종료일보다 늦을 수 없습니다.")
+    public boolean isDateRangeValid() {
+        if (startDate == null && endDate == null) {
+            return true; // 둘 다 비어있는 경우에
+        }
+        return !startDate.isAfter(endDate);
+    }
 }

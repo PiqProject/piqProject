@@ -1,16 +1,18 @@
 package piq.piqproject.domain.posts.service;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import piq.piqproject.common.error.exception.NotFoundException;
-import piq.piqproject.domain.posts.dao.PostDao;
-import piq.piqproject.domain.posts.dto.PostRequestDto;
-import piq.piqproject.domain.posts.dto.PostResponseDto;
+import piq.piqproject.domain.posts.dto.request.CreateAnnouncementRequestDto;
+import piq.piqproject.domain.posts.dto.request.CreateEventRequestDto;
+import piq.piqproject.domain.posts.dto.response.PostResponseDto;
 import piq.piqproject.domain.posts.entity.PostEntity;
 import piq.piqproject.domain.posts.entity.PostType;
-import piq.piqproject.domain.users.dao.UserDao;
+import piq.piqproject.domain.posts.repository.PostRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.repository.UserRepository;
 
 import java.time.format.DateTimeFormatter;
 
@@ -20,29 +22,47 @@ import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_USER;
 @RequiredArgsConstructor
 public class PostService {
 
-    private final UserDao userDao;
-    private final PostDao postDao;
+    private final UserRepository userRepository;
+    private final PostRepository postRepository;
 
     @Transactional
-    public PostResponseDto createPost(Long userId, PostType type, PostRequestDto postRequestDto) {
+    public PostResponseDto createAnnouncement(Long userId, CreateAnnouncementRequestDto createAnnouncementRequestDto) {
 
-        UserEntity user = userDao.findById(userId)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
-        PostEntity post = PostEntity.of(user, type, postRequestDto);
-
-        //todo: startDate, endDate 검증 로직 추가
-
-        PostEntity savedPost = postDao.savePost(post);
-
-        return PostResponseDto.of(
-                savedPost.getId(),
-                savedPost.getTitle(),
-                savedPost.getContent(),
-                savedPost.getType(),
-                savedPost.getStartDate() != null ? post.getStartDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "",
-                savedPost.getEndDate() != null ? post.getEndDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "",
-                savedPost.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
+        // [Request 처리: DTO → Entity]
+        // 도메인 계층(Entity)의 순수성을 지키기 위해 표현 계층의 객체(DTO)를 직접 전달하지 않습니다.
+        // 서비스 계층에서 필요한 데이터를 추출하여 순수한 값으로 Entity 생성을 위임합니다.
+        // 이를 통해 Entity는 DTO의 존재를 전혀 알지 못하게 되어 계층 간 결합도가 낮아집니다.
+        PostEntity post = PostEntity.createAnnouncement(
+                user,
+                createAnnouncementRequestDto.getTitle(),
+                createAnnouncementRequestDto.getContent()
         );
+
+        postRepository.save(post);
+
+        // [Response 처리: Entity → DTO]
+        // 표현 계층(DTO)이 도메인 계층(Entity)을 아는 것은 올바른 의존성 방향입니다.
+        // Entity 객체를 통째로 넘겨 데이터 변환 및 가공의 책임을 DTO에 완전히 위임합니다.
+        return PostResponseDto.of(post);
+    }
+
+    @Transactional
+    public PostResponseDto createEvent(Long userId, CreateEventRequestDto createEventRequestDto) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
+
+        PostEntity post = PostEntity.createEvent(
+                user,
+                createEventRequestDto.getTitle(),
+                createEventRequestDto.getContent(),
+                createEventRequestDto.getStartDate(),
+                createEventRequestDto.getEndDate()
+        );
+
+        postRepository.save(post);
+        return PostResponseDto.of(post);
     }
 }
