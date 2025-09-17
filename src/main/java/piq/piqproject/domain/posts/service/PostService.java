@@ -101,4 +101,12 @@ public class PostService {
 
         return PostResponseDto.of(post);
     }
+
+    @Transactional
+    public void deletePost(Long postId) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_POST));
+
+        postRepository.delete(post);
+    }
 }

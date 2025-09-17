@@ -53,4 +53,12 @@ public class PostController {
     ) {
         return ResponseEntity.ok(postService.updateEvent(postId, eventRequestDto));
     }
+
+    @PostMapping("/{postId}/delete")
+    public ResponseEntity<String> deletePost(
+            @PathVariable Long postId
+    ) {
+        postService.deletePost(postId);
+        return ResponseEntity.ok("게시물 삭제에 성공하였습니다.");
+    }
 }
