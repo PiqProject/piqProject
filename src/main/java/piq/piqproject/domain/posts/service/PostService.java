@@ -3,17 +3,18 @@ package piq.piqproject.domain.posts.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import piq.piqproject.common.error.exception.InvalidRequestException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.posts.dto.request.AnnouncementRequestDto;
-import piq.piqproject.domain.posts.dto.request.CreateEventRequestDto;
+import piq.piqproject.domain.posts.dto.request.EventRequestDto;
 import piq.piqproject.domain.posts.dto.response.PostResponseDto;
 import piq.piqproject.domain.posts.entity.PostEntity;
+import piq.piqproject.domain.posts.entity.PostType;
 import piq.piqproject.domain.posts.repository.PostRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
 
-import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_POST;
-import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_USER;
+import static piq.piqproject.common.error.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -47,16 +48,16 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponseDto createEvent(Long userId, CreateEventRequestDto createEventRequestDto) {
+    public PostResponseDto createEvent(Long userId, EventRequestDto eventRequestDto) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         PostEntity post = PostEntity.createEvent(
                 user,
-                createEventRequestDto.getTitle(),
-                createEventRequestDto.getContent(),
-                createEventRequestDto.getStartDate(),
-                createEventRequestDto.getEndDate()
+                eventRequestDto.getTitle(),
+                eventRequestDto.getContent(),
+                eventRequestDto.getStartDate(),
+                eventRequestDto.getEndDate()
         );
 
         postRepository.save(post);
@@ -70,7 +71,33 @@ public class PostService {
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_POST));
 
+        // 게시글 유형이 '공지사항'인지 확인
+        if (!post.getType().equals(PostType.ANNOUNCEMENT)) {
+            throw new InvalidRequestException(POST_TYPE_MISMATCH);
+        }
+
         post.updateAnnouncement(announcementRequestDto.getTitle(), announcementRequestDto.getContent());
+
+        return PostResponseDto.of(post);
+    }
+
+    @Transactional
+    public PostResponseDto updateEvent(Long postId, EventRequestDto eventRequestDto) {
+        //TODO: 공지사항 에러 메세지와 이벤트 에러메세지 다르게 설정하기
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_POST));
+
+        // 게시글 유형이 '이벤트'인지 확인
+        if (!post.getType().equals(PostType.EVENT)) {
+            throw new InvalidRequestException(POST_TYPE_MISMATCH);
+        }
+
+        post.updateEvent(
+                eventRequestDto.getTitle(),
+                eventRequestDto.getContent(),
+                eventRequestDto.getStartDate(),
+                eventRequestDto.getEndDate()
+        );
 
         return PostResponseDto.of(post);
     }

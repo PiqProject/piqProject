@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import piq.piqproject.domain.posts.dto.request.AnnouncementRequestDto;
-import piq.piqproject.domain.posts.dto.request.CreateEventRequestDto;
+import piq.piqproject.domain.posts.dto.request.EventRequestDto;
 import piq.piqproject.domain.posts.dto.response.PostResponseDto;
 import piq.piqproject.domain.posts.service.PostService;
 import piq.piqproject.domain.users.entity.UserEntity;
@@ -32,10 +32,10 @@ public class PostController {
     @PostMapping("/event")
     public ResponseEntity<PostResponseDto> createEvent(
             @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody CreateEventRequestDto createEventRequestDto
+            @Valid @RequestBody EventRequestDto eventRequestDto
     ) {
         return ResponseEntity.status(201)
-                .body(postService.createEvent(user.getId(), createEventRequestDto));
+                .body(postService.createEvent(user.getId(), eventRequestDto));
     }
 
     @PutMapping("/announcement/{postId}")
@@ -44,5 +44,13 @@ public class PostController {
             @Valid @RequestBody AnnouncementRequestDto announcementRequestDto
     ) {
         return ResponseEntity.ok(postService.updateAnnouncement(postId, announcementRequestDto));
+    }
+
+    @PutMapping("/event/{postId}")
+    public ResponseEntity<PostResponseDto> updateEvent(
+            @PathVariable Long postId,
+            @Valid @RequestBody EventRequestDto eventRequestDto
+    ) {
+        return ResponseEntity.ok(postService.updateEvent(postId, eventRequestDto));
     }
 }

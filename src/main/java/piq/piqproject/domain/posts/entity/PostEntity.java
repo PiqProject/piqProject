@@ -71,8 +71,15 @@ public class PostEntity extends BaseEntity {
                 .build();
     }
 
-    public void updateAnnouncement(String title,String content) {
+    public void updateAnnouncement(String title, String content) {
         this.title = title;
         this.content = content;
+    }
+
+    public void updateEvent(String title, String content, LocalDateTime startDate, LocalDateTime endDate) {
+        this.title = title;
+        this.content = content;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 }

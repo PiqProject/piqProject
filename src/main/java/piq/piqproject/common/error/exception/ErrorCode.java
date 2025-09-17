@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     // BAD_REQUEST (400) : 잘못된 요청
     JWT_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "JWT 토큰이 제공되지 않았거나 유효하지 않습니다."),
+    POST_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "해당 URL에서 접근할 수 없는 타입의 게시글입니다."),
 
     // UNAUTHORIZED (401) : 인증되지 않은 접근,
     JWT_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "JWT 토큰이 만료되었습니다."),
