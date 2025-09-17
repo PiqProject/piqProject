@@ -32,6 +32,10 @@ public enum ErrorCode {
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "가입되지 않은 이메일입니다."),
     NOT_FOUND_REFRESH_TOKEN(HttpStatus.NOT_FOUND, "리프레시 토큰이 존재하지 않습니다. 다시 로그인해주세요."),
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
+    NOT_FOUND_POST(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
+
+    // METHOD_NOT_ALLOWED (405) : 허용되지 않는 HTTP 메서드
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청하신 리소스에 대해 HTTP 메서드가 허용되지 않습니다."),
 
     // CONFLICT (409) : 충돌
     ALREADY_EXISTS_USER(HttpStatus.CONFLICT, "이미 가입된 유저입니다."),
@@ -40,6 +44,7 @@ public enum ErrorCode {
     // INTERNAL_SERVER_ERROR (500) : 서버 오류
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다."),
     JWT_PROCESSING_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "JWT 처리 중 예상치 못한 오류가 발생했습니다."),
+
     ;
 
     private final HttpStatus status;

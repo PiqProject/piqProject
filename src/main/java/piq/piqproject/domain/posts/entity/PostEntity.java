@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
-import piq.piqproject.domain.posts.dto.request.CreateAnnouncementRequestDto;
-import piq.piqproject.domain.posts.dto.request.CreateEventRequestDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 import java.time.LocalDateTime;
@@ -71,5 +69,10 @@ public class PostEntity extends BaseEntity {
                 .endDate(endDate)
                 .type(EVENT)
                 .build();
+    }
+
+    public void updateAnnouncement(String title,String content) {
+        this.title = title;
+        this.content = content;
     }
 }

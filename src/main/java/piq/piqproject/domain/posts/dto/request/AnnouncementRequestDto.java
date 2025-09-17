@@ -1,17 +1,13 @@
 package piq.piqproject.domain.posts.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Getter
 @RequiredArgsConstructor
-public class CreateAnnouncementRequestDto {
+public class AnnouncementRequestDto {
 
     //todo: 제목 최대 길이에 대한 확정 필요 (현재 임시 50자)
     @NotBlank(message = "제목을 입력해주세요.")
