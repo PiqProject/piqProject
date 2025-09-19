@@ -7,6 +7,8 @@ import piq.piqproject.domain.posts.entity.PostType;
 
 import java.time.format.DateTimeFormatter;
 
+import static piq.piqproject.common.util.TimeUtils.formatToDateTimeWithMinutes;
+
 @Getter
 public class PostResponseDto {
     private final Long id;
@@ -35,15 +37,14 @@ public class PostResponseDto {
     }
 
     public static PostResponseDto of(PostEntity post) {
-        DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        
         String formattedStartDate = post.getStartDate() != null
-                ? post.getStartDate().format(DATE_TIME_FORMATTER)
+                ? formatToDateTimeWithMinutes(post.getStartDate())
                 : "";
 
         String formattedEndDate = post.getStartDate() != null
-                ? post.getEndDate().format(DATE_TIME_FORMATTER)
+                ? formatToDateTimeWithMinutes(post.getEndDate())
                 : "";
+
         return PostResponseDto.builder()
                 .id(post.getId())
                 .title(post.getTitle())
