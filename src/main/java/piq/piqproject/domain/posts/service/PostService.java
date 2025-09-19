@@ -1,6 +1,8 @@
 package piq.piqproject.domain.posts.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import piq.piqproject.common.error.exception.InvalidRequestException;
@@ -45,6 +47,20 @@ public class PostService {
         // 표현 계층(DTO)이 도메인 계층(Entity)을 아는 것은 올바른 의존성 방향입니다.
         // Entity 객체를 통째로 넘겨 데이터 변환 및 가공의 책임을 DTO에 완전히 위임합니다.
         return PostResponseDto.of(post);
+    }
+
+    @Transactional(readOnly = true)
+    public PostResponseDto findPost(Long postId) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_POST));
+
+        return PostResponseDto.of(post);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PostResponseDto> getPost(Pageable pageable) {
+        Page<PostEntity> posts = postRepository.findAll(pageable);
+        return posts.map(PostResponseDto::of);
     }
 
     @Transactional

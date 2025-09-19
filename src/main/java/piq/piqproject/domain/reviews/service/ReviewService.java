@@ -17,9 +17,7 @@ import piq.piqproject.domain.reviews.entity.ReviewEntity;
 import piq.piqproject.domain.users.dao.UserDao;
 import piq.piqproject.domain.users.entity.UserEntity;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
-import java.util.function.Predicate;
 
 import static piq.piqproject.common.error.exception.ErrorCode.*;
 
@@ -60,14 +58,7 @@ public class ReviewService {
 
         ReviewEntity savedReview = reviewDao.saveReview(review);
 
-        return ReviewResponseDto.toDto(
-                savedReview.getId(),
-                user.getUsername(),
-                savedReview.getTitle(),
-                savedReview.getContent(),
-                savedReview.getRate(),
-                savedReview.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
-        );
+        return ReviewResponseDto.of(savedReview);
     }
 
     @Transactional(readOnly = true)
@@ -75,14 +66,7 @@ public class ReviewService {
         ReviewEntity review = reviewDao.findByUserEmail(email)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
 
-        return ReviewResponseDto.toDto(
-                review.getId(),
-                email,
-                review.getTitle(),
-                review.getContent(),
-                review.getRate(),
-                review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
-        );
+        return ReviewResponseDto.of(review);
     }
 
     @Transactional(readOnly = true) //읽기만 허용
@@ -92,16 +76,7 @@ public class ReviewService {
         Page<ReviewEntity> reviews = reviewDao.getReviews(pageable);
 
         //responseDto로 담아서 응답
-        return reviews.map(review -> {
-            return ReviewResponseDto.toDto(
-                    review.getId(),
-                    review.getUser().getUsername(),
-                    review.getTitle(),
-                    review.getContent(),
-                    review.getRate(),
-                    review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
-            );
-        });
+        return reviews.map(ReviewResponseDto::of);
     }
 
     /**
@@ -130,14 +105,7 @@ public class ReviewService {
 
         review.updateReview(reviewRequestDto.getTitle(), reviewRequestDto.getContent(), reviewRequestDto.getRate());
 
-        return ReviewResponseDto.toDto(
-                review.getId(),
-                user.getUsername(),
-                review.getTitle(),
-                review.getContent(),
-                review.getRate(),
-                review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
-        );
+        return ReviewResponseDto.of(review);
     }
 
     /**

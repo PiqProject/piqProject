@@ -1,6 +1,7 @@
 package piq.piqproject.config.springsecurity;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import piq.piqproject.config.jwt.JwtExceptionFilter;
 import piq.piqproject.config.jwt.JwtFilter;
 
@@ -84,6 +85,7 @@ public class SecurityConfig {
                 // "/api/signup", "/api/login" 엔드포인트는 인증 없이 누구나 접근할 수 있도록 허용합니다.
                 .requestMatchers(AUTH_WHITELIST)
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
                 // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
                 .anyRequest().authenticated())
 

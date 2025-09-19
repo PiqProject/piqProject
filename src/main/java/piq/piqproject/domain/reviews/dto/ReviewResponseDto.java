@@ -2,14 +2,16 @@ package piq.piqproject.domain.reviews.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import piq.piqproject.domain.reviews.entity.ReviewEntity;
+
+import static piq.piqproject.common.util.TimeUtils.formatToDate;
 
 @Getter
 public class ReviewResponseDto {
 
     private final Long reviewId;
 
-    //리뷰에 표시할 리뷰 작성자 (todo: userEntity에 별명 추가 필요할 듯)
-    private final String userName;
+    private final String nickName;
 
     private final String title;
 
@@ -20,23 +22,23 @@ public class ReviewResponseDto {
     private final String createdAt;
 
     @Builder
-    private ReviewResponseDto(Long reviewId, String userName, String title, String content, int rate, String createdAt) {
+    private ReviewResponseDto(Long reviewId, String nickName, String title, String content, int rate, String createdAt) {
         this.reviewId = reviewId;
-        this.userName = userName;
+        this.nickName = nickName;
         this.title = title;
         this.content = content;
         this.rate = rate;
         this.createdAt = createdAt;
     }
 
-    public static ReviewResponseDto toDto(Long reviewId, String userName, String title, String content, int rate, String createdAt) {
+    public static ReviewResponseDto of(ReviewEntity review) {
         return ReviewResponseDto.builder()
-                .reviewId(reviewId)
-                .userName(userName)
-                .title(title)
-                .content(content)
-                .rate(rate)
-                .createdAt(createdAt)
+                .reviewId(review.getId())
+                .nickName(review.getUser().getNickname())
+                .title(review.getTitle())
+                .content(review.getContent())
+                .rate(review.getRate())
+                .createdAt(formatToDate(review.getCreatedAt()))
                 .build();
     }
 }
