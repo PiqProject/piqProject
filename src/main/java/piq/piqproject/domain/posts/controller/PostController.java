@@ -2,6 +2,10 @@ package piq.piqproject.domain.posts.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +16,7 @@ import piq.piqproject.domain.posts.service.PostService;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 /**
- * TODO: 각 메서드에 권한 검증 추가하기 @PreAuthorize("hasRole('ROLE_ADMIN')")
+ * TODO: 조회를 제외한 각 메서드에 권한 검증 추가하기 @PreAuthorize("hasRole('ROLE_ADMIN')")
  */
 @RestController
 @RequiredArgsConstructor
@@ -36,6 +40,20 @@ public class PostController {
     ) {
         return ResponseEntity.status(201)
                 .body(postService.createEvent(user.getId(), createEventRequestDto));
+    }
+
+    @GetMapping("/{postId}")
+    public ResponseEntity<PostResponseDto> findPost(
+            @PathVariable Long postId
+    ) {
+        return ResponseEntity.ok(postService.findPost(postId));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<Page<PostResponseDto>> getPost(
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(postService.getPost(pageable));
     }
 
     @PutMapping("/announcement/{postId}")
