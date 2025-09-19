@@ -35,7 +35,7 @@ public enum ErrorCode {
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
 
     // METHOD_NOT_ALLOWED (405) : 허용되지 않는 HTTP 메서드
-    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청하신 리소스에 대해 HTTP 메서드가 허용되지 않습니다."),
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청하신 HTTP 메서드는 이 리소스에 허용되지 않습니다."),
 
     // CONFLICT (409) : 충돌
     ALREADY_EXISTS_USER(HttpStatus.CONFLICT, "이미 가입된 유저입니다."),

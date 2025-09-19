@@ -38,38 +38,31 @@ public class GlobalExceptionHandler {
      * @ExceptionHandler 어노테이션을 사용하면 CustomException가 발생했을 때 이 메서드가 실행됩니다.
      */
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ErrorResponseDto> CustomExceptionHandler(CustomException e) {
+    public ResponseEntity<ErrorResponseDto> handleCustomExceptionHandler(CustomException e) {
 
-        HttpStatus status = e.getErrorCode().getStatus();
-        int statusCode = e.getErrorCode().getStatus().value();
-        String code = e.getErrorCode().name();
-        String message = e.getErrorCode().getMessage();
+        HttpStatus status = e.getErrorCode().getStatus();      // HTTP 상태 코드 값 (예: Conflict)
+        String codeName = e.getErrorCode().name();             // ErrorCode의 이름 (예: ALREADY_EXISTS_USER)
+        String codeMessage = e.getErrorCode().getMessage();    // ErrorCode에 정의된 메시지 (예: "이미 가입된 유저입니다.)
 
         log.error(
                 """
-                        CustomException occurred
-                        ------------------------
-                        status= {} ({})
-                        code= {}
-                        message= {}
-                        
-                        """,
-                status, // HTTP 상태 코드 값 (예: Conflict)
-                statusCode, // HTTP 상태 코드 값 (예: 409)
-                code, // ErrorCode의 이름 (예: ALREADY_EXISTS_USER)
-                message, // ErrorCode에 정의된 메시지 (예: "이미 가입된 유저입니다.)
-                e);
+                CustomException occurred
+                ------------------------
+                status= {} ({})
+                code= {}
+                message= {}
+                """,
+                status.getReasonPhrase(), status.value(), codeName, codeMessage, e
+        );
 
-        return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
+        return ResponseEntity.status(status).body(ErrorResponseDto.of(status, codeName, codeMessage));
     }
 
     // 유효성 검사에 대한 에러 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ValidErrorResponseDto> MethodArgumentNotValidExceptionHandler(
-            MethodArgumentNotValidException e) {
+    public ResponseEntity<ValidErrorResponseDto> handleMethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
 
-        String status = HttpStatus.BAD_REQUEST.getReasonPhrase();
-        int statusCode = e.getStatusCode().value();
+        HttpStatus status = HttpStatus.BAD_REQUEST; // HTTP 상태 코드 값 (예: BadRequest)
 
         // validation 에러의 경우 여러개가 발생할 수 있습니다.
         // BindingResult를 통해 필드별 에러 목록을 가져옵니다.
@@ -77,9 +70,11 @@ public class GlobalExceptionHandler {
 
         // 각 FieldError를 ErrorDetailDto로 매핑하여 필드명과 에러 메시지를 구조화합니다. ("어떤 필드에서", "어떤 오류
         // 메시지"가 발생했는지)
-        List<ErrorDetailsDto> errorDetails = fieldErrors.stream().map(error -> {
-            return ErrorDetailsDto.of(error.getField(), error.getDefaultMessage());
-        }).toList();
+        List<ErrorDetailsDto> errorDetails = fieldErrors.stream()
+                .map(error -> {
+                    return ErrorDetailsDto.of(error.getField(), error.getDefaultMessage());
+                })
+                .toList();
 
         // 로그에 출력할 에러 상세 목록을 포맷팅합니다.
         String formattedErrorDetails = errorDetails.stream()
@@ -89,19 +84,17 @@ public class GlobalExceptionHandler {
 
         log.error(
                 """
-                        Validation error occurred (MethodArgumentNotValidException)
-                        -----------------------------------------------------------
-                        status={} ({})
-                        Errors=
-                        {}
-                        """,
-                status, // HTTP 상태 코드 값 (예: BadRequest)
-                statusCode, // HTTP 상태 코드 값 (예: 400)
-                formattedErrorDetails, // 발생한 모든 에러 상세 정보
-                e);
+                Validation error occurred (MethodArgumentNotValidException)
+                -----------------------------------------------------------
+                status= {} ({})
+                Errors=
+                {}
+                """,
+                status.getReasonPhrase(), status.value(), formattedErrorDetails, e
+        );
 
-        return ResponseEntity.status(statusCode)
-                .body(ValidErrorResponseDto.of(HttpStatus.valueOf("BAD_REQUEST"), errorDetails));
+        return ResponseEntity.status(status)
+                .body(ValidErrorResponseDto.of(status, errorDetails));
     }
 
     /**
@@ -119,17 +112,13 @@ public class GlobalExceptionHandler {
                 ------------------------------------
                 status= {} ({})
                 message= {}
-                path= {}
+                requestMethod= {}
                 """,
-                errorCode.getStatus().value(),           // 405 (상태 값)
-                errorCode.name(),             // "METHOD_NOT_ALLOWED" (고유 코드)
-                errorCode.getMessage(),              // 상세 메시지
-                request.getRequestURI(),      // 요청 URI (request 파라미터 사용)
-                e // 예외 스택 트레이스
+                errorCode.getStatus().getReasonPhrase(), errorCode.getStatus().value(), errorCode.getMessage(), request.getMethod(), e
         );
 
         // ErrorResponseDto 생성 및 반환
-        return ResponseEntity.status(errorCode.getStatus().value())
-                .body(ErrorResponseDto.of(errorCode.getStatus(), errorCode.getStatus().name(), errorCode.getMessage()));
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ErrorResponseDto.of(errorCode.getStatus(), errorCode.name(), errorCode.getMessage()));
     }
 }
