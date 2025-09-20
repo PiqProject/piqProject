@@ -22,103 +22,106 @@ import java.util.stream.Collectors;
 
 /**
  * @RestControllerAdvice - 전역 예외 처리(Global Exception Handling)를 위한 컨트롤러 어드바이스
- * - @ControllerAdvice와 @ResponseBody를 결합한 어노테이션
- * ➡️ ExceptionHandler에 AOP를 적용시키며, 객체를 응답할 수 있도록 해줍니다.
- * 애플리케이션 전반에서 발생하는 예외를 처리하고 그 결과를 HTTP 응답 본문(JSON)으로 반환할 수 있게 합니다.
- * 이는 중복되는 예외 처리 코드를 줄이고 일관된 에러 응답 형식을 유지합니다.
+ *                       - @ControllerAdvice와 @ResponseBody를 결합한 어노테이션
+ *                       ➡️ ExceptionHandler에 AOP를 적용시키며, 객체를 응답할 수 있도록 해줍니다.
+ *                       애플리케이션 전반에서 발생하는 예외를 처리하고 그 결과를 HTTP 응답 본문(JSON)으로 반환할
+ *                       수 있게 합니다.
+ *                       이는 중복되는 예외 처리 코드를 줄이고 일관된 에러 응답 형식을 유지합니다.
  */
 @Slf4j
 @Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * CustomException 하위 클래스에서 발생하는 모든 예외를 가로채 처리합니다.
-     *
-     * @ExceptionHandler 어노테이션을 사용하면 CustomException가 발생했을 때 이 메서드가 실행됩니다.
-     */
-    @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ErrorResponseDto> handleCustomExceptionHandler(CustomException e) {
+        /**
+         * CustomException 하위 클래스에서 발생하는 모든 예외를 가로채 처리합니다.
+         *
+         * @ExceptionHandler 어노테이션을 사용하면 CustomException가 발생했을 때 이 메서드가 실행됩니다.
+         */
+        @ExceptionHandler(CustomException.class)
+        public ResponseEntity<ErrorResponseDto> handleCustomExceptionHandler(CustomException e) {
 
-        HttpStatus status = e.getErrorCode().getStatus();      // HTTP 상태 코드 값 (예: Conflict)
-        String codeName = e.getErrorCode().name();             // ErrorCode의 이름 (예: ALREADY_EXISTS_USER)
-        String codeMessage = e.getErrorCode().getMessage();    // ErrorCode에 정의된 메시지 (예: "이미 가입된 유저입니다.)
+                HttpStatus status = e.getErrorCode().getStatus();
+                int statusCode = e.getErrorCode().getStatus().value();
+                String code = e.getErrorCode().name();
+                String message = e.getMessage();
 
-        log.error(
-                """
-                CustomException occurred
-                ------------------------
-                status= {} ({})
-                code= {}
-                message= {}
-                """,
-                status.getReasonPhrase(), status.value(), codeName, codeMessage, e
-        );
+                log.error(
+                                """
+                                                CustomException occurred
+                                                ------------------------
+                                                status= {} ({})
+                                                code= {}
+                                                message= {}
+                                                """,
+                                status.getReasonPhrase(), status.value(), code, message, e);
 
-        return ResponseEntity.status(status).body(ErrorResponseDto.of(status, codeName, codeMessage));
-    }
+                return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
+        }
 
-    // 유효성 검사에 대한 에러 처리
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ValidErrorResponseDto> handleMethodArgumentNotValidExceptionHandler(MethodArgumentNotValidException e) {
+        // 유효성 검사에 대한 에러 처리
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<ValidErrorResponseDto> handleMethodArgumentNotValidExceptionHandler(
+                        MethodArgumentNotValidException e) {
 
-        HttpStatus status = HttpStatus.BAD_REQUEST; // HTTP 상태 코드 값 (예: BadRequest)
+                HttpStatus status = HttpStatus.BAD_REQUEST; // HTTP 상태 코드 값 (예: BadRequest)
 
-        // validation 에러의 경우 여러개가 발생할 수 있습니다.
-        // BindingResult를 통해 필드별 에러 목록을 가져옵니다.
-        List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
+                // validation 에러의 경우 여러개가 발생할 수 있습니다.
+                // BindingResult를 통해 필드별 에러 목록을 가져옵니다.
+                List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
 
-        // 각 FieldError를 ErrorDetailDto로 매핑하여 필드명과 에러 메시지를 구조화합니다. ("어떤 필드에서", "어떤 오류
-        // 메시지"가 발생했는지)
-        List<ErrorDetailsDto> errorDetails = fieldErrors.stream()
-                .map(error -> {
-                    return ErrorDetailsDto.of(error.getField(), error.getDefaultMessage());
-                })
-                .toList();
+                // 각 FieldError를 ErrorDetailDto로 매핑하여 필드명과 에러 메시지를 구조화합니다. ("어떤 필드에서", "어떤 오류
+                // 메시지"가 발생했는지)
+                List<ErrorDetailsDto> errorDetails = fieldErrors.stream()
+                                .map(error -> {
+                                        return ErrorDetailsDto.of(error.getField(), error.getDefaultMessage());
+                                })
+                                .toList();
 
-        // 로그에 출력할 에러 상세 목록을 포맷팅합니다.
-        String formattedErrorDetails = errorDetails.stream()
-                .map(detail -> String.format("    - Field: %-15s Message: %s", detail.getField(),
-                        detail.getMessage()))
-                .collect(Collectors.joining("\n")); // 각 항목을 줄바꿈 문자로 연결
+                // 로그에 출력할 에러 상세 목록을 포맷팅합니다.
+                String formattedErrorDetails = errorDetails.stream()
+                                .map(detail -> String.format("    - Field: %-15s Message: %s", detail.getField(),
+                                                detail.getMessage()))
+                                .collect(Collectors.joining("\n")); // 각 항목을 줄바꿈 문자로 연결
 
-        log.error(
-                """
-                Validation error occurred (MethodArgumentNotValidException)
-                -----------------------------------------------------------
-                status= {} ({})
-                Errors=
-                {}
-                """,
-                status.getReasonPhrase(), status.value(), formattedErrorDetails, e
-        );
+                log.error(
+                                """
+                                                Validation error occurred (MethodArgumentNotValidException)
+                                                -----------------------------------------------------------
+                                                status= {} ({})
+                                                Errors=
+                                                {}
+                                                """,
+                                status.getReasonPhrase(), status.value(), formattedErrorDetails, e);
 
-        return ResponseEntity.status(status)
-                .body(ValidErrorResponseDto.of(status, errorDetails));
-    }
+                return ResponseEntity.status(status)
+                                .body(ValidErrorResponseDto.of(status, errorDetails));
+        }
 
-    /**
-     * 클라이언트가 요청한 HTTP 메서드가 특정 리소스에 대해 지원되지 않을 때 발생하는 예외를 처리합니다.
-     * 응답: 405 Method Not Allowed
-     */
-    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ErrorResponseDto> handleHttpRequestMethodNotSupported(HttpRequestMethodNotSupportedException e, HttpServletRequest request) { // request 파라미터 추가
+        /**
+         * 클라이언트가 요청한 HTTP 메서드가 특정 리소스에 대해 지원되지 않을 때 발생하는 예외를 처리합니다.
+         * 응답: 405 Method Not Allowed
+         */
+        @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+        public ResponseEntity<ErrorResponseDto> handleHttpRequestMethodNotSupported(
+                        HttpRequestMethodNotSupportedException e, HttpServletRequest request) { // request 파라미터 추가
 
-        ErrorCode errorCode = ErrorCode.METHOD_NOT_ALLOWED;
+                ErrorCode errorCode = ErrorCode.METHOD_NOT_ALLOWED;
 
-        log.error(
-                """
-                MethodNotSupportedException occurred
-                ------------------------------------
-                status= {} ({})
-                message= {}
-                requestMethod= {}
-                """,
-                errorCode.getStatus().getReasonPhrase(), errorCode.getStatus().value(), errorCode.getMessage(), request.getMethod(), e
-        );
+                log.error(
+                                """
+                                                MethodNotSupportedException occurred
+                                                ------------------------------------
+                                                status= {} ({})
+                                                message= {}
+                                                requestMethod= {}
+                                                """,
+                                errorCode.getStatus().getReasonPhrase(), errorCode.getStatus().value(),
+                                errorCode.getMessage(), request.getMethod(), e);
 
-        // ErrorResponseDto 생성 및 반환
-        return ResponseEntity.status(errorCode.getStatus())
-                .body(ErrorResponseDto.of(errorCode.getStatus(), errorCode.name(), errorCode.getMessage()));
-    }
+                // ErrorResponseDto 생성 및 반환
+                return ResponseEntity.status(errorCode.getStatus())
+                                .body(ErrorResponseDto.of(errorCode.getStatus(), errorCode.name(),
+                                                errorCode.getMessage()));
+        }
 }

@@ -1,32 +1,36 @@
 package piq.piqproject.domain.reviews.service;
 
-import lombok.RequiredArgsConstructor;
+import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_REVIEW;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_REVIEW;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_USER;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_REVIEW_OWNER;
+
+import java.util.Collection;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
 import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.util.RoleUtils;
-import piq.piqproject.domain.reviews.dao.ReviewDao;
 import piq.piqproject.domain.reviews.dto.ReviewRequestDto;
 import piq.piqproject.domain.reviews.dto.ReviewResponseDto;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
-import piq.piqproject.domain.users.dao.UserDao;
+import piq.piqproject.domain.reviews.repository.ReviewRepository;
+import piq.piqproject.domain.users.repository.UserRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
-
-import java.util.Collection;
-
-import static piq.piqproject.common.error.exception.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
 
-    private final UserDao userDao;
-    private final ReviewDao reviewDao;
+    private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
     /**
      * 서비스에 대한 리뷰를 생성합니다.
@@ -42,10 +46,10 @@ public class ReviewService {
      */
     @Transactional
     public ReviewResponseDto createReview(ReviewRequestDto reviewRequestDto, String email) {
-        UserEntity user = userDao.findByEmail(email)
+        UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
-        if (reviewDao.existsByUserEmail(email)) {
+        if (reviewRepository.existsByUserEmail(email)) {
             throw new ConflictException(ALREADY_EXISTS_REVIEW);
         }
 
@@ -53,29 +57,28 @@ public class ReviewService {
                 user,
                 reviewRequestDto.getTitle(),
                 reviewRequestDto.getContent(),
-                reviewRequestDto.getRate()
-        );
+                reviewRequestDto.getRate());
 
-        ReviewEntity savedReview = reviewDao.saveReview(review);
+        ReviewEntity savedReview = reviewRepository.save(review);
 
         return ReviewResponseDto.of(savedReview);
     }
 
     @Transactional(readOnly = true)
     public ReviewResponseDto findMyReview(String email) {
-        ReviewEntity review = reviewDao.findByUserEmail(email)
+        ReviewEntity review = reviewRepository.findByUserEmail(email)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
 
         return ReviewResponseDto.of(review);
     }
 
-    @Transactional(readOnly = true) //읽기만 허용
+    @Transactional(readOnly = true) // 읽기만 허용
     public Page<ReviewResponseDto> getReviews(Pageable pageable) {
 
-        //클라이언트 요청이 담긴 pageable을 넘겨줌
-        Page<ReviewEntity> reviews = reviewDao.getReviews(pageable);
+        // 클라이언트 요청이 담긴 pageable을 넘겨줌
+        Page<ReviewEntity> reviews = reviewRepository.findAllWithUser(pageable);
 
-        //responseDto로 담아서 응답
+        // responseDto로 담아서 응답
         return reviews.map(ReviewResponseDto::of);
     }
 
@@ -84,21 +87,21 @@ public class ReviewService {
      * @param reviewRequestDto 수정된 리뷰 정보
      * @param reviewId         수정할 리뷰 아이디
      * @return 최종 수정된 리뷰 정보
-     * <p>
-     * [논의 사항]
-     * 문제점: 현재 userDao를 통해 User 엔티티를 조회할 때 orElseThrow 로직이 여러 곳에서 중복적으로 사용
-     * 해결 방안?: 유저 조회 시 예외 처리를 담당하는 전용 메서드를 UserService 내부에 구현하고,
-     * 이를 다른 서비스 로직에서 호출하여 사용하는 방식도 좋을 것 같음.
+     *         <p>
+     *         [논의 사항]
+     *         문제점: 현재 userDao를 통해 User 엔티티를 조회할 때 orElseThrow 로직이 여러 곳에서 중복적으로 사용
+     *         해결 방안?: 유저 조회 시 예외 처리를 담당하는 전용 메서드를 UserService 내부에 구현하고,
+     *         이를 다른 서비스 로직에서 호출하여 사용하는 방식도 좋을 것 같음.
      */
     @Transactional
     public ReviewResponseDto updateReview(String email, ReviewRequestDto reviewRequestDto, Long reviewId) {
-        UserEntity user = userDao.findByEmail(email)
+        UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
-        ReviewEntity review = reviewDao.findReview(reviewId)
+        ReviewEntity review = reviewRepository.findByIdWithUser(reviewId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
 
-        //본인 리뷰만 수정 가능
+        // 본인 리뷰만 수정 가능
         if (!review.getUser().getUsername().equals(user.getUsername())) {
             throw new ForbiddenException(NOT_REVIEW_OWNER);
         }
@@ -114,17 +117,17 @@ public class ReviewService {
      */
     @Transactional
     public void deleteReview(String email, Collection<? extends GrantedAuthority> authorities, Long reviewId) {
-        UserEntity user = userDao.findByEmail(email)
+        UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
-        ReviewEntity review = reviewDao.findReview(reviewId)
+        ReviewEntity review = reviewRepository.findByIdWithUser(reviewId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
 
-        //본인 리뷰만 삭제 가능 (유저일 경우에만 조건 검증)
+        // 본인 리뷰만 삭제 가능 (유저일 경우에만 조건 검증)
         if (!review.getUser().getUsername().equals(user.getUsername()) && RoleUtils.isUser(authorities)) {
             throw new ForbiddenException(NOT_REVIEW_OWNER);
         }
 
-        reviewDao.deleteReview(review);
+        reviewRepository.delete(review);
     }
 }

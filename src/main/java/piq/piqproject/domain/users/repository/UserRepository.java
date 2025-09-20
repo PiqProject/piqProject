@@ -1,9 +1,12 @@
 package piq.piqproject.domain.users.repository;
 
-import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
@@ -21,9 +24,16 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
      * Spring Data JPA가 메소드 이름을 분석하여 아래와 같은 JPQL을 자동으로 생성합니다.
      * "SELECT u FROM UserEntity u WHERE u.gender = :gender"
      *
-     * @param gender 검색할 성별 (Gender Enum 타입)
+     * @param gender 검색할 성별 (Gender Enum 타입), Pageable pageable
      * @return 해당 성별을 가진 UserEntity의 리스트
      */
-    List<UserEntity> findAllByGender(Gender gender);
+    Page<UserEntity> findAllByGender(Gender gender, Pageable pageable);
 
+    boolean existsByNickname(String nickname);
+
+    // User를 조회할 때 연관된 images 한 번의 쿼리로 함께 가져온다.
+    // 'LEFT JOIN FETCH'가 핵심입니다.
+    // UserEntity의 이미지 컬렉션 필드명이 'images'라고 가정하겠습니다.
+    @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.images WHERE u.id = :id")
+    Optional<UserEntity> findByIdWithImages(@Param("id") Long id);
 }

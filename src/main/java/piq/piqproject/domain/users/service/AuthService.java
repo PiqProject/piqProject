@@ -17,24 +17,24 @@ import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.error.exception.UnauthorizedException;
 import piq.piqproject.config.jwt.JwtTokenProvider;
-import piq.piqproject.domain.users.dao.UserDao;
-import piq.piqproject.domain.users.dto.LoginRequestDto;
-import piq.piqproject.domain.users.dto.MyProfileResponseDto;
-import piq.piqproject.domain.users.dto.SignUpRequestDto;
-import piq.piqproject.domain.users.dto.SignUpResponseDto;
-import piq.piqproject.domain.users.dto.TokensResponseDto;
-import piq.piqproject.domain.users.dto.UserProfileResponseDto;
-import piq.piqproject.domain.users.dto.UserSimpleProfileResponseDto;
+import piq.piqproject.domain.users.dto.request.LoginRequestDto;
+import piq.piqproject.domain.users.dto.request.SignUpRequestDto;
+import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.SignUpResponseDto;
+import piq.piqproject.domain.users.dto.response.TokensResponseDto;
+import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
 import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.RefreshTokenEntity;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.RefreshTokenRepository;
+import piq.piqproject.domain.users.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)
 public class AuthService {
 
-    private final UserDao userDao;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -48,7 +48,8 @@ public class AuthService {
     @Transactional // 데이터베이스에 변경 작업을 하므로 트랜잭션 처리
     public SignUpResponseDto signUp(SignUpRequestDto signUpRequestDto) {
         // 1. 이메일 중복 확인
-        if (userDao.existsByEmail(signUpRequestDto.getEmail())) {
+        if (userRepository.existsByEmail(signUpRequestDto.getEmail())
+                && userRepository.existsByNickname(signUpRequestDto.getNickname())) {
             // 실무에서는 custom exception을 정의하여 사용하는 것이 좋습니다.
             // ErrorCode Enum으로 정의해두었던 값을 사용하여 CustomException을 상속받고 있는 ConflictException에게
             // 넘겨줍니다.
@@ -73,7 +74,7 @@ public class AuthService {
                 Collections.singletonList("ROLE_USER"));
 
         // 3. 사용자 정보 저장
-        userDao.saveUser(userEntity);
+        userRepository.save(userEntity);
 
         return SignUpResponseDto.toDto(userEntity);
     }
@@ -87,7 +88,7 @@ public class AuthService {
     @Transactional(readOnly = true)
     public TokensResponseDto login(LoginRequestDto loginRequestDto) {
         // 1. 이메일을 기반으로 사용자 조회
-        UserEntity user = userDao.findByEmail(loginRequestDto.getEmail())
+        UserEntity user = userRepository.findByEmail(loginRequestDto.getEmail())
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         // 2. 사용자의 비밀번호와 입력된 비밀번호가 일치하는지 확인
@@ -149,7 +150,7 @@ public class AuthService {
 
         // 5. 새로운 Access Token을 생성하기 위해 사용자 정보를 DB에서 조회
         // (보안 상 이유로, 토큰에 모든 정보를 담기보다 DB에서 최신 정보를 가져오는 것이 안전)
-        UserEntity user = userDao.findByEmail(userEmail)
+        UserEntity user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         // 6. 새로운 Access Token을 생성하여 반환
@@ -163,13 +164,7 @@ public class AuthService {
 
     public void deleteUser(UserEntity userEntity) {
         // ID를 사용하거나 엔티티 자체를 사용하여 삭제 로직을 수행합니다.
-        userDao.deleteByUserEntity(userEntity);
-    }
-
-    public List<UserSimpleProfileResponseDto> findAllProfilesByGender(Gender gender) {
-        return userDao.findAllByGender(gender).stream()
-                .map((user) -> UserSimpleProfileResponseDto.from(user))
-                .collect(Collectors.toList());
+        userRepository.delete(userEntity);
     }
 
     /**
@@ -181,7 +176,7 @@ public class AuthService {
      */
     @Transactional(readOnly = true)
     public UserProfileResponseDto findUserProfileById(Long id) {
-        UserEntity user = userDao.findById(id)
+        UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("해당 ID의 사용자를 찾을 수 없습니다: " + id));
 
         // 2. 조회된 UserEntity를 DTO로 변환하여 반환합니다.

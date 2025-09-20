@@ -2,14 +2,12 @@ package piq.piqproject.domain.users.entity;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,6 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
+import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.posts.entity.PostEntity;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
 
@@ -64,6 +63,11 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name="gender", nullable = false) 
     private Gender gender;
 
+    // mappedBy: UserImage 엔티티의 'user' 필드에 의해 매핑되었음을 의미
+    // cascade: User가 삭제되면 관련된 Image도 함께 삭제되도록 설정
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<UserImageEntity> images = new ArrayList<>();
+
     @Column(name="mbti", nullable = true, length = 10) // NULL 허용, MBTI는 4글자
     private String mbti;
 
@@ -79,7 +83,6 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name="is_active", nullable = false) 
     private Boolean isActive; // 활성화 여부
 
-    // roles 필드를 위한 올바른 JPA 매핑
     @ElementCollection(fetch = FetchType.EAGER) // User 조회 시 권한 정보도 항상 함께 조회
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id")) // 'user_roles' 테이블 생성, 'user_id'로 조인
     @Column(name = "role") // 'user_roles' 테이블의 컬럼명은 'role'

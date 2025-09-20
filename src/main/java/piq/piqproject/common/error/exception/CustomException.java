@@ -11,16 +11,25 @@ import lombok.Getter;
  * CustomException 사용 이유
  * <p>
  * - 코드 일관성: 애플리케이션 전반에 걸쳐 예외 처리 방식을 통일합니다.
- * - 중복 코드 제거: GlobalExceptionHandler에서 CustomException만 가로채면 모든 하위 예외를 일괄적으로 처리 가능합니다.
+ * - 중복 코드 제거: GlobalExceptionHandler에서 CustomException만 가로채면 모든 하위 예외를 일괄적으로 처리
+ * 가능합니다.
  * ➡️ 각 예외 유형별로 핸들러 코드를 작성할 필요 ❌
  */
 @Getter
 public class CustomException extends RuntimeException {
 
+    private String message;
     private final ErrorCode errorCode;
 
     public CustomException(ErrorCode errorCode) {
         super(errorCode.getMessage());
         this.errorCode = errorCode;
+        this.message = errorCode.getMessage();
+    }
+
+    public CustomException(ErrorCode errorCode, String message) {
+        super(message);
+        this.errorCode = errorCode;
+        this.message = message;
     }
 }
