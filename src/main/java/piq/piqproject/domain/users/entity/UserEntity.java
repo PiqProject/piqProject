@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
 import piq.piqproject.domain.posts.entity.PostEntity;
+import piq.piqproject.domain.reviews.entity.ReviewEntity;
 
 /*
  * 비밀번호 (Password): 사용자의 비밀번호를 반환합니다.
@@ -95,8 +96,8 @@ public class UserEntity extends BaseEntity implements UserDetails {
      *
      * 따라서 보통 비즈니스 로직에서 관리하는 것을 지향한다고 하며 데이터가 적을 경우에만 OneToMany를 사용하는 것이 좋다고 함
      */
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<PostEntity> posts = new ArrayList<>();
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private final List<ReviewEntity> reviews = new ArrayList<>();
 
     // Builder 패턴을 사용하여 객체 생성 가능 (new로 불가)
     @Builder
