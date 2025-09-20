@@ -2,27 +2,32 @@ package piq.piqproject.domain.reviews.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
 
 import static piq.piqproject.common.util.TimeUtils.formatToDate;
 
 @Getter
+@Setter
+@NoArgsConstructor
 public class ReviewResponseDto {
 
-    private final Long reviewId;
+    private Long reviewId;
 
-    private final String nickName;
+    private String nickName;
 
-    private final String title;
+    private String title;
 
-    private final String content;
+    private String content;
 
-    private final int rate;
+    private int rate;
 
-    private final String createdAt;
+    private String createdAt;
 
     @Builder
-    private ReviewResponseDto(Long reviewId, String nickName, String title, String content, int rate, String createdAt) {
+    private ReviewResponseDto(Long reviewId, String nickName, String title, String content, int rate,
+            String createdAt) {
         this.reviewId = reviewId;
         this.nickName = nickName;
         this.title = title;

@@ -67,7 +67,7 @@ public class UserImageController {
     // 대표 이미지 설정
     @PutMapping("/{imageId}/set-main")
     public ResponseEntity<String> setMainImage(@AuthenticationPrincipal UserEntity user,
-            @PathVariable Long imageId) {
+            @PathVariable("imageId") Long imageId) {
         userImageService.setMainImage(user, imageId);
         return ResponseEntity.ok("대표 이미지가 성공적으로 변경되었습니다.");
     }

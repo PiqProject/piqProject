@@ -22,61 +22,54 @@ import piq.piqproject.domain.users.entity.UserEntity;
 @RequiredArgsConstructor
 @RequestMapping("api/v1/posts")
 public class PostController {
-    private final PostService postService;
+        private final PostService postService;
 
-    @PostMapping("/announcement")
-    public ResponseEntity<PostResponseDto> createAnnouncement(
-            @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody AnnouncementRequestDto announcementRequestDto
-    ) {
-        return ResponseEntity.status(201)
-                .body(postService.createAnnouncement(user.getId(), announcementRequestDto));
-    }
+        @PostMapping("/announcement")
+        public ResponseEntity<PostResponseDto> createAnnouncement(
+                        @AuthenticationPrincipal UserEntity user,
+                        @Valid @RequestBody AnnouncementRequestDto announcementRequestDto) {
+                return ResponseEntity.status(201)
+                                .body(postService.createAnnouncement(user.getId(), announcementRequestDto));
+        }
 
-    @PostMapping("/event")
-    public ResponseEntity<PostResponseDto> createEvent(
-            @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody EventRequestDto eventRequestDto
-    ) {
-        return ResponseEntity.status(201)
-                .body(postService.createEvent(user.getId(), eventRequestDto));
-    }
+        @PostMapping("/event")
+        public ResponseEntity<PostResponseDto> createEvent(
+                        @AuthenticationPrincipal UserEntity user,
+                        @Valid @RequestBody EventRequestDto eventRequestDto) {
+                return ResponseEntity.status(201)
+                                .body(postService.createEvent(user.getId(), eventRequestDto));
+        }
 
-    @GetMapping("/{postId}")
-    public ResponseEntity<PostResponseDto> findPost(
-            @PathVariable Long postId
-    ) {
-        return ResponseEntity.ok(postService.findPost(postId));
-    }
+        @GetMapping("/{postId}")
+        public ResponseEntity<PostResponseDto> findPost(
+                        @PathVariable("postId") Long postId) {
+                return ResponseEntity.ok(postService.findPost(postId));
+        }
 
-    @GetMapping("/all")
-    public ResponseEntity<Page<PostResponseDto>> getPost(
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
-    ) {
-        return ResponseEntity.ok(postService.getPost(pageable));
-    }
+        @GetMapping("/all")
+        public ResponseEntity<Page<PostResponseDto>> getPost(
+                        @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+                return ResponseEntity.ok(postService.getPost(pageable));
+        }
 
-    @PutMapping("/announcement/{postId}")
-    public ResponseEntity<PostResponseDto> updateAnnouncement(
-            @PathVariable Long postId,
-            @Valid @RequestBody AnnouncementRequestDto announcementRequestDto
-    ) {
-        return ResponseEntity.ok(postService.updateAnnouncement(postId, announcementRequestDto));
-    }
+        @PutMapping("/announcement/{postId}")
+        public ResponseEntity<PostResponseDto> updateAnnouncement(
+                        @PathVariable("postId") Long postId,
+                        @Valid @RequestBody AnnouncementRequestDto announcementRequestDto) {
+                return ResponseEntity.ok(postService.updateAnnouncement(postId, announcementRequestDto));
+        }
 
-    @PutMapping("/event/{postId}")
-    public ResponseEntity<PostResponseDto> updateEvent(
-            @PathVariable Long postId,
-            @Valid @RequestBody EventRequestDto eventRequestDto
-    ) {
-        return ResponseEntity.ok(postService.updateEvent(postId, eventRequestDto));
-    }
+        @PutMapping("/event/{postId}")
+        public ResponseEntity<PostResponseDto> updateEvent(
+                        @PathVariable("postId") Long postId,
+                        @Valid @RequestBody EventRequestDto eventRequestDto) {
+                return ResponseEntity.ok(postService.updateEvent(postId, eventRequestDto));
+        }
 
-    @PostMapping("/{postId}/delete")
-    public ResponseEntity<String> deletePost(
-            @PathVariable Long postId
-    ) {
-        postService.deletePost(postId);
-        return ResponseEntity.ok("게시물 삭제에 성공하였습니다.");
-    }
+        @PostMapping("/{postId}/delete")
+        public ResponseEntity<String> deletePost(
+                        @PathVariable("postId") Long postId) {
+                postService.deletePost(postId);
+                return ResponseEntity.ok("게시물 삭제에 성공하였습니다.");
+        }
 }
