@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import piq.piqproject.domain.users.entity.Gender;
+import piq.piqproject.domain.users.enums.Gender;
 
 // json으로 요청보낼때 Gender의 경우 "MALE", "FEMALE"과 같은 문자열로 전송해야함
 // 필수가 아닌 값은 key - value 매핑시 value를 null로 적을 것

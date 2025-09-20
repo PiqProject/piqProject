@@ -1,8 +1,8 @@
 package piq.piqproject.domain.users.service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,18 +13,17 @@ import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
 import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
 import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
-import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.enums.Gender;
+import piq.piqproject.domain.users.enums.Role;
 import piq.piqproject.domain.users.repository.UserRepository;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder; // DI 주입
 
     @Transactional(readOnly = true)
     public MyProfileResponseDto findMyProfile(Long userId) {
@@ -65,4 +64,22 @@ public class UserService {
         return UserProfileResponseDto.from(user);
     }
 
+    @Transactional
+    public void createAdminAccount(String email, String password) {
+        // 1. 이메일 중복 확인 (중복된 이메일은 허용하지 않음)
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+
+        // 2. 비밀번호 암호화 (중요!)
+        String encodedPassword = passwordEncoder.encode(password);
+
+        // 3. UserEntity 생성
+        UserEntity adminUser = UserEntity.of(email, "Admin", encodedPassword, "kakaoAdmin", null,
+                30, Gender.MALE, "MBTI", 1000.0, 1000, "관리자 계정", true);
+        adminUser.addRole(Role.ADMIN); // 관리자 권한 부여
+
+        // 4. DB에 저장
+        userRepository.save(adminUser);
+    }
 }

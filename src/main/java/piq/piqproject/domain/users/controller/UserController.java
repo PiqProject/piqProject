@@ -18,8 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
 import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
 import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
-import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.service.UserService;
 
 @RestController

@@ -1,10 +1,10 @@
 package piq.piqproject.domain.users.service;
 
-import static piq.piqproject.common.error.exception.ErrorCode.*;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_USER;
+import static piq.piqproject.common.error.exception.ErrorCode.DISABLED_ACCOUNT_USER;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_REFRESH_TOKEN;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_USER;
+import static piq.piqproject.common.error.exception.ErrorCode.PASSWORD_MISMATCH;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,8 +23,6 @@ import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
 import piq.piqproject.domain.users.dto.response.SignUpResponseDto;
 import piq.piqproject.domain.users.dto.response.TokensResponseDto;
 import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
-import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
-import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.RefreshTokenEntity;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.RefreshTokenRepository;
@@ -70,8 +68,9 @@ public class AuthService {
                 0.0,
                 0,
                 signUpRequestDto.getIntroduce(),
-                true,
-                Collections.singletonList("ROLE_USER"));
+                true);
+        // 최초 가입시 ADMIN 권한도 부여 (추후 운영자가 직접 ADMIN
+        // 권한을 부여하는 방식으로 변경할 수도 있음
 
         // 3. 사용자 정보 저장
         userRepository.save(userEntity);

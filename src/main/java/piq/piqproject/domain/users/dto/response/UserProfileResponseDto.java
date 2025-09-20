@@ -8,8 +8,8 @@ import lombok.Getter;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.common.list.Listable; // Listable 인터페이스 import
 import piq.piqproject.domain.userimages.dto.UserImageResponseDto;
-import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.enums.Gender;
 
 @Getter
 @Builder

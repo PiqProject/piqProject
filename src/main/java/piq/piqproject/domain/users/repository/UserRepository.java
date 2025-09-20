@@ -8,13 +8,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.enums.Gender;
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     // 이메일을 통해 사용자를 찾는 메소드
-    Optional<UserEntity> findByEmail(String email);
+    Optional<UserEntity> findByEmail(@Param("email") String email);
+
+    // 이메일로 사용자를 찾을 때, roles 컬렉션까지 JOIN FETCH로 함께 가져온다.
+    @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.roles WHERE u.email = :email")
+    Optional<UserEntity> findByEmailWithRoles(@Param("email") String email);
 
     // 이메일 존재 여부 확인
     boolean existsByEmail(String email);

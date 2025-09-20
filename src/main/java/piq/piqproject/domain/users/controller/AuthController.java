@@ -54,7 +54,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<AccessTokenResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
-        log.debug("User login attempt: {}", loginRequestDto.getEmail());
+        log.info("User login attempt: {}", loginRequestDto.getEmail());
 
         TokensResponseDto tokenResponseDto = authService.login(loginRequestDto);
 

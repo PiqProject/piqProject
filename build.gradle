@@ -43,7 +43,8 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'// JWT의 인터페이스와 핵심 클래스들을 담고있다.
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'//실제 JWT를 생성하고 파싱하는 로직이 구현되어있다.
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'//JWT의 헤더와 페이로드는 JSON 형식. 이 JSON을 자바 객체로 변환하거나 그 반대의 작업을 수행할 때 필요한 라이브러리
-
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    
     // ## redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 }

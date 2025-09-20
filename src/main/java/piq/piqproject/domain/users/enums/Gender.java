@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.entity;
+package piq.piqproject.domain.users.enums;
 
 public enum Gender {
     MALE, // 남성
