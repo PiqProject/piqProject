@@ -4,8 +4,8 @@ import lombok.Builder;
 import lombok.Getter;
 import piq.piqproject.common.list.Listable;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
-import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.enums.Gender;
 
 @Getter
 @Builder

@@ -9,15 +9,29 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
-import piq.piqproject.domain.userimages.entity.UserImageEntity;
-import piq.piqproject.domain.posts.entity.PostEntity;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
+import piq.piqproject.domain.userimages.entity.UserImageEntity;
+import piq.piqproject.domain.users.enums.Gender;
+import piq.piqproject.domain.users.enums.Role;
 
 /*
  * 비밀번호 (Password): 사용자의 비밀번호를 반환합니다.
@@ -83,10 +97,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name="is_active", nullable = false) 
     private Boolean isActive; // 활성화 여부
 
-    @ElementCollection(fetch = FetchType.EAGER) // User 조회 시 권한 정보도 항상 함께 조회
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id")) // 'user_roles' 테이블 생성, 'user_id'로 조인
-    @Column(name = "role") // 'user_roles' 테이블의 컬럼명은 'role'
-    private List<String> roles = new ArrayList<>();
+ // --- 기존 @ElementCollection 필드를 아래 코드로 교체 ---
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<UserRoleEntity> roles = new ArrayList<>();
 
     /**
      * TODO: 실제로 OneToMany는 지양
@@ -106,7 +119,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
-            Integer pqPoint, String introduce, Boolean isActive, List<String> roles) {
+            Integer pqPoint, String introduce, Boolean isActive) {
         this.email = email;
         this.nickname = nickname;
         this.password = password;
@@ -119,7 +132,6 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.pqPoint = pqPoint;
         this.introduce = introduce;
         this.isActive = isActive;
-        this.roles = roles;
     }
 
     /**
@@ -132,8 +144,8 @@ public class UserEntity extends BaseEntity implements UserDetails {
      */
     public static UserEntity of (String email, String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
-            Integer pqPoint, String introduce, Boolean isActive, List<String> roles) {
-        return UserEntity.builder()
+            Integer pqPoint, String introduce, Boolean isActive ) {
+        UserEntity user = UserEntity.builder()
                 .email(email)
                 .nickname(nickname)
                 .password(password)
@@ -147,8 +159,19 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 // ▼ 회원가입 시 서버에서 설정해주는 기본값들
                 .pqPoint(0)
                 .isActive(true) // 예시: 가입 시 바로 활성 상태
-                .roles(roles) // 예시: 기본 권한 'USER' 부여
                 .build();
+
+                 user.addRole(Role.USER); // 기본 권한 부여
+                return user;
+    }
+
+     //== 연관관계 편의 메서드 (양방향 관계에서 중요) ==//
+    public void addRole(Role role) {
+        UserRoleEntity newUserRole = UserRoleEntity.builder()
+        .user(this) // '나' 자신(UserEntity)을 설정
+        .role(role)
+        .build();
+        this.roles.add(newUserRole);
     }
     
     /**
@@ -158,7 +181,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.roles.stream()
-                .map(SimpleGrantedAuthority::new)
+                .map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getKey()))
                 .collect(Collectors.toList());
     }
 

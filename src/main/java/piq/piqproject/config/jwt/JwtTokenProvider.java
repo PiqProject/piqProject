@@ -11,6 +11,7 @@ import piq.piqproject.domain.users.entity.UserEntity;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +58,10 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtProperties.getExpiration());
 
+        String authorities = user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
         return Jwts.builder()
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE) // 헤더 typ : JWT
                 .setIssuer(jwtProperties.getIssuer()) // 발급자 정보
@@ -63,7 +69,7 @@ public class JwtTokenProvider {
                 .setExpiration(expiry) // 만료 시간
                 .setSubject(user.getEmail()) // 토큰 제목 (사용자 식별값)
                 .claim("id", user.getId()) // 비공개 클레임(사용자 정의 클레임) key-value 형태로 추가 정보 저장
-                .claim("auth", user.getRoles())
+                .claim("auth", authorities)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
