@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import piq.piqproject.domain.reviews.dto.ReviewRequestDto;
 import piq.piqproject.domain.reviews.dto.ReviewResponseDto;
 import piq.piqproject.domain.reviews.service.ReviewService;
+import piq.piqproject.domain.users.entity.UserEntity;
 
 @RestController
 @RequiredArgsConstructor
@@ -96,10 +97,10 @@ public class ReviewController {
      */
     @PostMapping("/{reviewId}/delete")
     public ResponseEntity<String> deleteReview(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal UserEntity userEntity,
             @PathVariable Long reviewId
     ) {
-        reviewService.deleteReview(userDetails.getUsername(), userDetails.getAuthorities(), reviewId);
+        reviewService.deleteReview(userEntity.getUsername(), userEntity.getAuthorities(), reviewId);
         return ResponseEntity.ok("리뷰가 삭제되었습니다.");
     }
 }

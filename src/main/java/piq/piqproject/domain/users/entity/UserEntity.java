@@ -16,6 +16,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
+import piq.piqproject.domain.posts.entity.PostEntity;
+import piq.piqproject.domain.reviews.entity.ReviewEntity;
 
 /*
  * 비밀번호 (Password): 사용자의 비밀번호를 반환합니다.
@@ -86,7 +88,19 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name = "role") // 'user_roles' 테이블의 컬럼명은 'role'
     private List<String> roles = new ArrayList<>();
 
-    //TODO: review 필드 생성할 것
+    /**
+     * TODO: 실제로 OneToMany는 지양
+     *
+     * [이유]
+     * - 성능 및 메모리 문제 (N+1 쿼리)
+     * ➡️ 부모 엔티티가 자식 엔티티의 컬렉션을 직접 가지는 것은 필요하지도 않은 수많은 데이터를 메모리에 올릴 위험이 존재
+     * - 관리의 복잡성과 책임 소재의 모호함
+     * ➡️ 높은 결합도: 연관관계의 주인인 Post가 아닌 User에서도 컬렉션을 통해 Post 데이터의 상태를 변경할 가능성이 존재 (데이터 흐름을 추적하기 어려움)
+     *
+     * 따라서 보통 비즈니스 로직에서 관리하는 것을 지향한다고 하며 데이터가 적을 경우에만 OneToMany를 사용하는 것이 좋다고 함
+     */
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private final List<ReviewEntity> reviews = new ArrayList<>();
 
     // Builder 패턴을 사용하여 객체 생성 가능 (new로 불가)
     @Builder

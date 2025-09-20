@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
     // BAD_REQUEST (400) : 잘못된 요청
     JWT_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "JWT 토큰이 제공되지 않았거나 유효하지 않습니다."),
+    POST_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "해당 URL에서 접근할 수 없는 타입의 게시글입니다."),
 
     // UNAUTHORIZED (401) : 인증되지 않은 접근,
     JWT_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "JWT 토큰이 만료되었습니다."),
@@ -32,6 +33,10 @@ public enum ErrorCode {
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "가입되지 않은 이메일입니다."),
     NOT_FOUND_REFRESH_TOKEN(HttpStatus.NOT_FOUND, "리프레시 토큰이 존재하지 않습니다. 다시 로그인해주세요."),
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
+    NOT_FOUND_POST(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
+
+    // METHOD_NOT_ALLOWED (405) : 허용되지 않는 HTTP 메서드
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청하신 HTTP 메서드는 이 리소스에 허용되지 않습니다."),
 
     // CONFLICT (409) : 충돌
     ALREADY_EXISTS_USER(HttpStatus.CONFLICT, "이미 가입된 유저입니다."),

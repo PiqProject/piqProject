@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.NotFoundException;
+import piq.piqproject.common.util.RoleUtils;
 import piq.piqproject.domain.reviews.dao.ReviewDao;
 import piq.piqproject.domain.reviews.dto.ReviewRequestDto;
 import piq.piqproject.domain.reviews.dto.ReviewResponseDto;
@@ -16,9 +17,7 @@ import piq.piqproject.domain.reviews.entity.ReviewEntity;
 import piq.piqproject.domain.users.dao.UserDao;
 import piq.piqproject.domain.users.entity.UserEntity;
 
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
-import java.util.function.Predicate;
 
 import static piq.piqproject.common.error.exception.ErrorCode.*;
 
@@ -59,14 +58,7 @@ public class ReviewService {
 
         ReviewEntity savedReview = reviewDao.saveReview(review);
 
-        return ReviewResponseDto.toDto(
-                savedReview.getId(),
-                user.getUsername(),
-                savedReview.getTitle(),
-                savedReview.getContent(),
-                savedReview.getRate(),
-                savedReview.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
-        );
+        return ReviewResponseDto.of(savedReview);
     }
 
     @Transactional(readOnly = true)
@@ -74,14 +66,7 @@ public class ReviewService {
         ReviewEntity review = reviewDao.findByUserEmail(email)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
 
-        return ReviewResponseDto.toDto(
-                review.getId(),
-                email,
-                review.getTitle(),
-                review.getContent(),
-                review.getRate(),
-                review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
-        );
+        return ReviewResponseDto.of(review);
     }
 
     @Transactional(readOnly = true) //읽기만 허용
@@ -91,16 +76,7 @@ public class ReviewService {
         Page<ReviewEntity> reviews = reviewDao.getReviews(pageable);
 
         //responseDto로 담아서 응답
-        return reviews.map(review -> {
-            return ReviewResponseDto.toDto(
-                    review.getId(),
-                    review.getUser().getUsername(),
-                    review.getTitle(),
-                    review.getContent(),
-                    review.getRate(),
-                    review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
-            );
-        });
+        return reviews.map(ReviewResponseDto::of);
     }
 
     /**
@@ -129,14 +105,7 @@ public class ReviewService {
 
         review.updateReview(reviewRequestDto.getTitle(), reviewRequestDto.getContent(), reviewRequestDto.getRate());
 
-        return ReviewResponseDto.toDto(
-                review.getId(),
-                user.getUsername(),
-                review.getTitle(),
-                review.getContent(),
-                review.getRate(),
-                review.getCreatedAt().format(DateTimeFormatter.ISO_DATE)
-        );
+        return ReviewResponseDto.of(review);
     }
 
     /**
@@ -151,13 +120,8 @@ public class ReviewService {
         ReviewEntity review = reviewDao.findReview(reviewId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REVIEW));
 
-        //유저일 경우에만 아래의 조건 검증 (todo: common에 옮기기)
-        boolean isUser = authorities.stream()
-                .map(GrantedAuthority::getAuthority) //유저의 모든 role 정보 가져오기
-                .anyMatch(Predicate.isEqual("ROLE_USER"));
-
-        //본인 리뷰만 삭제 가능
-        if (!review.getUser().getUsername().equals(user.getUsername()) && isUser) {
+        //본인 리뷰만 삭제 가능 (유저일 경우에만 조건 검증)
+        if (!review.getUser().getUsername().equals(user.getUsername()) && RoleUtils.isUser(authorities)) {
             throw new ForbiddenException(NOT_REVIEW_OWNER);
         }
 
