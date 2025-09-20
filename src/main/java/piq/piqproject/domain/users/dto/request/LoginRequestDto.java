@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.dto;
+package piq.piqproject.domain.users.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

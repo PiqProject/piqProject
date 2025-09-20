@@ -9,9 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.domain.users.dao.UserDao;
-import piq.piqproject.domain.users.dto.MyProfileResponseDto;
-import piq.piqproject.domain.users.dto.UserProfileResponseDto;
-import piq.piqproject.domain.users.dto.UserSimpleProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
 import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
 
@@ -24,8 +24,13 @@ public class UserService {
 
     private final UserDao userDao;
 
-    public MyProfileResponseDto findMyProfile(UserEntity userEntity) {
-        // userEntity가 이미 DB에서 조회된 객체이므로 별도 조회가 필요 없습니다.
+    @Transactional(readOnly = true)
+    public MyProfileResponseDto findMyProfile(Long userId) {
+        // 트랜잭션 안에서 Fetch Join으로 DB 조회 (세션이 살아있음)
+        UserEntity userEntity = userDao.findByIdWithImages(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        // 안전하게 DTO 변환
         return MyProfileResponseDto.from(userEntity);
     }
 

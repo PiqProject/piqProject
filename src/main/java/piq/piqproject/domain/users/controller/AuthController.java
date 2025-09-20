@@ -15,10 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import piq.piqproject.domain.users.dto.AccessTokenResponseDto;
-import piq.piqproject.domain.users.dto.LoginRequestDto;
-import piq.piqproject.domain.users.dto.SignUpRequestDto;
-import piq.piqproject.domain.users.dto.TokensResponseDto;
+import piq.piqproject.domain.users.dto.request.LoginRequestDto;
+import piq.piqproject.domain.users.dto.request.SignUpRequestDto;
+import piq.piqproject.domain.users.dto.response.AccessTokenResponseDto;
+import piq.piqproject.domain.users.dto.response.TokensResponseDto;
 import piq.piqproject.domain.users.service.AuthService;
 
 @RestController
@@ -40,6 +40,7 @@ public class AuthController {
     public ResponseEntity<String> signUp(@Valid @RequestBody SignUpRequestDto signUpRequestDto) {
 
         authService.signUp(signUpRequestDto);
+        log.info("New user registered: {}", signUpRequestDto.getEmail());
 
         return ResponseEntity.ok("회원가입이 성공적으로 완료되었습니다.");
     }

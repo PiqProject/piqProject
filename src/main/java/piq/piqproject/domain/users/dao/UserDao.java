@@ -17,6 +17,10 @@ public class UserDao {
 
     private final UserRepository userRepository;
 
+    public Optional<UserEntity> findByIdWithImages(Long id) {
+        return userRepository.findByIdWithImages(id);
+    }
+
     /**
      * 새로운 사용자 정보를 데이터베이스에 저장합니다.
      * 

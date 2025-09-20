@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
                 HttpStatus status = e.getErrorCode().getStatus();
                 int statusCode = e.getErrorCode().getStatus().value();
                 String code = e.getErrorCode().name();
-                String message = e.getErrorCode().getMessage();
+                String message = e.getMessage();
 
                 log.error(
                                 """

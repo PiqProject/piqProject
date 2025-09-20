@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.dto;
+package piq.piqproject.domain.users.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import piq.piqproject.domain.users.dto.MyProfileResponseDto;
-import piq.piqproject.domain.users.dto.UserProfileResponseDto;
-import piq.piqproject.domain.users.dto.UserSimpleProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
 import piq.piqproject.domain.users.entity.Gender;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.service.UserService;
@@ -54,7 +54,7 @@ public class UserController {
      */
     @GetMapping("/profiles/me")
     public ResponseEntity<MyProfileResponseDto> getMyProfile(@AuthenticationPrincipal UserEntity userEntity) {
-        MyProfileResponseDto myProfile = userService.findMyProfile(userEntity);
+        MyProfileResponseDto myProfile = userService.findMyProfile(userEntity.getId());
         return ResponseEntity.ok(myProfile);
     }
 
