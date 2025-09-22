@@ -1,11 +1,14 @@
 package piq.piqproject.domain.shop.service;
 
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_SHOP;
+
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.shop.dto.request.ShopRequestDto;
 import piq.piqproject.domain.shop.dto.response.ShopResponseDto;
@@ -34,5 +37,23 @@ public class ShopService {
                 .toList();
         
         return ListResponseDto.from(shopList);
+    }
+
+    @Transactional
+    public ShopResponseDto updateShop(Long shopId, ShopRequestDto shopRequestDto) {
+        ShopEntity shop = shopRepository.findById(shopId)
+                    .orElseThrow(() -> new NotFoundException(NOT_FOUND_SHOP));
+
+        shop.update(shopRequestDto.getPrice(), shopRequestDto.getPoint());
+
+        return ShopResponseDto.of(shop);
+    }
+
+    @Transactional
+    public void deleteShop(Long shopId) {
+        ShopEntity shop = shopRepository.findById(shopId)
+                    .orElseThrow(() -> new NotFoundException(NOT_FOUND_SHOP));
+
+        shopRepository.delete(shop);
     }
 }

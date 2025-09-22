@@ -4,7 +4,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,5 +45,29 @@ public class ShopController {
         log.info("Request to get shops.");
 
         return ResponseEntity.ok(shopService.getShops());
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PutMapping("/{shopId}")
+    public ResponseEntity<ShopResponseDto> updateShop(
+        @AuthenticationPrincipal UserEntity user,
+        @PathVariable("shopId") Long shopId,
+        @Valid @RequestBody ShopRequestDto shopRequestDto
+    ) {
+        log.info("Request to update an Shop. User: {} ShopId: {}", user.getUsername(), shopId);
+
+        return ResponseEntity.ok(shopService.updateShop(shopId, shopRequestDto));
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/{shopId}/delete")
+    public ResponseEntity<String> deleteShop(
+        @AuthenticationPrincipal UserEntity user,
+        @PathVariable("shopId") Long shopId
+    ) {
+        log.info("Request to delete an Shop. User: {} ShopId: {}", user.getUsername(), shopId);
+
+        shopService.deleteShop(shopId);
+        return ResponseEntity.ok("가게 삭제가 완료되었습니다.");
     }
 }

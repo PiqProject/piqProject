@@ -39,4 +39,9 @@ public class ShopEntity extends BaseEntity{
                 .point(point)
                 .build();
     }
+
+    public void update(int price, int point) {
+        this.price = price;
+        this.point = point;
+    }
 }
