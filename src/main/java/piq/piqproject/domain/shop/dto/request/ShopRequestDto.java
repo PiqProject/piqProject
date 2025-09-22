@@ -1,4 +1,4 @@
-package piq.piqproject.domain.shop.dto;
+package piq.piqproject.domain.shop.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

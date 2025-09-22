@@ -3,6 +3,7 @@ package piq.piqproject.domain.shop.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,8 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import piq.piqproject.domain.shop.dto.ShopRequestDto;
-import piq.piqproject.domain.shop.dto.ShopResponseDto;
+import piq.piqproject.common.list.ListResponseDto;
+import piq.piqproject.domain.shop.dto.request.ShopRequestDto;
+import piq.piqproject.domain.shop.dto.response.ShopResponseDto;
 import piq.piqproject.domain.shop.service.ShopService;
 import piq.piqproject.domain.users.entity.UserEntity;
 
@@ -35,4 +37,11 @@ public class ShopController {
                     .body(shopService.createShop(shopRequestDto));
     }
 
+    @GetMapping("/all")
+    public ResponseEntity<ListResponseDto<ShopResponseDto>> getShops(
+    ) {
+        log.info("Request to get shops.");
+
+        return ResponseEntity.ok(shopService.getShops());
+    }
 }

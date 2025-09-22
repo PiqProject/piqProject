@@ -41,6 +41,7 @@ public class SecurityConfig {
             "/api/v1/auth/reissue",
             "/api/v1/users/profiles",
             "/api/v1/reviews",
+            "/api/v1/shops/all",
             "/h2-console/**", // H2 콘솔 접근 허용
             "/swagger-ui/**", // Swagger UI 접근 허용
             "/v3/api-docs/**", // Swagger API 문서 접근 허용

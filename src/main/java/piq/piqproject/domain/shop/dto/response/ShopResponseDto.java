@@ -1,12 +1,13 @@
-package piq.piqproject.domain.shop.dto;
+package piq.piqproject.domain.shop.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
+import piq.piqproject.common.list.Listable;
 import piq.piqproject.domain.shop.entity.ShopEntity;
 import static piq.piqproject.common.util.TimeUtils.*;
 
 @Getter
-public class ShopResponseDto {
+public class ShopResponseDto implements Listable{
 
     private Long id;
 
