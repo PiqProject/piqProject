@@ -1,24 +1,24 @@
 package piq.piqproject.common.error.handle;
 
-import io.swagger.v3.oas.annotations.Hidden;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.dto.ErrorDetailsDto;
 import piq.piqproject.common.error.dto.ErrorResponseDto;
 import piq.piqproject.common.error.dto.ValidErrorResponseDto;
 import piq.piqproject.common.error.exception.CustomException;
 import piq.piqproject.common.error.exception.ErrorCode;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @RestControllerAdvice - 전역 예외 처리(Global Exception Handling)를 위한 컨트롤러 어드바이스
@@ -42,7 +42,6 @@ public class GlobalExceptionHandler {
         public ResponseEntity<ErrorResponseDto> handleCustomExceptionHandler(CustomException e) {
 
                 HttpStatus status = e.getErrorCode().getStatus();
-                int statusCode = e.getErrorCode().getStatus().value();
                 String code = e.getErrorCode().name();
                 String message = e.getMessage();
 

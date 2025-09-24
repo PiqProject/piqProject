@@ -1,8 +1,8 @@
 package piq.piqproject.infra.s3;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+
 import piq.piqproject.common.file.FileUploader;
 
 //TODO: S3 SDK 의존성 추가 및 업로드 로직 구현해야함 /현재는 임시로 만든 클래스
@@ -24,7 +24,7 @@ public class S3Uploader implements FileUploader {
     public void delete(String fileUrl) {
         try {
             // S3에 저장된 파일의 key는 전체 URL이 아니라, URL에서 도메인 부분을 제외한 경로입니다.
-            String fileKey = fileUrl.substring(fileUrl.indexOf("images/"));
+            // String fileKey = fileUrl.substring(fileUrl.indexOf("images/"));
             // amazonS3Client.deleteObject(bucket, fileKey);
         } catch (Exception e) {
             System.err.println("S3 파일 삭제 실패: " + fileUrl);

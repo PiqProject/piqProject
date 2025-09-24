@@ -1,6 +1,15 @@
 package piq.piqproject.config.jwt;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,20 +18,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.CustomException;
 
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtExceptionFilter extends OncePerRequestFilter {
     private final ObjectMapper mapper;
 
+    @SuppressWarnings("null")
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {

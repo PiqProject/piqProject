@@ -75,6 +75,7 @@ public class UserController {
 
     /**
      * 현재 로그인된 사용자 계정을 삭제(탈퇴)합니다.
+     * TODO: 실제 서비스에서는 탈퇴 사유 수집, 데이터 백업 여부 및 저장기간 설정, 관련 리소스 정리 등 추가 로직이 필요
      * 
      * @param userEntity @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
      * @return 성공 메시지
