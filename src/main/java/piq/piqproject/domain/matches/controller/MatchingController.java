@@ -28,7 +28,6 @@ import piq.piqproject.domain.users.entity.UserEntity;
 @RequestMapping("/api/v1/matches")
 public class MatchingController {
 
-    // TODO: pq포인트 차감 로직 추가해야함
     private final MatchingService matchingService;
 
     /**

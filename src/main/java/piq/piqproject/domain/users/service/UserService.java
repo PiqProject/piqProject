@@ -76,7 +76,7 @@ public class UserService {
 
         // 3. UserEntity 생성
         UserEntity adminUser = UserEntity.of(email, "Admin", encodedPassword, "kakaoAdmin", null,
-                30, Gender.MALE, "MBTI", 1000.0, 1000, "관리자 계정", true);
+                30, Gender.MALE, "MBTI", 1000.0, 10000000, "관리자 계정", true);
         adminUser.addRole(Role.ADMIN); // 관리자 권한 부여
 
         // 4. DB에 저장

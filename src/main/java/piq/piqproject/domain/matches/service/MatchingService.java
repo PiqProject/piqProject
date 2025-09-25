@@ -1,7 +1,6 @@
 package piq.piqproject.domain.matches.service;
 
 import lombok.RequiredArgsConstructor;
-import net.bytebuddy.asm.MemberSubstitution.Substitution.ForMethodInvocation.MethodResolver.Matching;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.InternalServerException;
@@ -27,6 +26,7 @@ public class MatchingService {
 
     private final MatchingRepository matchingRepository;
     private final UserRepository userRepository; // 유저 정보를 가져오기 위해 필요
+    private static final int MATCH_COST = 100; // 매칭 비용을 상수로 정의하여 관리 용이성 증대
 
     /**
      * 매칭 요청 생성
@@ -36,6 +36,7 @@ public class MatchingService {
      */
     @Transactional
     public MatchingResponseDto createMatch(Long currentId, MatchingRequestDto requestDto) {
+
         // 1. 요청을 보낸 유저(Sender)와 받는 유저(Receiver) 조회
         UserEntity sender = userRepository.findById(currentId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "존재하지 않는 유저입니다."));
@@ -54,17 +55,17 @@ public class MatchingService {
                     throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 매칭을 요청한 상대입니다.");
                 });
 
-        // // 4. (비즈니스 로직 추가) 상대방이 나에게 보낸 요청이 있는지 확인 (B -> A)
-        // // 만약 상대방도 나에게 요청을 보냈다면, 바로 매칭 성공으로 처리할 수 있습니다.
-        // matchingRepository.findBySenderIdAndReceiverId(receiver.getId(),
-        // sender.getId())
-        // .ifPresent(existingMatch -> {
-        // // 상대방의 요청을 SUCCESS로 변경
-        // existingMatch.changeStatus(MatchingStatus.SUCCESS);
-        // // 나의 요청도 SUCCESS로 생성 (또는 별도 로직)
-        // });
+        // 4. 포인트 잔액 검사
+        if (sender.getPqPoint() < MATCH_COST) {
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "매칭을 요청하기 위한 PQ 포인트가 부족합니다.");
+        }
 
-        // 5. 매칭 엔티티 생성 및 저장 (초기 상태는 PENDING)
+        // 5. 포인트 차감
+        // UserEntity의 상태를 변경합니다.
+        // @Transactional에 의해 이 변경사항은 트랜잭션 커밋 시점에 DB에 반영됩니다.
+        sender.deductPqPoints(MATCH_COST);
+
+        // 6. 매칭 엔티티 생성 및 저장 (초기 상태는 PENDING)
         MatchingEntity newMatch = MatchingEntity.builder()
                 .sender(sender)
                 .receiver(receiver)
@@ -73,7 +74,7 @@ public class MatchingService {
 
         MatchingEntity savedMatch = matchingRepository.save(newMatch);
 
-        // 6. DTO로 변환하여 반환
+        // 7. DTO로 변환하여 반환
         return MatchingResponseDto.from(savedMatch, currentId);
     }
 
@@ -112,6 +113,12 @@ public class MatchingService {
 
         // @Transactional에 의해 메서드 종료 시 자동으로 DB에 업데이트 (dirty checking)
         // 따라서 matchingRepository.save(matching)을 명시적으로 호출할 필요가 없습니다.
+
+        // 5. sender의 pqPoint환급
+        if (newStatus == MatchingStatus.FAIL) {
+            UserEntity sender = matching.getSender();
+            sender.refundPqPoints(MATCH_COST);
+        }
 
         return MatchingResponseDto.from(matching, currentId);
     }
