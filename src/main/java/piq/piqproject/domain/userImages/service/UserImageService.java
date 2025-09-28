@@ -149,7 +149,7 @@ public class UserImageService {
 
         // 2. 새로 지정된 이미지에 대한 UserImageEntity를 가져옴
         UserImageEntity newMainImage = userImageRepository.findById(imageId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이미지입니다."));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "존재하지 않는 이미지입니다."));
 
         // 본인 소유의 이미지가 맞는지 확인하는 로직
         if (!newMainImage.getUser().getId().equals(user.getId())) {
