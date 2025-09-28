@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.domain.matches.dto.request.MatchingRequestDto;
 import piq.piqproject.domain.matches.dto.request.UpdateMatchingRequestDto;
+import piq.piqproject.domain.matches.dto.response.ContactExchangeResponseDto;
 import piq.piqproject.domain.matches.dto.response.MatchingResponseDto;
 import piq.piqproject.domain.matches.service.MatchingService;
 import piq.piqproject.domain.users.entity.UserEntity;
@@ -95,6 +96,18 @@ public class MatchingController {
         return ResponseEntity.ok(result);
     }
 
-    // TODO: 매칭 성공후 연락처 교환 api만들기
+    /**
+     * 매칭 성공 후 연락처 교환 API
+     */
+    @GetMapping("/{matchId}/exchange-contact")
+    public ResponseEntity<ContactExchangeResponseDto> exchangeContact(
+            @PathVariable("matchId") Long matchId,
+            @AuthenticationPrincipal UserEntity userEntity) {
+
+        Long currentUserId = userEntity.getId();
+        ContactExchangeResponseDto response = matchingService.exchangeContact(matchId, currentUserId);
+
+        return ResponseEntity.ok(response);
+    }
 
 }

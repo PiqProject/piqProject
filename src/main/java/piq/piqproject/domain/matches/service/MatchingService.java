@@ -7,6 +7,8 @@ import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.matches.dto.request.MatchingRequestDto;
 import piq.piqproject.domain.matches.dto.request.UpdateMatchingRequestDto;
+import piq.piqproject.domain.matches.dto.response.ContactExchangeResponseDto;
+import piq.piqproject.domain.matches.dto.response.ContactExchangeResponseDto;
 import piq.piqproject.domain.matches.dto.response.MatchingResponseDto;
 import piq.piqproject.domain.matches.entity.MatchingEntity;
 import piq.piqproject.domain.matches.enums.MatchingStatus;
@@ -149,5 +151,38 @@ public class MatchingService {
 
         // Page<Entity>를 Page<DTO>로 변환하여 반환
         return receivedMatchesPage.map(matching -> MatchingResponseDto.from(matching, currentId));
+    }
+
+    /**
+     * 매칭 성공 후 연락처 교환
+     *
+     * @param matchId   연락처를 교환할 매칭의 ID
+     * @param currentId 현재 로그인한 사용자의 ID
+     * @return 파트너의 연락처 정보 (KakaoTalk ID, Instagram ID)
+     */
+    @Transactional
+    public ContactExchangeResponseDto exchangeContact(Long matchId, Long currentId) {
+        // 1. 매칭 정보 조회
+        MatchingEntity matching = matchingRepository.findById(matchId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "존재하지 않는 매칭 정보입니다."));
+
+        // 2. 매칭 상태 검증: 매칭이 성공 상태인지 확인
+        if (matching.getStatus() != MatchingStatus.SUCCESS) {
+            throw new IllegalStateException("매칭이 성공한 상태에서만 연락처를 교환할 수 있습니다.");
+        }
+
+        // 3. 권한 검증: 현재 사용자가 매칭의 당사자인지 확인
+        Long senderId = matching.getSender().getId();
+        Long receiverId = matching.getReceiver().getId();
+
+        if (!currentId.equals(senderId) && !currentId.equals(receiverId)) {
+            throw new ForbiddenException(ErrorCode.NOT_OWNER, "연락처를 교환할 권한이 없습니다.");
+        }
+
+        // 4. 파트너 정보 조회
+        UserEntity partner = currentId.equals(senderId) ? matching.getReceiver() : matching.getSender();
+
+        // 5. 파트너의 연락처 정보를 DTO로 변환하여 반환
+        return ContactExchangeResponseDto.from(partner);
     }
 }
