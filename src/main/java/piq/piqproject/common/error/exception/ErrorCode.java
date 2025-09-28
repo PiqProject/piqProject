@@ -28,12 +28,14 @@ public enum ErrorCode {
     // FORBIDDEN (403) : 권한 없는 접근,
     DISABLED_ACCOUNT_USER(HttpStatus.FORBIDDEN, "비활성화된 계정입니다."),
     NOT_REVIEW_OWNER(HttpStatus.FORBIDDEN, "자신의 리뷰만 수정 및 삭제 가능합니다."),
+    ADMIN_ACCESS_REQUIRED(HttpStatus.FORBIDDEN, "관리자만 접근 가능합니다."),
 
     // NOT_FOUND (404) : 찾을 수 없음
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "가입되지 않은 이메일입니다."),
     NOT_FOUND_REFRESH_TOKEN(HttpStatus.NOT_FOUND, "리프레시 토큰이 존재하지 않습니다. 다시 로그인해주세요."),
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
+    NOT_FOUND_SHOP(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다."),
 
     // METHOD_NOT_ALLOWED (405) : 허용되지 않는 HTTP 메서드
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청하신 HTTP 메서드는 이 리소스에 허용되지 않습니다."),

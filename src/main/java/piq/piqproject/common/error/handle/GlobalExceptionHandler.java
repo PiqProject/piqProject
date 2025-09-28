@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -42,7 +41,6 @@ public class GlobalExceptionHandler {
         public ResponseEntity<ErrorResponseDto> handleCustomExceptionHandler(CustomException e) {
 
                 HttpStatus status = e.getErrorCode().getStatus();
-                int statusCode = e.getErrorCode().getStatus().value();
                 String code = e.getErrorCode().name();
                 String message = e.getMessage();
 

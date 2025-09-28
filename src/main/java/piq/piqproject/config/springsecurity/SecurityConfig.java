@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,6 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity // Spring Security를 활성화하고 웹 보안 설정을 구성함을 나타냅니다.
 @RequiredArgsConstructor
+@EnableMethodSecurity
 public class SecurityConfig {
     // JWT 토큰 제공자 및 필터를 주입받습니다.
     private final JwtFilter jwtFilter;
@@ -39,6 +41,7 @@ public class SecurityConfig {
             "/api/v1/auth/reissue",
             "/api/v1/users/profiles",
             "/api/v1/reviews",
+            "/api/v1/shops/all",
             "/h2-console/**", // H2 콘솔 접근 허용
             "/swagger-ui/**", // Swagger UI 접근 허용
             "/v3/api-docs/**", // Swagger API 문서 접근 허용
