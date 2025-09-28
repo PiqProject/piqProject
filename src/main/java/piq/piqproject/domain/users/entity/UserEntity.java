@@ -10,9 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -20,13 +18,14 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import piq.piqproject.common.error.exception.ErrorCode;
+import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.domain.BaseEntity;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
@@ -157,7 +156,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 .score(.0)
                 .introduce(introduce)
                 // ▼ 회원가입 시 서버에서 설정해주는 기본값들
-                .pqPoint(0)
+                .pqPoint(pqPoint)
                 .isActive(true) // 예시: 가입 시 바로 활성 상태
                 .build();
 
@@ -174,6 +173,14 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.roles.add(newUserRole);
     }
     
+    public void deductPqPoints(int amount) {
+        this.pqPoint -= amount;
+    }
+
+    public void refundPqPoints(int amount) {
+        this.pqPoint += amount;
+    }
+
     /**
      * 사용자가 가진 권한 목록을 반환합니다.
      * @return Collection<? extends GrantedAuthority>

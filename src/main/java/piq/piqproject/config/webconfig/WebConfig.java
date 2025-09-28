@@ -10,6 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     // LocalUploader에서 설정한 실제 파일 저장 경로를 여기에 동일하게 적어줍니다.
     private final String uploadDir = "C:/uploads/";
 
+    @SuppressWarnings("null")
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**") // 1. 웹 브라우저에 입력할 URL

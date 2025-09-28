@@ -25,6 +25,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
 
     // HTTP 요청이 들어올 때마다 실행되는 메소드
+    @SuppressWarnings("null")
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
