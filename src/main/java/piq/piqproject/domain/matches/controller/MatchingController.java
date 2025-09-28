@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.domain.matches.dto.request.MatchingRequestDto;
 import piq.piqproject.domain.matches.dto.request.UpdateMatchingRequestDto;
@@ -38,7 +39,7 @@ public class MatchingController {
      */
     @PostMapping
     public ResponseEntity<MatchingResponseDto> createMatch(@AuthenticationPrincipal UserEntity userEntity,
-            @RequestBody MatchingRequestDto requestDto) {
+            @Valid @RequestBody MatchingRequestDto requestDto) {
         MatchingResponseDto response = matchingService.createMatch(userEntity.getId(), requestDto);
 
         // 생성된 리소스의 URI를 Location 헤더에 담아 201 Created 응답 반환
@@ -58,7 +59,7 @@ public class MatchingController {
     public ResponseEntity<MatchingResponseDto> updateMatch(
             @PathVariable("matchId") Long matchId,
             @AuthenticationPrincipal UserEntity userEntity,
-            @RequestBody UpdateMatchingRequestDto requestDto) {
+            @Valid @RequestBody UpdateMatchingRequestDto requestDto) {
 
         Long currentUserId = userEntity.getId();
         MatchingResponseDto response = matchingService.updateMatchStatus(matchId, currentUserId, requestDto);
@@ -94,6 +95,6 @@ public class MatchingController {
         return ResponseEntity.ok(result);
     }
 
-    // TODO: 매칭 성공후 연락처 교환 api만들기, 매칭조회할떄 사진이나 닉네임정보도 가져오는게 좋을까?
+    // TODO: 매칭 성공후 연락처 교환 api만들기
 
 }
