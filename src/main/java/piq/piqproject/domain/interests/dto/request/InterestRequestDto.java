@@ -1,0 +1,10 @@
+package piq.piqproject.domain.interests.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Getter;
+
+@Getter
+public class InterestRequestDto {
+    @NotBlank(message = "관심사 키워드를 입력해주세요.")
+    private String keyword;
+}
