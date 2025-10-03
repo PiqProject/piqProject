@@ -114,6 +114,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private final List<ReviewEntity> reviews = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private final List<UserInterestEntity> userInterests = new ArrayList<>();
+
     // Builder 패턴을 사용하여 객체 생성 가능 (new로 불가)
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,

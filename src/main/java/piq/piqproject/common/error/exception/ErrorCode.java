@@ -47,6 +47,7 @@ public enum ErrorCode {
     ALREADY_EXISTS_USER(HttpStatus.CONFLICT, "이미 가입된 유저입니다."),
     ALREADY_EXISTS_REVIEW(HttpStatus.CONFLICT, "서비스에 대한 리뷰는 1회만 가능합니다."),
     ALREADY_EXISTS_INTEREST(HttpStatus.CONFLICT, "이미 존재하는 관심사 키워드입니다."),
+    USER_INTERESTS_ALREADY_REGISTERED(HttpStatus.CONFLICT, "유저의 관심사는 이미 등록되어 있습니다."),
 
     // INTERNAL_SERVER_ERROR (500) : 서버 오류
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다."),

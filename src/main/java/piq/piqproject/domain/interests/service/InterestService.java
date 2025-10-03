@@ -1,9 +1,13 @@
 package piq.piqproject.domain.interests.service;
 
+import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_INTEREST;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
+
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.NotFoundException;
@@ -12,16 +16,14 @@ import piq.piqproject.domain.interests.dto.request.InterestRequestDto;
 import piq.piqproject.domain.interests.dto.response.InterestResponseDto;
 import piq.piqproject.domain.interests.entity.InterestEntity;
 import piq.piqproject.domain.interests.repository.InterestRepository;
-
-import static piq.piqproject.common.error.exception.ErrorCode.*;
-
-import java.util.List;
+import piq.piqproject.domain.users.repository.UserInterestRepository;
 
 @Service
 @RequiredArgsConstructor
 public class InterestService {
 
     private final InterestRepository interestRepository;
+    private final UserInterestRepository userInterestRepository;
 
     @Transactional
     public InterestResponseDto createInterest(InterestRequestDto interestRequestDto) {
@@ -58,13 +60,14 @@ public class InterestService {
         interest.updateKeyword(interestRequestDto.getKeyword());
 
         return InterestResponseDto.of(interest);
-    }
+    } 
 
     @Transactional
     public void deleteInterest(Long interestId) {
         InterestEntity interest = interestRepository.findById(interestId)
                             .orElseThrow(() -> new NotFoundException(NOT_FOUND_INTEREST));
 
+        userInterestRepository.deleteAllByInterest(interest);
         interestRepository.delete(interest);
     }
 
