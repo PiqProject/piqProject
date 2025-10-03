@@ -2,10 +2,11 @@ package piq.piqproject.domain.interests.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
+import piq.piqproject.common.list.Listable;
 import piq.piqproject.domain.interests.entity.InterestEntity;
 
 @Getter
-public class InterestResponseDto {
+public class InterestResponseDto implements Listable {
     private Long id;
     private String keyword;
 
