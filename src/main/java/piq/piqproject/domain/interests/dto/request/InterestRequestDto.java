@@ -9,6 +9,8 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 public class InterestRequestDto {
+
+    //TODO: 범위 지정
     @NotBlank(message = "관심사 키워드를 입력해주세요.")
     private String keyword;
 }

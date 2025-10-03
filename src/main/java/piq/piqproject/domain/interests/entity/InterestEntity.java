@@ -33,4 +33,8 @@ public class InterestEntity {
                 .keyword(keyword)
                 .build();
     }
+
+    public void updateKeyword(String keyword) {
+        this.keyword = keyword;
+    }
 }
