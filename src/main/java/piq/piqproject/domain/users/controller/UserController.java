@@ -5,17 +5,23 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.list.ListResponseDto;
+import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
+import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
 import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
 import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
@@ -86,4 +92,18 @@ public class UserController {
         return ResponseEntity.ok("회원 탈퇴가 성공적으로 처리되었습니다.");
     }
 
+    /**
+     * 현재 로그인된 사용자의 관심사를 저장하는 API입니다.
+     * 
+     * @param userEntity             @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param UserInterestRequestDto 유저가 선택한 관심사 리스트를 담은 request dto
+     * @return 저장된 사용자의 관심사 리스트
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PostMapping("/me/interests")
+    public ResponseEntity<ListResponseDto<UserInterestResponseDto>> registerUserInterests(
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserInterestRequestDto userInterestRequestDto) {
+        return ResponseEntity.ok(userService.registerUserInterests(user, userInterestRequestDto));
+    }
 }

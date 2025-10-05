@@ -38,6 +38,7 @@ public enum ErrorCode {
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없습니다."),
     NOT_FOUND_SHOP(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다."),
+    NOT_FOUND_INTEREST(HttpStatus.NOT_FOUND, "관심사 키워드를 찾을 수 없습니다."),
 
     // METHOD_NOT_ALLOWED (405) : 허용되지 않는 HTTP 메서드
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청하신 HTTP 메서드는 이 리소스에 허용되지 않습니다."),
@@ -45,6 +46,8 @@ public enum ErrorCode {
     // CONFLICT (409) : 충돌
     ALREADY_EXISTS_USER(HttpStatus.CONFLICT, "이미 가입된 유저입니다."),
     ALREADY_EXISTS_REVIEW(HttpStatus.CONFLICT, "서비스에 대한 리뷰는 1회만 가능합니다."),
+    ALREADY_EXISTS_INTEREST(HttpStatus.CONFLICT, "이미 존재하는 관심사 키워드입니다."),
+    USER_INTERESTS_ALREADY_REGISTERED(HttpStatus.CONFLICT, "유저의 관심사는 이미 등록되어 있습니다."),
 
     // INTERNAL_SERVER_ERROR (500) : 서버 오류
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다."),
