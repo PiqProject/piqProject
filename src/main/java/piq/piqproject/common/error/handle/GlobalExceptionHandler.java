@@ -6,10 +6,12 @@ import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
@@ -123,4 +125,36 @@ public class GlobalExceptionHandler {
                                 .body(ErrorResponseDto.of(errorCode.getStatus(), errorCode.name(),
                                                 errorCode.getMessage()));
         }
+
+        /**
+         * 업로드 파일 크기가 서버에서 설정한 최대치를 초과했을 때 발생하는 예외를 처리합니다.
+         * 응답: 413 Payload Too Large
+         *
+         * @param e 발생한 MaxUploadSizeExceededException 예외
+         * @return ErrorResponseDto 형식의 에러 응답
+         */
+        @ExceptionHandler(MaxUploadSizeExceededException.class)
+        public ResponseEntity<ErrorResponseDto> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+
+                // ErrorCode Enum에 PAYLOAD_TOO_LARGE 같은 코드를 정의해두면 더 좋습니다.
+                // 여기서는 직접 상태와 메시지를 생성하겠습니다.
+                ErrorCode errorCode = ErrorCode.FILE_SIZE_EXCEEDED; // ErrorCode에 이 항목을 추가했다고 가정합니다.
+
+                HttpStatus status = errorCode.getStatus();
+                String code = errorCode.name();
+                String message = errorCode.getMessage();
+
+                log.error(
+                                """
+                                                MaxUploadSizeExceededException occurred
+                                                ---------------------------------------
+                                                status= {} ({})
+                                                code= {}
+                                                message= {}
+                                                """,
+                                status.getReasonPhrase(), status.value(), code, message, e);
+
+                return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
+        }
+
 }

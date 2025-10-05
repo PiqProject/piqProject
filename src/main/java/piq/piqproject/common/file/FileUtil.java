@@ -13,9 +13,9 @@ public class FileUtil {
     /**
      * 날짜 기반의 디렉토리 경로를 생성합니다. (예: images/2025/09/17)
      */
-    public String createDirectoryPath() {
+    public String createDirectoryPath(String baseDir) {
         LocalDate now = LocalDate.now();
-        return "images/" + now.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        return baseDir + "/" + now.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
     }
 
     /**
@@ -42,4 +42,23 @@ public class FileUtil {
         return contentType != null && contentType.startsWith("image");
     }
 
+    /**
+     * 전달된 파일이 오디오 파일인지 검증합니다.
+     * 
+     * @param file 검증할 MultipartFile
+     * @return boolean
+     */
+    public boolean isAudioFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return false;
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            return false;
+        }
+
+        // 일반적인 오디오 파일 MIME 타입들
+        return contentType.startsWith("audio/"); // "audio/mpeg", "audio/wav", "audio/aac" 등
+    }
 }

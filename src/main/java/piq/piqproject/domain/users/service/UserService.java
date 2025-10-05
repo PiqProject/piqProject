@@ -1,12 +1,5 @@
 package piq.piqproject.domain.users.service;
 
-import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_INTEREST;
-import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
-import static piq.piqproject.common.error.exception.ErrorCode.USER_INTERESTS_ALREADY_REGISTERED;
-
-import java.util.List;
-import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,8 +27,17 @@ import piq.piqproject.domain.users.enums.Role;
 import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
 
+/**
+ * UserService는 사용자를 가져오거나 삭제하는 비즈니스 로직을 담당합니다.
+ *
+ * 주요 기능:
+ * - 사용자 프로필 조회
+ * - 사용자 삭제
+ * - 성별에 따른 사용자 목록 조회
+ * - 관리자 계정 생성
+ */
 @Service
-@RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
@@ -103,11 +105,11 @@ public class UserService {
 
     @Transactional
     public ListResponseDto<UserInterestResponseDto> registerUserInterests(UserEntity user, UserInterestRequestDto userInterestRequestDto) {
-        
+
         if (userInterestRepository.existsByUser(user)) {
             throw new ConflictException(USER_INTERESTS_ALREADY_REGISTERED);
         }
-        
+
         List<Long> interestIds = userInterestRequestDto.getInterestIds();
         List<InterestEntity> interests = interestRepository.findAllById(interestIds);
 
@@ -118,7 +120,7 @@ public class UserService {
         List<UserInterestEntity> userInterestList = interests.stream()
                     .map(interest -> UserInterestEntity.of(user, interest))
                     .toList();
-        
+
         userInterestRepository.saveAll(userInterestList);
 
         List<UserInterestResponseDto> userInterestResponse = userInterestList.stream()

@@ -56,6 +56,7 @@ public enum ErrorCode {
     FILE_NUMBER_EXCEEDED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 최대 개수를 초과했습니다."),
     FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제 중 오류가 발생했습니다."),
     AUTHORITY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "권한 정보 처리 중 오류가 발생했습니다."),
+    FILE_SIZE_EXCEEDED(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 파일 크기가 서버에서 설정한 최대치를 초과했습니다."),
     ;
 
     private final HttpStatus status;

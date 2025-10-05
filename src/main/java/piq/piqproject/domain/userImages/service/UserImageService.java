@@ -44,7 +44,7 @@ public class UserImageService {
         // 3. 파일 경로/이름 생성
         // fullPath는 루트에서부터가 아닌 사진을 저장하기로한 최상위 디렉토리까지만을 의미한다.
         // 저장위치의 최상위 C:/는 FileUploader가 관리한다.
-        String directoryPath = fileUtil.createDirectoryPath();
+        String directoryPath = fileUtil.createDirectoryPath("images");
         String fileName = fileUtil.createUniqueFileName(imageFile.getOriginalFilename());
         String relativePath = directoryPath + "/" + fileName;
 
