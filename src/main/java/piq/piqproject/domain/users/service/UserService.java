@@ -18,8 +18,17 @@ import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.enums.Role;
 import piq.piqproject.domain.users.repository.UserRepository;
 
+/**
+ * UserService는 사용자를 가져오거나 삭제하는 비즈니스 로직을 담당합니다.
+ * 
+ * 주요 기능:
+ * - 사용자 프로필 조회
+ * - 사용자 삭제
+ * - 성별에 따른 사용자 목록 조회
+ * - 관리자 계정 생성
+ */
 @Service
-@RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
@@ -82,4 +91,5 @@ public class UserService {
         // 4. DB에 저장
         userRepository.save(adminUser);
     }
+
 }

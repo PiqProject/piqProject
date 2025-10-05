@@ -25,6 +25,7 @@ public class MyProfileResponseDto {
     private Double score;
     private Boolean isActive;
     private ListResponseDto<UserImageResponseDto> userImages;
+    private String voiceUrl;
 
     // 생성자
     @Builder
@@ -32,7 +33,7 @@ public class MyProfileResponseDto {
             Integer age,
             Gender gender,
             String mbti, String introduce, Integer pqPoint, Boolean isActive, Double score,
-            ListResponseDto<UserImageResponseDto> userImages) {
+            ListResponseDto<UserImageResponseDto> userImages, String voiceUrl) {
         this.id = id;
         this.nickname = nickname;
         this.email = email;
@@ -46,6 +47,7 @@ public class MyProfileResponseDto {
         this.isActive = isActive;
         this.score = score;
         this.userImages = userImages;
+        this.voiceUrl = voiceUrl;
     }
 
     public static MyProfileResponseDto from(UserEntity userEntity) {
@@ -72,6 +74,7 @@ public class MyProfileResponseDto {
                 .isActive(userEntity.getIsActive())
                 .score(userEntity.getScore())
                 .userImages(imageListResponse)
+                .voiceUrl(userEntity.getVoiceUrl())
                 .build();
     }
 }

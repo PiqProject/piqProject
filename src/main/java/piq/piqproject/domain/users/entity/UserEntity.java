@@ -24,8 +24,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import piq.piqproject.common.error.exception.ErrorCode;
-import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.domain.BaseEntity;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
@@ -69,33 +67,37 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name="instagram_id", nullable = true, length = 100) 
     private String instagramId;
 
+    
     @Column(name="age", nullable = false) 
     private Integer age;
-
+    
     @Enumerated(EnumType.STRING) // 지금은 Enum 타입을 DB에 문자열로 저장 -> 이후 postgresql에서 string을 쓸지 Gender enum을 쓸지 고민
     @Column(name="gender", nullable = false) 
     private Gender gender;
-
+    
     // mappedBy: UserImage 엔티티의 'user' 필드에 의해 매핑되었음을 의미
     // cascade: User가 삭제되면 관련된 Image도 함께 삭제되도록 설정
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<UserImageEntity> images = new ArrayList<>();
-
+    
+    @Column(name="voice_url", nullable = true, length = 255)
+    private String voiceUrl;
+    
     @Column(name="mbti", nullable = true, length = 10) // NULL 허용, MBTI는 4글자
     private String mbti;
-
+    
     @Column(name="score", nullable = false) //신뢰점수
     private Double score;
-
+    
     @Column(name="pq_point", nullable = false) //돈
     private Integer pqPoint;
-
+    
     @Column(name="introduce", nullable = false, columnDefinition = "TEXT") // 긴 텍스트를 위해 TEXT 타입 지정
     private String introduce;
-
+    
     @Column(name="is_active", nullable = false) 
     private Boolean isActive; // 활성화 여부
-
+    
  // --- 기존 @ElementCollection 필드를 아래 코드로 교체 ---
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<UserRoleEntity> roles = new ArrayList<>();
@@ -179,6 +181,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     public void refundPqPoints(int amount) {
         this.pqPoint += amount;
+    }
+
+    public void updateVoiceUrl(String voiceUrl) {
+        this.voiceUrl = voiceUrl;
     }
 
     /**
