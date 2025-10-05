@@ -27,6 +27,11 @@ import piq.piqproject.domain.users.enums.Role;
 import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
 
+import java.util.List;
+
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
+import static piq.piqproject.common.error.exception.ErrorCode.USER_INTERESTS_ALREADY_REGISTERED;
+
 /**
  * UserService는 사용자를 가져오거나 삭제하는 비즈니스 로직을 담당합니다.
  *
