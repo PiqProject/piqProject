@@ -24,6 +24,7 @@ public class UserProfileResponseDto implements Listable {
     private final Double score;
     private final String introduce;
     private final ListResponseDto<UserImageResponseDto> userImages;
+    private final String voiceUrl;
 
     /**
      * UserEntity를 UserProfileResponseDto로 변환하는 정적 팩토리 메서드입니다.
@@ -49,6 +50,7 @@ public class UserProfileResponseDto implements Listable {
                 .score(user.getScore())
                 .introduce(user.getIntroduce())
                 .userImages(imageListResponse) // 완성된 ListResponseDto를 할당합니다.
+                .voiceUrl(user.getVoiceUrl())
                 .build();
     }
 }

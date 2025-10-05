@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.service;
+package piq.piqproject.domain.users.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -8,6 +8,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.domain.users.repository.UserRepository;
+import piq.piqproject.domain.users.service.UserService;
 
 @Component
 @RequiredArgsConstructor
