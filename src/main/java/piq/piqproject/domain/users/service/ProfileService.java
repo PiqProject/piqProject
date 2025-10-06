@@ -1,5 +1,10 @@
 package piq.piqproject.domain.users.service;
 
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
+import static piq.piqproject.common.error.exception.ErrorCode.USER_INTERESTS_ALREADY_REGISTERED;
+
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -8,12 +13,20 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
+import piq.piqproject.common.list.ListResponseDto;
+import piq.piqproject.domain.interests.entity.InterestEntity;
+import piq.piqproject.domain.interests.repository.InterestRepository;
+import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.entity.UserInterestEntity;
+import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
 
 /**
@@ -30,6 +43,8 @@ public class ProfileService {
     private final UserRepository userRepository;
     private final FileUploader fileUploader;
     private final FileUtil fileUtil;
+    private final InterestRepository interestRepository;
+    private final UserInterestRepository userInterestRepository;
 
     /**
      * 사용자의 프로필 음성을 업로드(또는 교체)하는 메서드
@@ -111,5 +126,32 @@ public class ProfileService {
                 }
             }
         });
+    }
+
+    @Transactional
+    public ListResponseDto<UserInterestResponseDto> registerUserInterests(UserEntity user, UserInterestRequestDto userInterestRequestDto) {
+
+        if (userInterestRepository.existsByUser(user)) {
+            throw new ConflictException(USER_INTERESTS_ALREADY_REGISTERED);
+        }
+
+        List<Long> interestIds = userInterestRequestDto.getInterestIds();
+        List<InterestEntity> interests = interestRepository.findAllById(interestIds);
+
+        if (interests.size() != interestIds.size()) {
+            throw new NotFoundException(NOT_FOUND_INTEREST);
+        }
+
+        List<UserInterestEntity> userInterestList = interests.stream()
+                    .map(interest -> UserInterestEntity.of(user, interest))
+                    .toList();
+
+        userInterestRepository.saveAll(userInterestList);
+
+        List<UserInterestResponseDto> userInterestResponse = userInterestList.stream()
+                        .map(UserInterestResponseDto::of)
+                        .toList();
+
+        return ListResponseDto.from(userInterestResponse);
     }
 }
