@@ -93,18 +93,17 @@ public class UserController {
     }
 
     /**
-     * 현재 로그인된 사용자의 관심사를 저장하는 API입니다. 
+     * 현재 로그인된 사용자의 관심사를 저장하는 API입니다.
      * 
-     * @param userEntity @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param userEntity             @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
      * @param UserInterestRequestDto 유저가 선택한 관심사 리스트를 담은 request dto
-     * @return 저장된 사용자의 관심사 리스트 
+     * @return 저장된 사용자의 관심사 리스트
      */
     @PreAuthorize("hasRole('ROLE_USER')")
-    @PostMapping("/me/interests") 
+    @PostMapping("/me/interests")
     public ResponseEntity<ListResponseDto<UserInterestResponseDto>> registerUserInterests(
-        @AuthenticationPrincipal UserEntity user,
-        @Valid @RequestBody UserInterestRequestDto userInterestRequestDto
-    ){
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserInterestRequestDto userInterestRequestDto) {
         return ResponseEntity.ok(userService.registerUserInterests(user, userInterestRequestDto));
     }
 }

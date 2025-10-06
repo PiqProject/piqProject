@@ -19,6 +19,7 @@ public class UserSimpleProfileResponseDto implements Listable {
     private Double score;
     private Boolean isActive;
     private String mainImageUrl;
+    private String voiceUrl;
 
     /**
      * UserEntity를 UserSimpleProfileDto로 변환하는 정적 팩토리 메서드
@@ -41,6 +42,7 @@ public class UserSimpleProfileResponseDto implements Listable {
                 .score(user.getScore())
                 .isActive(user.getIsActive())
                 .mainImageUrl(mainImageUrl) // 빌더에 추가
+                .voiceUrl(user.getVoiceUrl())
                 .build();
     }
 }
