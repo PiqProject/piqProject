@@ -1,7 +1,6 @@
 package piq.piqproject.domain.users.service;
 
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
-import static piq.piqproject.common.error.exception.ErrorCode.USER_INTERESTS_ALREADY_REGISTERED;
 
 import java.util.List;
 
@@ -13,7 +12,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.error.exception.NotFoundException;
@@ -129,26 +127,30 @@ public class ProfileService {
     }
 
     @Transactional
-    public ListResponseDto<UserInterestResponseDto> registerUserInterests(UserEntity user, UserInterestRequestDto userInterestRequestDto) {
-
-        if (userInterestRepository.existsByUser(user)) {
-            throw new ConflictException(USER_INTERESTS_ALREADY_REGISTERED);
-        }
-
+    public ListResponseDto<UserInterestResponseDto> upsertUserInterests(UserEntity user, UserInterestRequestDto userInterestRequestDto) {
+        // 요청으로 들어온 관심사 ID들의 유효성을 검증
         List<Long> interestIds = userInterestRequestDto.getInterestIds();
         List<InterestEntity> interests = interestRepository.findAllById(interestIds);
 
+        // 요청된 ID의 수와 실제 조회된 관심사의 수가 다르면 예외 발생
         if (interests.size() != interestIds.size()) {
             throw new NotFoundException(NOT_FOUND_INTEREST);
         }
 
-        List<UserInterestEntity> userInterestList = interests.stream()
+        List<UserInterestEntity> userInterests = userInterestRepository.findAllByUserId(user.getId()); 
+
+        // 기존 관심사가 있다면 한 번의 쿼리로 모두 삭제하여 성능을 최적화
+        if (!userInterests.isEmpty()) {
+            userInterestRepository.deleteAllInBatch(userInterests);
+        }
+        
+        List<UserInterestEntity> newUserInterestList = interests.stream()
                     .map(interest -> UserInterestEntity.of(user, interest))
                     .toList();
 
-        userInterestRepository.saveAll(userInterestList);
+        userInterestRepository.saveAll(newUserInterestList);
 
-        List<UserInterestResponseDto> userInterestResponse = userInterestList.stream()
+        List<UserInterestResponseDto> userInterestResponse = newUserInterestList.stream()
                         .map(UserInterestResponseDto::of)
                         .toList();
 

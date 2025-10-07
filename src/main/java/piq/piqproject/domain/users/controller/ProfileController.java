@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
@@ -22,6 +24,7 @@ import piq.piqproject.domain.users.service.ProfileService;
  * ProfileController는 사용자 프로필 관련 API 엔드포인트를 담당합니다.
  * 모든 엔드포인트는 인증된 사용자 본인만 접근 가능합니다.
  */
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
@@ -63,17 +66,19 @@ public class ProfileController {
     }
 
     /**
-     * 현재 로그인된 사용자의 관심사를 저장하는 API입니다.
+     * 현재 로그인된 사용자의 관심사를 생성 및 수정하는 API입니다.
      * 
      * @param userEntity             @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
      * @param UserInterestRequestDto 유저가 선택한 관심사 리스트를 담은 request dto
-     * @return 저장된 사용자의 관심사 리스트
+     * @return 사용자의 관심사 리스트
      */
     @PreAuthorize("hasRole('ROLE_USER')")
-    @PostMapping("/me/interests")
-    public ResponseEntity<ListResponseDto<UserInterestResponseDto>> registerUserInterests(
+    @PutMapping("/me/interests")
+    public ResponseEntity<ListResponseDto<UserInterestResponseDto>> upsertUserInterests(
             @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody UserInterestRequestDto userInterestRequestDto) {
-        return ResponseEntity.ok(profileService.registerUserInterests(user, userInterestRequestDto));
+            @Valid @RequestBody UserInterestRequestDto userInterestRequestDto) 
+    {
+        log.info("Request to upsert(insert + update) user interests. User: {}", user.getEmail());
+        return ResponseEntity.ok(profileService.upsertUserInterests(user, userInterestRequestDto));
     }
 }

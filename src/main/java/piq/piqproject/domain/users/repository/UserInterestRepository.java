@@ -1,5 +1,7 @@
 package piq.piqproject.domain.users.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import piq.piqproject.domain.interests.entity.InterestEntity;
@@ -11,5 +13,7 @@ public interface UserInterestRepository extends JpaRepository<UserInterestEntity
     void deleteAllByInterest(InterestEntity interest);
 
     boolean existsByUser(UserEntity user);
+
+    List<UserInterestEntity> findAllByUserId(Long id);
 
 } 
