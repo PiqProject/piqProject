@@ -21,10 +21,16 @@ public class IdealCategoryEntity {
     private Long id;
 
     @Column(nullable = false)
-    private String category;
+    private String name;
 
     @Builder
-    private IdealCategoryEntity (String category) {
-        this.category = category;
+    private IdealCategoryEntity (String name) {
+        this.name = name;
+    }
+
+    public static IdealCategoryEntity of(String name) {
+        return IdealCategoryEntity.builder()
+                        .name(name)
+                        .build();
     }
 }

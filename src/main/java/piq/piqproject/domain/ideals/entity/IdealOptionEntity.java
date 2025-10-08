@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,5 +28,18 @@ public class IdealOptionEntity {
     private IdealCategoryEntity idealCategory;
 
     @Column(nullable = false)
-    private String option;
+    private String name;
+
+    @Builder 
+    private IdealOptionEntity (IdealCategoryEntity idealCategory, String name) {
+        this.idealCategory = idealCategory;
+        this.name = name;
+    }
+
+    public static IdealOptionEntity of (IdealCategoryEntity idealCategory, String name) {
+        return IdealOptionEntity.builder()
+                        .idealCategory(idealCategory)
+                        .name(name) 
+                        .build();
+    }
 }

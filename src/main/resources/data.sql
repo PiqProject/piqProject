@@ -13,13 +13,13 @@ INSERT INTO interests (keyword) VALUES
 ('반려동물'),
 ('재테크');
 
-INSERT INTO ideal_categories (category) VALUES
+INSERT INTO ideal_categories (name) VALUES
 ('얼굴형'),
 ('성격'),
 ('체형');
 
 -- 1. '얼굴형'에 대한 하위 옵션들 (category_id = 1)
-INSERT INTO ideal_options (category_id, `option`) VALUES
+INSERT INTO ideal_options (category_id, `name`) VALUES
 (1, '강아지상'),
 (1, '고양이상'),
 (1, '토끼상'),
@@ -30,7 +30,7 @@ INSERT INTO ideal_options (category_id, `option`) VALUES
 (1, '각진형');
 
 -- 2. '성격'에 대한 하위 옵션들 (category_id = 2)
-INSERT INTO ideal_options (category_id, `option`) VALUES
+INSERT INTO ideal_options (category_id, `name`) VALUES
 (2, '다정한'),
 (2, '유머있는'),
 (2, '진중한'),
@@ -42,7 +42,7 @@ INSERT INTO ideal_options (category_id, `option`) VALUES
 (2, '재치있는');
 
 -- 3. '체형'에 대한 하위 옵션들 (category_id = 3)
-INSERT INTO ideal_options (category_id, `option`) VALUES
+INSERT INTO ideal_options (category_id, `name`) VALUES
 (3, '마른'),
 (3, '슬림탄탄'),
 (3, '보통'),
