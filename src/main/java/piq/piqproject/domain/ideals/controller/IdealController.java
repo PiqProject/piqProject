@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.list.ListResponseDto;
+import piq.piqproject.domain.ideals.dto.request.CreateIdealOptionRequestDto;
 import piq.piqproject.domain.ideals.dto.request.IdealRequestDto;
 import piq.piqproject.domain.ideals.dto.response.IdealResponseDto;
 import piq.piqproject.domain.ideals.service.IdealService;
@@ -30,7 +32,7 @@ public class IdealController {
      * 이상형 카테고리와 하위 옵션들을 생성하는 API입니다. 
      * 
      * @body 생성할 카테고리와 하위 옵션을 리스트 형태로 받아옵니다.
-     * @return 생성되 카테고리 및 옵션 리스트 
+     * @return 생성된 카테고리 및 옵션 리스트 
      */
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
@@ -42,6 +44,26 @@ public class IdealController {
         
         return ResponseEntity.status(201)
                         .body(idealService.createCategoriesWithOptions(idealRequestDtos));
+    }
+
+    /**
+     * 이상형 카테고리의 하위 옵션들을 생성하는 API입니다. 
+     * 
+    * @param categoryId 이상형 카테고리 아이디
+     * @body 카테고리에 추가될 하위 옵션을 리스트 형태로 받아옵니다.
+     * @return 생성된 카테고리의 옵션 리스트 
+     */
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/{categoryId}/options")
+    public ResponseEntity<IdealResponseDto> addOptions(
+        @AuthenticationPrincipal UserEntity user,
+        @PathVariable Long categoryId,
+        @Valid @RequestBody CreateIdealOptionRequestDto createIdealOptionRequestDto
+    ) {
+        log.info("Request to add options for ideal category {}. User: {}", categoryId, user.getEmail());
+        
+        return ResponseEntity.status(201)
+                        .body(idealService.addOptions(categoryId, createIdealOptionRequestDto));
     }
     
 }

@@ -25,20 +25,20 @@ public class IdealOptionEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    private IdealCategoryEntity idealCategory;
+    private IdealCategoryEntity category;
 
     @Column(nullable = false)
     private String name;
 
     @Builder 
-    private IdealOptionEntity (IdealCategoryEntity idealCategory, String name) {
-        this.idealCategory = idealCategory;
+    private IdealOptionEntity (IdealCategoryEntity category, String name) {
+        this.category = category;
         this.name = name;
     }
 
-    public static IdealOptionEntity of (IdealCategoryEntity idealCategory, String name) {
+    public static IdealOptionEntity of (IdealCategoryEntity category, String name) {
         return IdealOptionEntity.builder()
-                        .idealCategory(idealCategory)
+                        .category(category)
                         .name(name) 
                         .build();
     }

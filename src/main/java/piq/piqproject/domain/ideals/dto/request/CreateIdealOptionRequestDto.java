@@ -1,0 +1,13 @@
+package piq.piqproject.domain.ideals.dto.request;
+
+import java.util.List;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.Getter;
+
+@Getter
+public class CreateIdealOptionRequestDto {
+    @NotEmpty(message = "옵션 목록을 입력해주세요.") 
+    private List<@NotBlank(message = "옵션 항목은 비어있을 수 없습니다.") String> options;
+}

@@ -2,18 +2,23 @@ package piq.piqproject.domain.ideals.service;
 
 import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDEAL_CATEGORY;
 import static piq.piqproject.common.error.exception.ErrorCode.DUPLICATE_IDEAL_OPTIONS;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_CATEGORY;
+import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDEAL_OPTION;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.common.error.exception.ConflictException;
+import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.list.ListResponseDto;
+import piq.piqproject.domain.ideals.dto.request.CreateIdealOptionRequestDto;
 import piq.piqproject.domain.ideals.dto.request.IdealRequestDto;
 import piq.piqproject.domain.ideals.dto.response.IdealOptionResponseDto;
 import piq.piqproject.domain.ideals.dto.response.IdealResponseDto;
@@ -66,6 +71,36 @@ public class IdealService {
         }
 
         return ListResponseDto.from(idealResponseDtoList);
+    }
+
+    @Transactional
+    public IdealResponseDto addOptions(Long categoryId, CreateIdealOptionRequestDto createIdealOptionRequestDto) {
+        List<String> options = createIdealOptionRequestDto.getOptions();
+
+        //1. 요청된 옵션들의 중복 여부 확인
+        validateOptionsAreUnique(options);
+
+        //2. 카테고리 존재 여부 확인
+        IdealCategoryEntity category = idealCategoryRepository.findById(categoryId)
+                                .orElseThrow(() -> new NotFoundException(NOT_FOUND_CATEGORY));
+
+        //3. 옵션이 이미 존재하는 경우 
+        if (idealOptionRepository.existsByCategoryAndNameIn(category, options)) {
+            throw new ConflictException(ALREADY_EXISTS_IDEAL_OPTION);
+        }
+
+        //4. 옵션 엔티티 생성 및 저장
+        List<IdealOptionEntity> idealoptionList = options.stream()
+                                                .map(optionName -> IdealOptionEntity.of(category, optionName))
+                                                .toList();
+        idealOptionRepository.saveAll(idealoptionList);
+
+        //5. 응답 DTO로 변환
+        List<IdealOptionResponseDto> idealOptionResponseDtos = idealoptionList.stream()
+                        .map(IdealOptionResponseDto::of)
+                        .toList();
+
+        return IdealResponseDto.of(category, idealOptionResponseDtos);
     }
 
     /**

@@ -39,6 +39,7 @@ public enum ErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없습니다."),
     NOT_FOUND_SHOP(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다."),
     NOT_FOUND_INTEREST(HttpStatus.NOT_FOUND, "관심사 키워드를 찾을 수 없습니다."),
+    NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND, "이상형 카테고리를 찾을 수 없습니다."),
 
     // METHOD_NOT_ALLOWED (405) : 허용되지 않는 HTTP 메서드
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청하신 HTTP 메서드는 이 리소스에 허용되지 않습니다."),
@@ -49,6 +50,7 @@ public enum ErrorCode {
     ALREADY_EXISTS_INTEREST(HttpStatus.CONFLICT, "이미 존재하는 관심사 키워드입니다."),
     USER_INTERESTS_ALREADY_REGISTERED(HttpStatus.CONFLICT, "유저의 관심사는 이미 등록되어 있습니다."),
     ALREADY_EXISTS_IDEAL_CATEGORY(HttpStatus.CONFLICT, "이미 존재하는 카테고리입니다."),
+    ALREADY_EXISTS_IDEAL_OPTION(HttpStatus.CONFLICT, "이미 존재하는 옵션입니다."),
     DUPLICATE_IDEAL_OPTIONS(HttpStatus.CONFLICT, "하나의 카테고리 내에 중복된 옵션을 입력할 수 없습니다."),
 
     // INTERNAL_SERVER_ERROR (500) : 서버 오류
