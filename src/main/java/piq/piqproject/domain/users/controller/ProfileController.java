@@ -15,7 +15,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.list.ListResponseDto;
+import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
 import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.service.ProfileService;
@@ -80,5 +82,22 @@ public class ProfileController {
     {
         log.info("Request to upsert(insert + update) user interests. User: {}", user.getEmail());
         return ResponseEntity.ok(profileService.upsertUserInterests(user, userInterestRequestDto));
+    }
+
+    /**
+     * 현재 로그인된 사용자의 이상형을 생성 및 수정하는 API입니다.
+     * 
+     * @param userEntity             @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param UserIdealRequestDto 유저가 선택한 이상형 리스트를 담은 request dto
+     * @return 사용자의 이상형 리스트
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PutMapping("/me/ideals")
+    public ResponseEntity<ListResponseDto<UserIdealResponseDto>> upsertUserIdeals(
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserIdealRequestDto userIdealRequestDto) 
+    {
+        log.info("Request to upsert(insert + update) user ideals. User: {}", user.getEmail());
+        return ResponseEntity.ok(profileService.upsertUserIdeals(user, userIdealRequestDto));
     }
 }

@@ -1,5 +1,6 @@
 package piq.piqproject.domain.users.service;
 
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_IDEAL_OPTION;
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
 
 import java.util.List;
@@ -18,12 +19,18 @@ import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
 import piq.piqproject.common.list.ListResponseDto;
+import piq.piqproject.domain.ideals.entity.IdealOptionEntity;
+import piq.piqproject.domain.ideals.repository.IdealOptionRepository;
 import piq.piqproject.domain.interests.entity.InterestEntity;
 import piq.piqproject.domain.interests.repository.InterestRepository;
+import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
 import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.entity.UserIdealEntity;
 import piq.piqproject.domain.users.entity.UserInterestEntity;
+import piq.piqproject.domain.users.repository.UserIdealRepository;
 import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
 
@@ -43,6 +50,8 @@ public class ProfileService {
     private final FileUtil fileUtil;
     private final InterestRepository interestRepository;
     private final UserInterestRepository userInterestRepository;
+    private final IdealOptionRepository idealOptionRepository;
+    private final UserIdealRepository userIdealRepository;
 
     /**
      * 사용자의 프로필 음성을 업로드(또는 교체)하는 메서드
@@ -155,5 +164,36 @@ public class ProfileService {
                         .toList();
 
         return ListResponseDto.from(userInterestResponse);
+    }
+
+    @Transactional
+    public ListResponseDto<UserIdealResponseDto> upsertUserIdeals(UserEntity user, UserIdealRequestDto userIdealRequestDto) {
+        // 요청으로 들어온 이상형 옵션 ID들의 유효성을 검증
+        List<Long> idealOptionIds = userIdealRequestDto.getIdealOptionIds();
+        List<IdealOptionEntity> idealOptions = idealOptionRepository.findAllById(idealOptionIds);
+
+        // 요청된 ID의 수와 실제 조회된 관심사의 수가 다르면 예외 발생
+        if (idealOptions.size() != idealOptionIds.size()) {
+            throw new NotFoundException(NOT_FOUND_IDEAL_OPTION);
+        }
+
+        List<UserIdealEntity> userIdeals = userIdealRepository.findAllByUserId(user.getId()); 
+
+        // 기존 이상형이 있다면 한 번의 쿼리로 모두 삭제하여 성능을 최적화
+        if (!userIdeals.isEmpty()) {
+            userIdealRepository.deleteAllInBatch(userIdeals);
+        }
+        
+        List<UserIdealEntity> userIdealList = idealOptions.stream()
+                    .map(option -> UserIdealEntity.of(user, option))
+                    .toList();
+
+        userIdealRepository.saveAll(userIdealList);
+
+        List<UserIdealResponseDto> userIdealResponse = userIdealList.stream()
+                        .map(UserIdealResponseDto::of)
+                        .toList();
+
+        return ListResponseDto.from(userIdealResponse);
     }
 }

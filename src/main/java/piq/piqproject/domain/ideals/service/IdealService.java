@@ -2,7 +2,7 @@ package piq.piqproject.domain.ideals.service;
 
 import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDEAL_CATEGORY;
 import static piq.piqproject.common.error.exception.ErrorCode.DUPLICATE_IDEAL_OPTIONS;
-import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_CATEGORY;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_IDEAL_CATEGORY;
 import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDEAL_OPTION;
 
 import java.util.ArrayList;
@@ -82,7 +82,7 @@ public class IdealService {
 
         //2. 카테고리 존재 여부 확인
         IdealCategoryEntity category = idealCategoryRepository.findById(categoryId)
-                                .orElseThrow(() -> new NotFoundException(NOT_FOUND_CATEGORY));
+                                .orElseThrow(() -> new NotFoundException(NOT_FOUND_IDEAL_CATEGORY));
 
         //3. 옵션이 이미 존재하는 경우 
         if (idealOptionRepository.existsByCategoryAndNameIn(category, options)) {

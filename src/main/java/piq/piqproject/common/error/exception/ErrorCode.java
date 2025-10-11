@@ -39,7 +39,8 @@ public enum ErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없습니다."),
     NOT_FOUND_SHOP(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다."),
     NOT_FOUND_INTEREST(HttpStatus.NOT_FOUND, "관심사 키워드를 찾을 수 없습니다."),
-    NOT_FOUND_CATEGORY(HttpStatus.NOT_FOUND, "이상형 카테고리를 찾을 수 없습니다."),
+    NOT_FOUND_IDEAL_CATEGORY(HttpStatus.NOT_FOUND, "이상형 카테고리를 찾을 수 없습니다."),
+    NOT_FOUND_IDEAL_OPTION(HttpStatus.NOT_FOUND, "이상형 옵션을 찾을 수 없습니다."),
 
     // METHOD_NOT_ALLOWED (405) : 허용되지 않는 HTTP 메서드
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "요청하신 HTTP 메서드는 이 리소스에 허용되지 않습니다."),
