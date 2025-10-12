@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,6 +65,18 @@ public class IdealController {
         
         return ResponseEntity.status(201)
                         .body(idealService.addOptions(categoryId, createIdealOptionRequestDto));
+    }
+
+    /**
+     * 이상형 카테고리와 하위 옵션들을 조회하는 API입니다. 
+     * 
+     * @return 저장되어 있는 카테고리와 하위 옵션 리스트 
+     */
+    @GetMapping("/all")
+    public ResponseEntity<ListResponseDto<IdealResponseDto>> getIdeals() {
+        log.info("Request to get categies and options for ideal ");
+        
+        return ResponseEntity.ok(idealService.getIdeals());
     }
     
 }

@@ -1,7 +1,5 @@
 package piq.piqproject.domain.ideals.dto.response;
 
-import java.util.List;
-
 import lombok.Builder;
 import lombok.Getter;
 import piq.piqproject.domain.ideals.entity.IdealOptionEntity;

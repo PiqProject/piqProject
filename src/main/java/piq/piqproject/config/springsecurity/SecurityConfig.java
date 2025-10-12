@@ -43,6 +43,7 @@ public class SecurityConfig {
             "/api/v1/reviews",
             "/api/v1/shops/all",
             "/api/v1/interests/all",
+            "/api/v1/ideals/all",
             "/h2-console/**", // H2 콘솔 접근 허용
             "/swagger-ui/**", // Swagger UI 접근 허용
             "/v3/api-docs/**", // Swagger API 문서 접근 허용

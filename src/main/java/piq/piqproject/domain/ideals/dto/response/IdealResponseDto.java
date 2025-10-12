@@ -9,20 +9,20 @@ import piq.piqproject.domain.ideals.entity.IdealCategoryEntity;
 
 @Getter
 public class IdealResponseDto implements Listable {
-    private final Long id;
+    private final Long categoryId;
     private final String categoryName;
     private final List<IdealOptionResponseDto> options;
 
     @Builder
-    public IdealResponseDto(Long id, String categoryName, List<IdealOptionResponseDto> options) {
-        this.id = id;
+    public IdealResponseDto(Long categoryId, String categoryName, List<IdealOptionResponseDto> options) {
+        this.categoryId = categoryId;
         this.categoryName = categoryName;
         this.options = options;
     }
 
     public static IdealResponseDto of(IdealCategoryEntity idealCategory, List<IdealOptionResponseDto> options) {
         return IdealResponseDto.builder()
-                .id(idealCategory.getId())
+                .categoryId(idealCategory.getId())
                 .categoryName(idealCategory.getName())
                 .options(options)
                 .build();

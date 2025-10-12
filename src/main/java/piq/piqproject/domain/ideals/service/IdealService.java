@@ -1,15 +1,14 @@
 package piq.piqproject.domain.ideals.service;
 
 import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDEAL_CATEGORY;
+import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDEAL_OPTION;
 import static piq.piqproject.common.error.exception.ErrorCode.DUPLICATE_IDEAL_OPTIONS;
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_IDEAL_CATEGORY;
-import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDEAL_OPTION;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,6 +100,21 @@ public class IdealService {
                         .toList();
 
         return IdealResponseDto.of(category, idealOptionResponseDtos);
+    }
+
+    @Transactional(readOnly = true)
+    public ListResponseDto<IdealResponseDto> getIdeals() {
+        List<IdealCategoryEntity> idealCategoryList = idealCategoryRepository.findAll();
+
+        List<IdealResponseDto> idealResponseDtos = idealCategoryList.stream()
+                        .map(category -> {
+                            List<IdealOptionEntity> idealOptionList = idealOptionRepository.findAllByCategoryId(category.getId());
+                            List<IdealOptionResponseDto> idealOptionResponseDto = idealOptionList.stream().map(IdealOptionResponseDto::of).toList();
+                            return IdealResponseDto.of(category, idealOptionResponseDto);
+                        })
+                        .toList();
+        
+        return ListResponseDto.from(idealResponseDtos);
     }
 
     /**
