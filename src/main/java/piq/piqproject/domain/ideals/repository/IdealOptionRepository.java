@@ -14,5 +14,4 @@ public interface IdealOptionRepository extends JpaRepository<IdealOptionEntity,L
 
     @Query("SELECT ioe FROM IdealOptionEntity ioe JOIN FETCH ioe.category ice WHERE ice.id = :categoryId")
     List<IdealOptionEntity> findAllByCategoryId(@Param("categoryId") Long categoryId);
-
 } 

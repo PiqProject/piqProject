@@ -4,6 +4,7 @@ import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDE
 import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_IDEAL_OPTION;
 import static piq.piqproject.common.error.exception.ErrorCode.DUPLICATE_IDEAL_OPTIONS;
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_IDEAL_CATEGORY;
+import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_IDEAL_OPTION;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,11 +14,13 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.ideals.dto.request.CreateIdealOptionRequestDto;
+import piq.piqproject.domain.ideals.dto.request.DeleteIdealOptionRequestDto;
 import piq.piqproject.domain.ideals.dto.request.IdealRequestDto;
 import piq.piqproject.domain.ideals.dto.response.IdealOptionResponseDto;
 import piq.piqproject.domain.ideals.dto.response.IdealResponseDto;
@@ -115,6 +118,19 @@ public class IdealService {
                         .toList();
         
         return ListResponseDto.from(idealResponseDtos);
+    }
+
+    @Transactional
+    public void deleteOptions(DeleteIdealOptionRequestDto deleteIdealOptionResponseDto) {
+
+        List<Long> optionIds = deleteIdealOptionResponseDto.getOptions();
+        List<IdealOptionEntity> idealOptionList = idealOptionRepository.findAllById(optionIds);
+        
+        if (idealOptionList.size() != deleteIdealOptionResponseDto.getOptions().size()) {
+            throw new NotFoundException(NOT_FOUND_IDEAL_OPTION);
+        }
+
+        idealOptionRepository.deleteAllInBatch(idealOptionList);
     }
 
     /**

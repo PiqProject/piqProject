@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.ideals.dto.request.CreateIdealOptionRequestDto;
+import piq.piqproject.domain.ideals.dto.request.DeleteIdealOptionRequestDto;
 import piq.piqproject.domain.ideals.dto.request.IdealRequestDto;
 import piq.piqproject.domain.ideals.dto.response.IdealResponseDto;
 import piq.piqproject.domain.ideals.service.IdealService;
@@ -58,7 +59,7 @@ public class IdealController {
     @PostMapping("/{categoryId}/options")
     public ResponseEntity<IdealResponseDto> addOptions(
         @AuthenticationPrincipal UserEntity user,
-        @PathVariable Long categoryId,
+        @PathVariable("categoryId") Long categoryId,
         @Valid @RequestBody CreateIdealOptionRequestDto createIdealOptionRequestDto
     ) {
         log.info("Request to add options for ideal category {}. User: {}", categoryId, user.getEmail());
@@ -78,5 +79,16 @@ public class IdealController {
         
         return ResponseEntity.ok(idealService.getIdeals());
     }
-    
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/delete")
+    public ResponseEntity<String> deleteOptions(
+        @AuthenticationPrincipal UserEntity user,
+        @Valid @RequestBody DeleteIdealOptionRequestDto deleteIdealOptionResponseDto
+    ) {
+        log.info("Request to delete options for ideal User: {}", user.getEmail());
+        idealService.deleteOptions(deleteIdealOptionResponseDto);
+        
+        return ResponseEntity.ok("카테고리 내 옵션이 삭제되었습니다.");
+    }
 }
