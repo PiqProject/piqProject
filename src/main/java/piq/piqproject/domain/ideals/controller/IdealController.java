@@ -81,7 +81,7 @@ public class IdealController {
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @PostMapping("/delete")
+    @PostMapping("/options/delete")
     public ResponseEntity<String> deleteOptions(
         @AuthenticationPrincipal UserEntity user,
         @Valid @RequestBody DeleteIdealOptionRequestDto deleteIdealOptionResponseDto
@@ -90,5 +90,17 @@ public class IdealController {
         idealService.deleteOptions(deleteIdealOptionResponseDto);
         
         return ResponseEntity.ok("카테고리 내 옵션이 삭제되었습니다.");
+    }
+
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/{categoryId}/delete")
+    public ResponseEntity<String> deleteCategoey(
+        @AuthenticationPrincipal UserEntity user,
+        @PathVariable("categoryId") Long categoryId
+    ) {
+        log.info("Request to delete category for ideal CategoryId: {} User: {}", categoryId, user.getEmail());
+        idealService.deleteCategoey(categoryId);
+        
+        return ResponseEntity.ok("카테고리 및 하위 옵션들이 삭제되었습니다.");
     }
 }

@@ -14,7 +14,6 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.NotFoundException;
@@ -131,6 +130,17 @@ public class IdealService {
         }
 
         idealOptionRepository.deleteAllInBatch(idealOptionList);
+    }
+
+    @Transactional
+    public void deleteCategoey(Long categoryId) {
+        IdealCategoryEntity idealCategory =idealCategoryRepository.findById(categoryId)
+                                                        .orElseThrow(() -> new NotFoundException(NOT_FOUND_IDEAL_CATEGORY));
+
+        List<IdealOptionEntity> idealOptionEntityList = idealOptionRepository.findAllByCategory(idealCategory);
+        
+        idealOptionRepository.deleteAll(idealOptionEntityList);
+        idealCategoryRepository.delete(idealCategory);
     }
 
     /**
