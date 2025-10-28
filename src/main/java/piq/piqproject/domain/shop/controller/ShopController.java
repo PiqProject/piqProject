@@ -30,18 +30,16 @@ public class ShopController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<ShopResponseDto> createShop(
-        @AuthenticationPrincipal UserEntity user,
-        @Valid @RequestBody ShopRequestDto shopRequestDto
-    ) {
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody ShopRequestDto shopRequestDto) {
         log.info("Request to create an Shop. User: {}", user.getUsername());
 
         return ResponseEntity.status(201)
-                    .body(shopService.createShop(shopRequestDto));
+                .body(shopService.createShop(shopRequestDto));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<ListResponseDto<ShopResponseDto>> getShops(
-    ) {
+    public ResponseEntity<ListResponseDto<ShopResponseDto>> getShops() {
         log.info("Request to get shops.");
 
         return ResponseEntity.ok(shopService.getShops());
@@ -50,10 +48,9 @@ public class ShopController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{shopId}")
     public ResponseEntity<ShopResponseDto> updateShop(
-        @AuthenticationPrincipal UserEntity user,
-        @PathVariable("shopId") Long shopId,
-        @Valid @RequestBody ShopRequestDto shopRequestDto
-    ) {
+            @AuthenticationPrincipal UserEntity user,
+            @PathVariable("shopId") Long shopId,
+            @Valid @RequestBody ShopRequestDto shopRequestDto) {
         log.info("Request to update an Shop. User: {} ShopId: {}", user.getUsername(), shopId);
 
         return ResponseEntity.ok(shopService.updateShop(shopId, shopRequestDto));
@@ -62,9 +59,8 @@ public class ShopController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/{shopId}/delete")
     public ResponseEntity<String> deleteShop(
-        @AuthenticationPrincipal UserEntity user,
-        @PathVariable("shopId") Long shopId
-    ) {
+            @AuthenticationPrincipal UserEntity user,
+            @PathVariable("shopId") Long shopId) {
         log.info("Request to delete an Shop. User: {} ShopId: {}", user.getUsername(), shopId);
 
         shopService.deleteShop(shopId);

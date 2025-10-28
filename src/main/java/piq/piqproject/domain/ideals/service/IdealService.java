@@ -36,10 +36,10 @@ public class IdealService {
     private final IdealOptionRepository idealOptionRepository;
     private final UserIdealRepository userIdealRepository;
 
-    @Transactional 
-    public ListResponseDto<IdealResponseDto> createCategoriesWithOptions (List<IdealRequestDto> idealRequestDtos) {
+    @Transactional
+    public ListResponseDto<IdealResponseDto> createCategoriesWithOptions(List<IdealRequestDto> idealRequestDtos) {
 
-        List<IdealResponseDto> idealResponseDtoList = new ArrayList<>();  
+        List<IdealResponseDto> idealResponseDtoList = new ArrayList<>();
 
         for (IdealRequestDto ideal : idealRequestDtos) {
 
@@ -60,14 +60,14 @@ public class IdealService {
 
             // 4. 옵션 엔티티들 생성 및 저장
             List<IdealOptionEntity> optionEntityList = options.stream()
-                                    .map(optionName -> IdealOptionEntity.of(categoryEntity, optionName))
-                                    .toList();
+                    .map(optionName -> IdealOptionEntity.of(categoryEntity, optionName))
+                    .toList();
             idealOptionRepository.saveAll(optionEntityList);
-            
+
             // 5. 생성된 엔티티를 응답 DTO로 변환하여 리스트에 추가
-            List<IdealOptionResponseDto> idealOptions= optionEntityList.stream()
-                                    .map(IdealOptionResponseDto::of)
-                                    .toList();
+            List<IdealOptionResponseDto> idealOptions = optionEntityList.stream()
+                    .map(IdealOptionResponseDto::of)
+                    .toList();
 
             IdealResponseDto idealResponse = IdealResponseDto.of(categoryEntity, idealOptions);
             idealResponseDtoList.add(idealResponse);
@@ -80,28 +80,28 @@ public class IdealService {
     public IdealResponseDto addOptions(Long categoryId, CreateIdealOptionRequestDto createIdealOptionRequestDto) {
         List<String> options = createIdealOptionRequestDto.getOptions();
 
-        //1. 요청된 옵션들의 중복 여부 확인
+        // 1. 요청된 옵션들의 중복 여부 확인
         validateOptionsAreUnique(options);
 
-        //2. 카테고리 존재 여부 확인
+        // 2. 카테고리 존재 여부 확인
         IdealCategoryEntity category = idealCategoryRepository.findById(categoryId)
-                                .orElseThrow(() -> new NotFoundException(NOT_FOUND_IDEAL_CATEGORY));
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_IDEAL_CATEGORY));
 
-        //3. 옵션이 이미 존재하는 경우 
+        // 3. 옵션이 이미 존재하는 경우
         if (idealOptionRepository.existsByCategoryAndNameIn(category, options)) {
             throw new ConflictException(ALREADY_EXISTS_IDEAL_OPTION);
         }
 
-        //4. 옵션 엔티티 생성 및 저장
+        // 4. 옵션 엔티티 생성 및 저장
         List<IdealOptionEntity> idealoptionList = options.stream()
-                                                .map(optionName -> IdealOptionEntity.of(category, optionName))
-                                                .toList();
+                .map(optionName -> IdealOptionEntity.of(category, optionName))
+                .toList();
         idealOptionRepository.saveAll(idealoptionList);
 
-        //5. 응답 DTO로 변환
+        // 5. 응답 DTO로 변환
         List<IdealOptionResponseDto> idealOptionResponseDtos = idealoptionList.stream()
-                        .map(IdealOptionResponseDto::of)
-                        .toList();
+                .map(IdealOptionResponseDto::of)
+                .toList();
 
         return IdealResponseDto.of(category, idealOptionResponseDtos);
     }
@@ -111,13 +111,15 @@ public class IdealService {
         List<IdealCategoryEntity> idealCategoryList = idealCategoryRepository.findAll();
 
         List<IdealResponseDto> idealResponseDtos = idealCategoryList.stream()
-                        .map(category -> {
-                            List<IdealOptionEntity> idealOptionList = idealOptionRepository.findAllByCategoryId(category.getId());
-                            List<IdealOptionResponseDto> idealOptionResponseDto = idealOptionList.stream().map(IdealOptionResponseDto::of).toList();
-                            return IdealResponseDto.of(category, idealOptionResponseDto);
-                        })
-                        .toList();
-        
+                .map(category -> {
+                    List<IdealOptionEntity> idealOptionList = idealOptionRepository
+                            .findAllByCategoryId(category.getId());
+                    List<IdealOptionResponseDto> idealOptionResponseDto = idealOptionList.stream()
+                            .map(IdealOptionResponseDto::of).toList();
+                    return IdealResponseDto.of(category, idealOptionResponseDto);
+                })
+                .toList();
+
         return ListResponseDto.from(idealResponseDtos);
     }
 
@@ -126,7 +128,7 @@ public class IdealService {
 
         List<Long> optionIds = deleteIdealOptionResponseDto.getOptions();
         List<IdealOptionEntity> idealOptionList = idealOptionRepository.findAllById(optionIds);
-        
+
         if (idealOptionList.size() != deleteIdealOptionResponseDto.getOptions().size()) {
             throw new NotFoundException(NOT_FOUND_IDEAL_OPTION);
         }
@@ -136,9 +138,9 @@ public class IdealService {
 
     @Transactional
     public void deleteCategoey(Long categoryId) {
-        IdealCategoryEntity idealCategory =idealCategoryRepository.findById(categoryId)
-                                                        .orElseThrow(() -> new NotFoundException(NOT_FOUND_IDEAL_CATEGORY));
-        
+        IdealCategoryEntity idealCategory = idealCategoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_IDEAL_CATEGORY));
+
         idealCategoryRepository.delete(idealCategory);
     }
 
