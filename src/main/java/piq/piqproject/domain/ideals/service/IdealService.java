@@ -27,12 +27,14 @@ import piq.piqproject.domain.ideals.entity.IdealCategoryEntity;
 import piq.piqproject.domain.ideals.entity.IdealOptionEntity;
 import piq.piqproject.domain.ideals.repository.IdealCategoryRepository;
 import piq.piqproject.domain.ideals.repository.IdealOptionRepository;
+import piq.piqproject.domain.users.repository.UserIdealRepository;
 
 @Service
 @RequiredArgsConstructor
 public class IdealService {
     private final IdealCategoryRepository idealCategoryRepository;
     private final IdealOptionRepository idealOptionRepository;
+    private final UserIdealRepository userIdealRepository;
 
     @Transactional 
     public ListResponseDto<IdealResponseDto> createCategoriesWithOptions (List<IdealRequestDto> idealRequestDtos) {
@@ -129,17 +131,14 @@ public class IdealService {
             throw new NotFoundException(NOT_FOUND_IDEAL_OPTION);
         }
 
-        idealOptionRepository.deleteAllInBatch(idealOptionList);
+        idealOptionRepository.deleteAll(idealOptionList);
     }
 
     @Transactional
     public void deleteCategoey(Long categoryId) {
         IdealCategoryEntity idealCategory =idealCategoryRepository.findById(categoryId)
                                                         .orElseThrow(() -> new NotFoundException(NOT_FOUND_IDEAL_CATEGORY));
-
-        List<IdealOptionEntity> idealOptionEntityList = idealOptionRepository.findAllByCategory(idealCategory);
         
-        idealOptionRepository.deleteAll(idealOptionEntityList);
         idealCategoryRepository.delete(idealCategory);
     }
 
