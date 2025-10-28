@@ -7,30 +7,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.NotFoundException;
-import piq.piqproject.common.list.ListResponseDto;
-import piq.piqproject.domain.interests.entity.InterestEntity;
-import piq.piqproject.domain.interests.repository.InterestRepository;
-import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
-import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
 import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
 import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
-import piq.piqproject.domain.users.entity.UserInterestEntity;
 import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.enums.Role;
-import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
-
-import java.util.List;
-
-import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
-import static piq.piqproject.common.error.exception.ErrorCode.USER_INTERESTS_ALREADY_REGISTERED;
 
 /**
  * UserService는 사용자를 가져오거나 삭제하는 비즈니스 로직을 담당합니다.
@@ -47,8 +33,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder; // DI 주입
-    private final InterestRepository interestRepository;
-    private final UserInterestRepository userInterestRepository;
 
     @Transactional(readOnly = true)
     public MyProfileResponseDto findMyProfile(Long userId) {
@@ -106,32 +90,5 @@ public class UserService {
 
         // 4. DB에 저장
         userRepository.save(adminUser);
-    }
-
-    @Transactional
-    public ListResponseDto<UserInterestResponseDto> registerUserInterests(UserEntity user, UserInterestRequestDto userInterestRequestDto) {
-
-        if (userInterestRepository.existsByUser(user)) {
-            throw new ConflictException(USER_INTERESTS_ALREADY_REGISTERED);
-        }
-
-        List<Long> interestIds = userInterestRequestDto.getInterestIds();
-        List<InterestEntity> interests = interestRepository.findAllById(interestIds);
-
-        if (interests.size() != interestIds.size()) {
-            throw new NotFoundException(NOT_FOUND_INTEREST);
-        }
-
-        List<UserInterestEntity> userInterestList = interests.stream()
-                    .map(interest -> UserInterestEntity.of(user, interest))
-                    .toList();
-
-        userInterestRepository.saveAll(userInterestList);
-
-        List<UserInterestResponseDto> userInterestResponse = userInterestList.stream()
-                        .map(UserInterestResponseDto::of)
-                        .toList();
-
-        return ListResponseDto.from(userInterestResponse);
     }
 }

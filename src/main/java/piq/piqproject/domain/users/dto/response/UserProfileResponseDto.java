@@ -25,6 +25,8 @@ public class UserProfileResponseDto implements Listable {
     private final String introduce;
     private final ListResponseDto<UserImageResponseDto> userImages;
     private final String voiceUrl;
+    private final ListResponseDto<UserInterestResponseDto> userInterests;
+    private final ListResponseDto<UserIdealResponseDto> userIdeals;
 
     /**
      * UserEntity를 UserProfileResponseDto로 변환하는 정적 팩토리 메서드입니다.
@@ -36,8 +38,21 @@ public class UserProfileResponseDto implements Listable {
                 .map(UserImageResponseDto::from)
                 .collect(Collectors.toList());
 
+        // UserEntity에서 UserInterestEntity 리스트를 가져와 UserInterestResponsDto로 변환
+        List<UserInterestResponseDto> interestDtoList = user.getUserInterests().stream()
+                .map(UserInterestResponseDto::of)
+                .toList();
+        
+        // UserEntity에서 UserIdealEntity 리스트를 가져와 UserIdealResponsDto로 변환
+        List<UserIdealResponseDto> idealDtoList = user.getUserIdeals().stream()
+                .map(UserIdealResponseDto::of)
+                .toList();
+
+
         // 2. 변환된 DTO 리스트를 ListResponseDto.from()을 사용하여 감싸줍니다.
         ListResponseDto<UserImageResponseDto> imageListResponse = ListResponseDto.from(imageDtoList);
+        ListResponseDto<UserInterestResponseDto> interestListResponse = ListResponseDto.from(interestDtoList);
+        ListResponseDto<UserIdealResponseDto> idealListResponse = ListResponseDto.from(idealDtoList);
 
         // 3. 최종적으로 UserProfileResponseDto를 빌드합니다.
         return UserProfileResponseDto.builder()
@@ -51,6 +66,8 @@ public class UserProfileResponseDto implements Listable {
                 .introduce(user.getIntroduce())
                 .userImages(imageListResponse) // 완성된 ListResponseDto를 할당합니다.
                 .voiceUrl(user.getVoiceUrl())
+                .userInterests(interestListResponse)
+                .userIdeals(idealListResponse)
                 .build();
     }
 }

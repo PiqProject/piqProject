@@ -10,12 +10,14 @@ public class UserInterestResponseDto implements Listable {
     private Long id;
     private Long userId;
     private Long interestId;
+    private String interestName;
 
     @Builder
-    private UserInterestResponseDto(Long id, Long userId, Long interestId) {
+    private UserInterestResponseDto(Long id, Long userId, Long interestId, String interestName) {
         this.id = id;
         this.userId = userId;
         this.interestId = interestId;
+        this.interestName = interestName;
     }
 
     public static UserInterestResponseDto of(UserInterestEntity userInterestEntity) {
@@ -23,7 +25,7 @@ public class UserInterestResponseDto implements Listable {
                 .id(userInterestEntity.getId())
                 .userId(userInterestEntity.getUser().getId())
                 .interestId(userInterestEntity.getInterest().getId())
+                .interestName(userInterestEntity.getInterest().getKeyword())
                 .build();
-
     }
 }
