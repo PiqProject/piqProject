@@ -26,6 +26,8 @@ public class MyProfileResponseDto {
     private Boolean isActive;
     private ListResponseDto<UserImageResponseDto> userImages;
     private String voiceUrl;
+    private ListResponseDto<UserInterestResponseDto> userInterests;
+    private ListResponseDto<UserIdealResponseDto> userIdeals;
 
     // 생성자
     @Builder
@@ -33,7 +35,10 @@ public class MyProfileResponseDto {
             Integer age,
             Gender gender,
             String mbti, String introduce, Integer pqPoint, Boolean isActive, Double score,
-            ListResponseDto<UserImageResponseDto> userImages, String voiceUrl) {
+            ListResponseDto<UserImageResponseDto> userImages, String voiceUrl, 
+            ListResponseDto<UserInterestResponseDto> userInterests, 
+            ListResponseDto<UserIdealResponseDto> userIdeals
+    ) {
         this.id = id;
         this.nickname = nickname;
         this.email = email;
@@ -48,6 +53,8 @@ public class MyProfileResponseDto {
         this.score = score;
         this.userImages = userImages;
         this.voiceUrl = voiceUrl;
+        this.userInterests = userInterests;
+        this.userIdeals = userIdeals;
     }
 
     public static MyProfileResponseDto from(UserEntity userEntity) {
@@ -56,8 +63,21 @@ public class MyProfileResponseDto {
                 .map(UserImageResponseDto::from)
                 .collect(Collectors.toList());
 
+        // UserEntity에서 UserInterestEntity 리스트를 가져와 UserInterestResponsDto로 변환
+        List<UserInterestResponseDto> interestDtoList = userEntity.getUserInterests().stream()
+                .map(UserInterestResponseDto::of)
+                .toList();
+        
+        // UserEntity에서 UserIdealEntity 리스트를 가져와 UserIdealResponsDto로 변환
+        List<UserIdealResponseDto> idealDtoList = userEntity.getUserIdeals().stream()
+                .map(UserIdealResponseDto::of)
+                .toList();
+
+
         // 2. 변환된 DTO 리스트를 ListResponseDto로 감싸기
         ListResponseDto<UserImageResponseDto> imageListResponse = ListResponseDto.from(imageDtoList);
+        ListResponseDto<UserInterestResponseDto> interestListResponse = ListResponseDto.from(interestDtoList);
+        ListResponseDto<UserIdealResponseDto> idealListResponse = ListResponseDto.from(idealDtoList);
 
         // 3. 최종 DTO 빌드
         return MyProfileResponseDto.builder()
@@ -75,6 +95,8 @@ public class MyProfileResponseDto {
                 .score(userEntity.getScore())
                 .userImages(imageListResponse)
                 .voiceUrl(userEntity.getVoiceUrl())
+                .userInterests(interestListResponse)
+                .userIdeals(idealListResponse)
                 .build();
     }
 }
