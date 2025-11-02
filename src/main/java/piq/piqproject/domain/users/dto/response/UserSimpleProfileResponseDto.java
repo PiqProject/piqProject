@@ -39,7 +39,7 @@ public class UserSimpleProfileResponseDto implements Listable {
                 .age(user.getAge())
                 .gender(user.getGender())
                 .mbti(user.getMbti())
-                .score(user.getScore())
+                .score(user.getAverageScore())
                 .isActive(user.getIsActive())
                 .mainImageUrl(mainImageUrl) // 빌더에 추가
                 .voiceUrl(user.getVoiceUrl())

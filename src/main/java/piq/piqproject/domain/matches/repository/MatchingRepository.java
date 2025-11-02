@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import piq.piqproject.domain.matches.entity.MatchingEntity;
+import piq.piqproject.domain.users.entity.UserEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,4 +31,10 @@ public interface MatchingRepository extends JpaRepository<MatchingEntity, Long> 
 
     @Query("SELECT m FROM MatchingEntity m JOIN FETCH m.sender s JOIN FETCH m.receiver r WHERE r.id = :receiverId")
     Page<MatchingEntity> findByReceiverIdWithUsers(@Param("receiverId") Long receiverId, Pageable pageable);
+
+
+    @Query("SELECT m FROM MatchingEntity m WHERE " +
+           "(m.sender.id = :user1Id AND m.receiver.id = :user2Id) OR " +
+           "(m.sender.id = :user2Id AND m.receiver.id = :user1Id)")
+    Optional<MatchingEntity> findMatchBetweenUsers(@Param("user1Id") Long user1Id, @Param("user2Id") Long user2Id);
 }
