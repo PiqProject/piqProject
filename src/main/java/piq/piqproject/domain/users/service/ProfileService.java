@@ -5,16 +5,19 @@ import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST
 
 import java.util.List;
 
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
+import piq.piqproject.common.error.exception.InvalidRequestException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
@@ -23,10 +26,15 @@ import piq.piqproject.domain.ideals.entity.IdealOptionEntity;
 import piq.piqproject.domain.ideals.repository.IdealOptionRepository;
 import piq.piqproject.domain.interests.entity.InterestEntity;
 import piq.piqproject.domain.interests.repository.InterestRepository;
+import piq.piqproject.domain.matches.entity.MatchingEntity;
+import piq.piqproject.domain.matches.enums.MatchingStatus;
+import piq.piqproject.domain.matches.repository.MatchingRepository;
 import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
 import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
+import piq.piqproject.domain.users.dto.response.UserScoreResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.entity.UserIdealEntity;
 import piq.piqproject.domain.users.entity.UserInterestEntity;
@@ -52,6 +60,7 @@ public class ProfileService {
     private final UserInterestRepository userInterestRepository;
     private final IdealOptionRepository idealOptionRepository;
     private final UserIdealRepository userIdealRepository;
+    private final MatchingRepository matchingRepository;
 
     /**
      * 사용자의 프로필 음성을 업로드(또는 교체)하는 메서드
@@ -195,5 +204,33 @@ public class ProfileService {
                         .toList();
 
         return ListResponseDto.from(userIdealResponse);
+    }
+
+    @Transactional
+    public UserScoreResponseDto scoreUser(UserEntity scorerUser, UserScoreRequestDto userScoreRequestDto) { 
+        
+        Long scorerId = scorerUser.getId();
+        Long targetId = userScoreRequestDto.getTargerUserId(); 
+
+        // 1. 점수를 받을 유저(targetUser)를 조회합니다.
+        UserEntity targetUser = userRepository.findById(targetId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "점수를 받을 유저를 찾을 수 없습니다."));
+
+        // 2. 두 유저 간의 매칭 정보를 조회합니다.
+        // sender, receiver 순서에 상관없이 매칭을 찾아야 합니다.
+        MatchingEntity match = matchingRepository.findMatchBetweenUsers(scorerId, targetId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "두 유저 간의 매칭 정보를 찾을 수 없습니다."));
+
+        // 3. 매칭 상태가 'SUCCESS'가 아니면 예외를 발생시킵니다.
+        if (match.getStatus() != MatchingStatus.SUCCESS) {
+            throw new InvalidRequestException(ErrorCode.INVALID_MATCH_STATUS);
+        }
+
+        // 5. targetUser의 점수를 업데이트합니다. (평균 계산 로직은 UserEntity로 위임)
+        int score = userScoreRequestDto.getScore();
+        targetUser.updateScore(score);
+        
+        // 7. 변경된 유저의 최종 정보를 담아 DTO로 반환합니다.
+        return UserScoreResponseDto.of(targetUser.getNickname(), targetUser.getAverageScore());   
     }
 }

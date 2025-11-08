@@ -92,7 +92,7 @@ public class MyProfileResponseDto {
                 .introduce(userEntity.getIntroduce())
                 .pqPoint(userEntity.getPqPoint())
                 .isActive(userEntity.getIsActive())
-                .score(userEntity.getScore())
+                .score(userEntity.getAverageScore())
                 .userImages(imageListResponse)
                 .voiceUrl(userEntity.getVoiceUrl())
                 .userInterests(interestListResponse)

@@ -62,7 +62,7 @@ public class UserProfileResponseDto implements Listable {
                 .age(user.getAge())
                 .gender(user.getGender())
                 .mbti(user.getMbti())
-                .score(user.getScore())
+                .score(user.getAverageScore())
                 .introduce(user.getIntroduce())
                 .userImages(imageListResponse) // 완성된 ListResponseDto를 할당합니다.
                 .voiceUrl(user.getVoiceUrl())

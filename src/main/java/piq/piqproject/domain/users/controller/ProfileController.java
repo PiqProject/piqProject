@@ -17,8 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
 import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
+import piq.piqproject.domain.users.dto.response.UserScoreResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.service.ProfileService;
 
@@ -99,5 +101,22 @@ public class ProfileController {
     {
         log.info("Request to upsert(insert + update) user ideals. User: {}", user.getEmail());
         return ResponseEntity.ok(profileService.upsertUserIdeals(user, userIdealRequestDto));
+    }
+
+    /**
+     * 매칭이후 상대방의 매너 점수를 매기는 API입니다. 
+     * 
+     * @param userEntity             @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param UserScoreRequestDto 매칭 상대에 대한 점수를 담은 request dto
+     * @return UserScoreResponseDto (점수를 매긴 유저 id, 상대 user 정보, 매긴 점수)
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PutMapping("/score")
+    public ResponseEntity<UserScoreResponseDto> scoreUser(
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserScoreRequestDto userScoreRequestDto) 
+    {
+        log.info("Request to score user User: {}", user.getEmail());
+        return ResponseEntity.ok(profileService.scoreUser(user, userScoreRequestDto));
     }
 }

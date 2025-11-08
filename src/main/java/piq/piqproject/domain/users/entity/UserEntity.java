@@ -86,8 +86,14 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name="mbti", nullable = true, length = 10) // NULL 허용, MBTI는 4글자
     private String mbti;
     
-    @Column(name="score", nullable = false) //신뢰점수
-    private Double score;
+    @Column(name = "total_score", nullable = false)
+    private Double totalScore = 0.0; // 사용자가 받은 총점
+
+    @Column(name = "score_count", nullable = false)
+    private int scoreCount = 0; // 사용자가 평가받은 횟수
+
+    @Column(name = "average_score", nullable = false)
+    private Double averageScore = 0.0; // 계산된 평균 점수 (기존 score 필드의 역할)
     
     @Column(name="pq_point", nullable = false) //돈
     private Integer pqPoint;
@@ -125,7 +131,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
     // Builder 패턴을 사용하여 객체 생성 가능 (new로 불가)
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
-            Integer age, Gender gender, String mbti, Double score,
+            Integer age, Gender gender, String mbti,
             Integer pqPoint, String introduce, Boolean isActive) {
         this.email = email;
         this.nickname = nickname;
@@ -135,7 +141,6 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.age = age;
         this.gender = gender;
         this.mbti = mbti;
-        this.score = score;
         this.pqPoint = pqPoint;
         this.introduce = introduce;
         this.isActive = isActive;
@@ -161,7 +166,6 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 .age(age)
                 .gender(gender)
                 .mbti(mbti)
-                .score(.0)
                 .introduce(introduce)
                 // ▼ 회원가입 시 서버에서 설정해주는 기본값들
                 .pqPoint(pqPoint)
@@ -261,6 +265,13 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Override
     public boolean isEnabled() {
         return this.isActive; // DB의 isActive 필드와 연동
+    }
+
+    public void updateScore(int score) {
+        this.totalScore += (double) score;
+        this.scoreCount++;
+        // 0으로 나누는 것을 방지 (논리상 scoreCount는 항상 1 이상이 됨)
+        this.averageScore = this.totalScore / this.scoreCount;
     }
      
 }
