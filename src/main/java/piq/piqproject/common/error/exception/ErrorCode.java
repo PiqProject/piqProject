@@ -16,6 +16,7 @@ public enum ErrorCode {
     JWT_TOKEN_MISSING(HttpStatus.BAD_REQUEST, "JWT 토큰이 제공되지 않았거나 유효하지 않습니다."),
     POST_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "해당 URL에서 접근할 수 없는 타입의 게시글입니다."),
     INVALID_MATCH_STATUS(HttpStatus.BAD_REQUEST, "성사된 매칭에 대해서만 점수를 매길 수 있습니다."),
+    INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "결제 금액이 유효하지 않습니다."),
 
     // UNAUTHORIZED (401) : 인증되지 않은 접근,
     JWT_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "JWT 토큰이 만료되었습니다."),
@@ -38,7 +39,7 @@ public enum ErrorCode {
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없습니다."),
-    NOT_FOUND_SHOP(HttpStatus.NOT_FOUND, "가게를 찾을 수 없습니다."),
+    NOT_FOUND_PRODUCT(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."),
     NOT_FOUND_INTEREST(HttpStatus.NOT_FOUND, "관심사 키워드를 찾을 수 없습니다."),
     NOT_FOUND_IDEAL_CATEGORY(HttpStatus.NOT_FOUND, "이상형 카테고리를 찾을 수 없습니다."),
     NOT_FOUND_IDEAL_OPTION(HttpStatus.NOT_FOUND, "이상형 옵션을 찾을 수 없습니다."),

@@ -1,4 +1,4 @@
-package piq.piqproject.domain.shop.entity;
+package piq.piqproject.domain.products.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,10 +13,10 @@ import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
 
 @Entity
-@Table(name = "shops")
+@Table(name = "products")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ShopEntity extends BaseEntity{
+public class ProductEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -28,13 +28,13 @@ public class ShopEntity extends BaseEntity{
     private int point;
 
     @Builder
-    private ShopEntity (int price, int point) {
+    private ProductEntity(int price, int point) {
         this.price = price;
         this.point = point;
     }
 
-    public static ShopEntity of(int price, int point) {
-        return ShopEntity.builder()
+    public static ProductEntity of(int price, int point) {
+        return ProductEntity.builder()
                 .price(price)
                 .point(point)
                 .build();
