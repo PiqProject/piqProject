@@ -27,14 +27,12 @@ import piq.piqproject.domain.ideals.entity.IdealCategoryEntity;
 import piq.piqproject.domain.ideals.entity.IdealOptionEntity;
 import piq.piqproject.domain.ideals.repository.IdealCategoryRepository;
 import piq.piqproject.domain.ideals.repository.IdealOptionRepository;
-import piq.piqproject.domain.users.repository.UserIdealRepository;
 
 @Service
 @RequiredArgsConstructor
 public class IdealService {
     private final IdealCategoryRepository idealCategoryRepository;
     private final IdealOptionRepository idealOptionRepository;
-    private final UserIdealRepository userIdealRepository;
 
     @Transactional
     public ListResponseDto<IdealResponseDto> createCategoriesWithOptions(List<IdealRequestDto> idealRequestDtos) {

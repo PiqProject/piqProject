@@ -16,7 +16,7 @@ import piq.piqproject.domain.interests.entity.InterestEntity;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) 
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "user_interests")
 public class UserInterestEntity {
     @Id
@@ -25,11 +25,11 @@ public class UserInterestEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private UserEntity user; 
+    private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "interest_id")
-    private InterestEntity interest; 
+    private InterestEntity interest;
 
     @Builder
     private UserInterestEntity(UserEntity user, InterestEntity interest) {

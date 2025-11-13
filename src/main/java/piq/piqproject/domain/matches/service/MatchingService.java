@@ -1,6 +1,12 @@
 package piq.piqproject.domain.matches.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.InternalServerException;
@@ -8,19 +14,16 @@ import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.matches.dto.request.MatchingRequestDto;
 import piq.piqproject.domain.matches.dto.request.UpdateMatchingRequestDto;
 import piq.piqproject.domain.matches.dto.response.ContactExchangeResponseDto;
-import piq.piqproject.domain.matches.dto.response.ContactExchangeResponseDto;
 import piq.piqproject.domain.matches.dto.response.MatchingResponseDto;
 import piq.piqproject.domain.matches.entity.MatchingEntity;
 import piq.piqproject.domain.matches.enums.MatchingStatus;
 import piq.piqproject.domain.matches.repository.MatchingRepository;
+import piq.piqproject.domain.recommendations.repository.DailyRecommendationRepository;
+import piq.piqproject.domain.recommendations.service.DailyRecommendationService;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -28,7 +31,11 @@ public class MatchingService {
 
     private final MatchingRepository matchingRepository;
     private final UserRepository userRepository; // 유저 정보를 가져오기 위해 필요
-    private static final int MATCH_COST = 100; // 매칭 비용을 상수로 정의하여 관리 용이성 증대
+    private final DailyRecommendationRepository dailyRecommendationRepository;
+    private final DailyRecommendationService dailyRecommendationService;
+    private static final int MATCH_COST = 100;
+
+    // 매칭 비용을 상수로 정의하여 관리 용이성 증대
 
     /**
      * 매칭 요청 생성
@@ -57,6 +64,11 @@ public class MatchingService {
                     throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 매칭을 요청한 상대입니다.");
                 });
 
+        // 3-1. 추천 기록이 있는지 확인
+        if (!dailyRecommendationRepository.existsByUserAndRecommendedUser(sender, receiver)) {
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "오늘의 추천 사용자에게만 매칭을 요청할 수 있습니다.");
+        }
+
         // 4. 포인트 잔액 검사
         if (sender.getPqPoint() < MATCH_COST) {
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "매칭을 요청하기 위한 PQ 포인트가 부족합니다.");
@@ -76,7 +88,10 @@ public class MatchingService {
 
         MatchingEntity savedMatch = matchingRepository.save(newMatch);
 
-        // 7. DTO로 변환하여 반환
+        // 7. 오늘의 추천 기록을 조회 하여 '액션 완료' 상태로 업데이트
+        dailyRecommendationService.markRecommendationAsActioned(sender, receiver);
+
+        // 8. DTO로 변환하여 반환
         return MatchingResponseDto.from(savedMatch, currentId);
     }
 
