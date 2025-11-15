@@ -37,9 +37,9 @@ public class DailyRecommendationService {
     private final DislikeRepository dislikeRepository;
     private final DailyRecommendationRepository dailyRecommendationRepository;
 
-    private static final int DAILY_RECOMMENDATION_COUNT_FOR_WOMENS = 4;
+    private static final int DAILY_RECOMMENDATION_COUNT_FOR_WOMENS = 2; // 4
     private static final int DAILY_RECOMMENDATION_COUNT_FOR_MENS = 2;
-    private static final int CANDIDATE_POOL_SIZE = 30;
+    private static final int CANDIDATE_POOL_SIZE = 2;// 30
 
     // --- ▼▼▼ 기준 시간 설정 ▼▼▼ ---
     /**

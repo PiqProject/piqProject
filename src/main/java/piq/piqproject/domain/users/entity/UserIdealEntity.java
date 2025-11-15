@@ -12,7 +12,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import piq.piqproject.domain.ideals.entity.IdealOptionEntity;
+import piq.piqproject.domain.traits.entity.TraitOptionEntity;
 
 @Entity
 @Table(name = "user_ideals")
@@ -25,22 +25,22 @@ public class UserIdealEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private UserEntity user; 
+    private UserEntity user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "option_id")
-    private IdealOptionEntity idealOption; 
+    private TraitOptionEntity idealOption;
 
-    @Builder 
-    private UserIdealEntity (UserEntity user, IdealOptionEntity idealOption) {
+    @Builder
+    private UserIdealEntity(UserEntity user, TraitOptionEntity idealOption) {
         this.user = user;
         this.idealOption = idealOption;
     }
 
-    public static UserIdealEntity of (UserEntity user, IdealOptionEntity idealOption) {
+    public static UserIdealEntity of(UserEntity user, TraitOptionEntity idealOption) {
         return UserIdealEntity.builder()
-                                .user(user)
-                                .idealOption(idealOption)
-                                .build();
+                .user(user)
+                .idealOption(idealOption)
+                .build();
     }
 }

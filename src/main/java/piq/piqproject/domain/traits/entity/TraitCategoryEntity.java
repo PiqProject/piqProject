@@ -1,4 +1,4 @@
-package piq.piqproject.domain.ideals.entity;
+package piq.piqproject.domain.traits.entity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,9 +19,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(name = "ideal_categories")
+@Table(name = "trait_categories")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class IdealCategoryEntity {
+public class TraitCategoryEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,16 +30,16 @@ public class IdealCategoryEntity {
     private String name;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<IdealOptionEntity> options = new ArrayList<>();
+    private List<TraitOptionEntity> options = new ArrayList<>();
 
     @Builder
-    private IdealCategoryEntity (String name) {
+    private TraitCategoryEntity(String name) {
         this.name = name;
     }
 
-    public static IdealCategoryEntity of(String name) {
-        return IdealCategoryEntity.builder()
-                        .name(name)
-                        .build();
+    public static TraitCategoryEntity of(String name) {
+        return TraitCategoryEntity.builder()
+                .name(name)
+                .build();
     }
 }

@@ -15,7 +15,8 @@ public class UserIdealResponseDto implements Listable {
     private String optionName;
 
     @Builder
-    private UserIdealResponseDto(Long id, Long userId, Long categoryId, Long optionId, String categoryName, String optionName) {
+    private UserIdealResponseDto(Long id, Long userId, Long categoryId, Long optionId, String categoryName,
+            String optionName) {
         this.id = id;
         this.userId = userId;
         this.categoryId = categoryId;

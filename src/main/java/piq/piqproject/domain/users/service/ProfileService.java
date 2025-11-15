@@ -1,18 +1,16 @@
 package piq.piqproject.domain.users.service;
 
-import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_IDEAL_OPTION;
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
 
 import java.util.List;
+import java.util.Set;
 
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.ErrorCode;
@@ -22,25 +20,29 @@ import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
 import piq.piqproject.common.list.ListResponseDto;
-import piq.piqproject.domain.ideals.entity.IdealOptionEntity;
-import piq.piqproject.domain.ideals.repository.IdealOptionRepository;
 import piq.piqproject.domain.interests.entity.InterestEntity;
 import piq.piqproject.domain.interests.repository.InterestRepository;
 import piq.piqproject.domain.matches.entity.MatchingEntity;
 import piq.piqproject.domain.matches.enums.MatchingStatus;
 import piq.piqproject.domain.matches.repository.MatchingRepository;
+import piq.piqproject.domain.traits.entity.TraitOptionEntity;
+import piq.piqproject.domain.traits.repository.TraitOptionRepository;
 import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
+import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
 import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
 import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
 import piq.piqproject.domain.users.dto.response.UserScoreResponseDto;
+import piq.piqproject.domain.users.dto.response.UserTraitResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.entity.UserIdealEntity;
 import piq.piqproject.domain.users.entity.UserInterestEntity;
+import piq.piqproject.domain.users.entity.UserTraitEntity;
 import piq.piqproject.domain.users.repository.UserIdealRepository;
 import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
+import piq.piqproject.domain.users.repository.UserTraitRepository;
 
 /**
  * ProfileService는 사용자 프로필수정 비지니스로직을 담당합니다.
@@ -58,8 +60,9 @@ public class ProfileService {
     private final FileUtil fileUtil;
     private final InterestRepository interestRepository;
     private final UserInterestRepository userInterestRepository;
-    private final IdealOptionRepository idealOptionRepository;
+    private final TraitOptionRepository traitOptionRepository;
     private final UserIdealRepository userIdealRepository;
+    private final UserTraitRepository userTraitRepository;
     private final MatchingRepository matchingRepository;
 
     /**
@@ -145,7 +148,8 @@ public class ProfileService {
     }
 
     @Transactional
-    public ListResponseDto<UserInterestResponseDto> upsertUserInterests(UserEntity user, UserInterestRequestDto userInterestRequestDto) {
+    public ListResponseDto<UserInterestResponseDto> upsertUserInterests(UserEntity user,
+            UserInterestRequestDto userInterestRequestDto) {
         // 요청으로 들어온 관심사 ID들의 유효성을 검증
         List<Long> interestIds = userInterestRequestDto.getInterestIds();
         List<InterestEntity> interests = interestRepository.findAllById(interestIds);
@@ -155,62 +159,64 @@ public class ProfileService {
             throw new NotFoundException(NOT_FOUND_INTEREST);
         }
 
-        List<UserInterestEntity> userInterests = userInterestRepository.findAllByUserId(user.getId()); 
+        List<UserInterestEntity> userInterests = userInterestRepository.findAllByUserId(user.getId());
 
         // 기존 관심사가 있다면 한 번의 쿼리로 모두 삭제하여 성능을 최적화
         if (!userInterests.isEmpty()) {
             userInterestRepository.deleteAllInBatch(userInterests);
         }
-        
+
         List<UserInterestEntity> newUserInterestList = interests.stream()
-                    .map(interest -> UserInterestEntity.of(user, interest))
-                    .toList();
+                .map(interest -> UserInterestEntity.of(user, interest))
+                .toList();
 
         userInterestRepository.saveAll(newUserInterestList);
 
         List<UserInterestResponseDto> userInterestResponse = newUserInterestList.stream()
-                        .map(UserInterestResponseDto::of)
-                        .toList();
+                .map(UserInterestResponseDto::of)
+                .toList();
 
         return ListResponseDto.from(userInterestResponse);
     }
 
     @Transactional
-    public ListResponseDto<UserIdealResponseDto> upsertUserIdeals(UserEntity user, UserIdealRequestDto userIdealRequestDto) {
+    public ListResponseDto<UserIdealResponseDto> upsertUserIdeals(UserEntity user,
+            UserIdealRequestDto userIdealRequestDto) {
         // 요청으로 들어온 이상형 옵션 ID들의 유효성을 검증
         List<Long> idealOptionIds = userIdealRequestDto.getIdealOptionIds();
-        List<IdealOptionEntity> idealOptions = idealOptionRepository.findAllById(idealOptionIds);
+        List<TraitOptionEntity> idealOptions = traitOptionRepository.findAllById(idealOptionIds);
 
         // 요청된 ID의 수와 실제 조회된 관심사의 수가 다르면 예외 발생
         if (idealOptions.size() != idealOptionIds.size()) {
-            throw new NotFoundException(NOT_FOUND_IDEAL_OPTION);
+            throw new NotFoundException(ErrorCode.NOT_FOUND_TRAIT_OPTION,
+                    "요청된 이상형 옵션 ID와 실제 조회된 이상형 옵션 ID의 수가 일치하지 않습니다.");
         }
 
-        List<UserIdealEntity> userIdeals = userIdealRepository.findAllByUserId(user.getId()); 
+        List<UserIdealEntity> userIdeals = userIdealRepository.findAllByUserId(user.getId());
 
         // 기존 이상형이 있다면 한 번의 쿼리로 모두 삭제하여 성능을 최적화
         if (!userIdeals.isEmpty()) {
             userIdealRepository.deleteAllInBatch(userIdeals);
         }
-        
+
         List<UserIdealEntity> userIdealList = idealOptions.stream()
-                    .map(option -> UserIdealEntity.of(user, option))
-                    .toList();
+                .map(option -> UserIdealEntity.of(user, option))
+                .toList();
 
         userIdealRepository.saveAll(userIdealList);
 
         List<UserIdealResponseDto> userIdealResponse = userIdealList.stream()
-                        .map(UserIdealResponseDto::of)
-                        .toList();
+                .map(UserIdealResponseDto::of)
+                .toList();
 
         return ListResponseDto.from(userIdealResponse);
     }
 
     @Transactional
-    public UserScoreResponseDto scoreUser(UserEntity scorerUser, UserScoreRequestDto userScoreRequestDto) { 
-        
+    public UserScoreResponseDto scoreUser(UserEntity scorerUser, UserScoreRequestDto userScoreRequestDto) {
+
         Long scorerId = scorerUser.getId();
-        Long targetId = userScoreRequestDto.getTargerUserId(); 
+        Long targetId = userScoreRequestDto.getTargerUserId();
 
         // 1. 점수를 받을 유저(targetUser)를 조회합니다.
         UserEntity targetUser = userRepository.findById(targetId)
@@ -229,8 +235,55 @@ public class ProfileService {
         // 5. targetUser의 점수를 업데이트합니다. (평균 계산 로직은 UserEntity로 위임)
         int score = userScoreRequestDto.getScore();
         targetUser.updateScore(score);
-        
+
         // 7. 변경된 유저의 최종 정보를 담아 DTO로 반환합니다.
-        return UserScoreResponseDto.of(targetUser.getNickname(), targetUser.getAverageScore());   
+        return UserScoreResponseDto.of(targetUser.getNickname(), targetUser.getAverageScore());
+    }
+
+    /**
+     * 사용자의 실제 특성 목록을 생성하거나 전체 수정합니다. (Upsert)
+     *
+     * @param user                현재 사용자 엔티티
+     * @param userTraitRequestDto 사용자가 선택한 특성 옵션 ID 목록을 담은 DTO
+     * @return 업데이트된 사용자의 특성 목록 DTO
+     */
+    @Transactional
+    public ListResponseDto<UserTraitResponseDto> upsertUserTraits(UserEntity user,
+            UserTraitRequestDto userTraitRequestDto) {
+
+        // 1. 요청으로 들어온 특성 옵션 ID들의 유효성을 검증합니다.
+        // 내 특성id들 조회
+        List<Long> traitOptionIds = userTraitRequestDto.getTraitOptionIds();
+        // 특성 정보들 조회
+        List<TraitOptionEntity> traitOptions = traitOptionRepository.findAllById(traitOptionIds);
+
+        // 2. 요청된 ID의 수와 실제 DB에서 조회된 엔티티의 수가 다르면, 유효하지 않은 ID가 포함된 것이므로 예외를 발생시킵니다.
+        if (traitOptions.size() != traitOptionIds.size()) {
+            throw new NotFoundException(ErrorCode.NOT_FOUND_TRAIT_OPTION,
+                    "요청된 특성 옵션 ID 중 일부가 유효하지 않습니다.");
+        }
+
+        // 3. 사용자의 기존 특성 목록을 조회합니다.
+        List<UserTraitEntity> userTraits = userTraitRepository.findAllByUserId(user.getId());
+
+        // 4. 기존 특성이 있다면, 한 번의 DELETE 쿼리로 모두 삭제하여 성능을 최적화합니다.
+        if (!userTraits.isEmpty()) {
+            userTraitRepository.deleteAllInBatch(userTraits);
+        }
+
+        // 5. 새로운 특성 목록을 생성합니다.
+        List<UserTraitEntity> newUserTraitList = traitOptions.stream()
+                .map(option -> UserTraitEntity.of(user, option))
+                .toList(); // Java 16+
+
+        // 6. 생성된 새 특성 목록을 한 번의 INSERT 쿼리(bulk insert)로 저장합니다.
+        userTraitRepository.saveAll(newUserTraitList);
+
+        // 7. 저장된 최종 특성 목록을 클라이언트에게 반환할 응답 DTO로 변환합니다.
+        List<UserTraitResponseDto> userTraitResponse = newUserTraitList.stream()
+                .map(userTrait -> UserTraitResponseDto.from(userTrait.getTraitOption()))
+                .toList();
+
+        return ListResponseDto.from(userTraitResponse);
     }
 }

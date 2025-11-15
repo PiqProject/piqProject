@@ -18,9 +18,11 @@ import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
+import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
 import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
 import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
 import piq.piqproject.domain.users.dto.response.UserScoreResponseDto;
+import piq.piqproject.domain.users.dto.response.UserTraitResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.service.ProfileService;
 
@@ -80,16 +82,31 @@ public class ProfileController {
     @PutMapping("/me/interests")
     public ResponseEntity<ListResponseDto<UserInterestResponseDto>> upsertUserInterests(
             @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody UserInterestRequestDto userInterestRequestDto) 
-    {
+            @Valid @RequestBody UserInterestRequestDto userInterestRequestDto) {
         log.info("Request to upsert(insert + update) user interests. User: {}", user.getEmail());
         return ResponseEntity.ok(profileService.upsertUserInterests(user, userInterestRequestDto));
     }
 
     /**
+     * 현재 로그인된 사용자의 실제 특성을 생성 및 수정하는 API입니다.
+     *
+     * @param user                @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param userTraitRequestDto 사용자가 선택한 자신의 특성 리스트를 담은 request DTO
+     * @return 사용자의 특성 리스트
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PutMapping("/me/traits")
+    public ResponseEntity<ListResponseDto<UserTraitResponseDto>> upsertUserTraits(
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserTraitRequestDto userTraitRequestDto) {
+        log.info("Request to upsert user traits. User: {}", user.getEmail());
+        return ResponseEntity.ok(profileService.upsertUserTraits(user, userTraitRequestDto));
+    }
+
+    /**
      * 현재 로그인된 사용자의 이상형을 생성 및 수정하는 API입니다.
      * 
-     * @param userEntity             @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param userEntity          @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
      * @param UserIdealRequestDto 유저가 선택한 이상형 리스트를 담은 request dto
      * @return 사용자의 이상형 리스트
      */
@@ -97,16 +114,15 @@ public class ProfileController {
     @PutMapping("/me/ideals")
     public ResponseEntity<ListResponseDto<UserIdealResponseDto>> upsertUserIdeals(
             @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody UserIdealRequestDto userIdealRequestDto) 
-    {
+            @Valid @RequestBody UserIdealRequestDto userIdealRequestDto) {
         log.info("Request to upsert(insert + update) user ideals. User: {}", user.getEmail());
         return ResponseEntity.ok(profileService.upsertUserIdeals(user, userIdealRequestDto));
     }
 
     /**
-     * 매칭이후 상대방의 매너 점수를 매기는 API입니다. 
+     * 매칭이후 상대방의 매너 점수를 매기는 API입니다.
      * 
-     * @param userEntity             @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param userEntity          @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
      * @param UserScoreRequestDto 매칭 상대에 대한 점수를 담은 request dto
      * @return UserScoreResponseDto (점수를 매긴 유저 id, 상대 user 정보, 매긴 점수)
      */
@@ -114,8 +130,7 @@ public class ProfileController {
     @PutMapping("/score")
     public ResponseEntity<UserScoreResponseDto> scoreUser(
             @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody UserScoreRequestDto userScoreRequestDto) 
-    {
+            @Valid @RequestBody UserScoreRequestDto userScoreRequestDto) {
         log.info("Request to score user User: {}", user.getEmail());
         return ResponseEntity.ok(profileService.scoreUser(user, userScoreRequestDto));
     }

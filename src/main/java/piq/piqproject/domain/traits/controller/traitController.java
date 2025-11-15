@@ -1,4 +1,4 @@
-package piq.piqproject.domain.ideals.controller;
+package piq.piqproject.domain.traits.controller;
 
 import java.util.List;
 
@@ -16,19 +16,19 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.list.ListResponseDto;
-import piq.piqproject.domain.ideals.dto.request.CreateIdealOptionRequestDto;
-import piq.piqproject.domain.ideals.dto.request.DeleteIdealOptionRequestDto;
-import piq.piqproject.domain.ideals.dto.request.IdealRequestDto;
-import piq.piqproject.domain.ideals.dto.response.IdealResponseDto;
-import piq.piqproject.domain.ideals.service.IdealService;
+import piq.piqproject.domain.traits.dto.request.CreateTraitOptionRequestDto;
+import piq.piqproject.domain.traits.dto.request.DeleteTraitOptionRequestDto;
+import piq.piqproject.domain.traits.dto.request.TraitRequestDto;
+import piq.piqproject.domain.traits.dto.response.TraitResponseDto;
+import piq.piqproject.domain.traits.service.TraitService;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/ideals")
-public class IdealController {
-    private final IdealService idealService;
+@RequestMapping("/api/v1/traits")
+public class traitController {
+    private final TraitService traitService;
 
     /**
      * 이상형 카테고리와 하위 옵션들을 생성하는 API입니다.
@@ -38,13 +38,13 @@ public class IdealController {
      */
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
-    public ResponseEntity<ListResponseDto<IdealResponseDto>> createCategoriesWithOptions(
+    public ResponseEntity<ListResponseDto<TraitResponseDto>> createCategoriesWithOptions(
             @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody List<IdealRequestDto> idealRequestDtos) {
-        log.info("Request to create ideal categories and options.User: {}", user.getEmail());
+            @Valid @RequestBody List<TraitRequestDto> traitRequestDtos) {
+        log.info("Request to create trait categories and options.User: {}", user.getEmail());
 
         return ResponseEntity.status(201)
-                .body(idealService.createCategoriesWithOptions(idealRequestDtos));
+                .body(traitService.createCategoriesWithOptions(traitRequestDtos));
     }
 
     /**
@@ -56,14 +56,14 @@ public class IdealController {
      */
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/{categoryId}/options")
-    public ResponseEntity<IdealResponseDto> addOptions(
+    public ResponseEntity<TraitResponseDto> addOptions(
             @AuthenticationPrincipal UserEntity user,
             @PathVariable("categoryId") Long categoryId,
-            @Valid @RequestBody CreateIdealOptionRequestDto createIdealOptionRequestDto) {
-        log.info("Request to add options for ideal category {}. User: {}", categoryId, user.getEmail());
+            @Valid @RequestBody CreateTraitOptionRequestDto createTraitOptionRequestDto) {
+        log.info("Request to add options for trait category {}. User: {}", categoryId, user.getEmail());
 
         return ResponseEntity.status(201)
-                .body(idealService.addOptions(categoryId, createIdealOptionRequestDto));
+                .body(traitService.addOptions(categoryId, createTraitOptionRequestDto));
     }
 
     /**
@@ -72,19 +72,19 @@ public class IdealController {
      * @return 저장되어 있는 카테고리와 하위 옵션 리스트
      */
     @GetMapping("/all")
-    public ResponseEntity<ListResponseDto<IdealResponseDto>> getIdeals() {
-        log.info("Request to get categies and options for ideal ");
+    public ResponseEntity<ListResponseDto<TraitResponseDto>> getTraits() {
+        log.info("Request to get categories and options for trait ");
 
-        return ResponseEntity.ok(idealService.getIdeals());
+        return ResponseEntity.ok(traitService.getTraits());
     }
 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/options/delete")
     public ResponseEntity<String> deleteOptions(
             @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody DeleteIdealOptionRequestDto deleteIdealOptionResponseDto) {
-        log.info("Request to delete options for ideal User: {}", user.getEmail());
-        idealService.deleteOptions(deleteIdealOptionResponseDto);
+            @Valid @RequestBody DeleteTraitOptionRequestDto deleteTraitOptionRequestDto) {
+        log.info("Request to delete options for trait User: {}", user.getEmail());
+        traitService.deleteOptions(deleteTraitOptionRequestDto);
 
         return ResponseEntity.ok("카테고리 내 옵션이 삭제되었습니다.");
     }
@@ -94,8 +94,8 @@ public class IdealController {
     public ResponseEntity<String> deleteCategoey(
             @AuthenticationPrincipal UserEntity user,
             @PathVariable("categoryId") Long categoryId) {
-        log.info("Request to delete category for ideal CategoryId: {} User: {}", categoryId, user.getEmail());
-        idealService.deleteCategoey(categoryId);
+        log.info("Request to delete category for trait CategoryId: {} User: {}", categoryId, user.getEmail());
+        traitService.deleteCategory(categoryId);
 
         return ResponseEntity.ok("카테고리 및 하위 옵션들이 삭제되었습니다.");
     }
