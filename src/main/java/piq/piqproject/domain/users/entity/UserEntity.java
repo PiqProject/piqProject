@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
+import piq.piqproject.domain.traits.entity.TraitOptionEntity;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.enums.Role;
@@ -128,7 +129,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private final List<UserIdealEntity> userIdeals = new ArrayList<>();
 
-    // Builder 패턴을 사용하여 객체 생성 가능 (new로 불가)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private final List<UserTraitEntity> userTraits = new ArrayList<>();
+
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti,
@@ -197,6 +200,28 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.voiceUrl = voiceUrl;
     }
 
+    /**
+     * 사용자의 실제 특성을 추가하는 연관관계 편의 메서드입니다.
+     * @param traitOption 사용자가 가진 특성 (예: ENFP, 비흡연 등)
+     */
+    public void addTrait(TraitOptionEntity traitOption) {
+        UserTraitEntity userTrait = UserTraitEntity.builder()
+                .user(this) // '나' 자신(UserEntity)을 설정
+                .traitOption(traitOption)
+                .build();
+        this.userTraits.add(userTrait);
+    }
+
+    /**
+     * 기존의 모든 특성을 지우고 새로운 특성 목록으로 교체하는 메서드입니다.
+     * 프로필 수정 등에서 유용하게 사용할 수 있습니다.
+     * @param traitOptions 새로운 특성 옵션 목록
+     */
+    public void updateTraits(List<TraitOptionEntity> traitOptions) {
+        // orphanRemoval=true 옵션 덕분에, 리스트에서 제거된 UserTraitEntity는 DB에서도 자동으로 삭제됩니다.
+        this.userTraits.clear(); 
+        traitOptions.forEach(this::addTrait);
+    }
     /**
      * 사용자가 가진 권한 목록을 반환합니다.
      * @return Collection<? extends GrantedAuthority>

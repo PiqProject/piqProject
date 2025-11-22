@@ -1,4 +1,4 @@
-package piq.piqproject.domain.ideals.entity;
+package piq.piqproject.domain.traits.entity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,19 +19,20 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.users.entity.UserIdealEntity;
+import piq.piqproject.domain.users.entity.UserTraitEntity;
 
 @Getter
 @Entity
-@Table(name = "ideal_options")
+@Table(name = "trait_options")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class IdealOptionEntity {
+public class TraitOptionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    private IdealCategoryEntity category;
+    private TraitCategoryEntity category;
 
     @Column(nullable = false)
     private String name;
@@ -39,16 +40,23 @@ public class IdealOptionEntity {
     @OneToMany(mappedBy = "idealOption", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<UserIdealEntity> userIdeals = new ArrayList<>();
 
-    @Builder 
-    private IdealOptionEntity (IdealCategoryEntity category, String name) {
+    /**
+     * 이 특성 옵션을 '자신의 특성'으로 보유한 모든 사용자-특성 관계 목록입니다.
+     * 이 TraitOption이 삭제되면, 관련된 모든 UserTraitEntity도 함께 삭제됩니다.
+     */
+    @OneToMany(mappedBy = "traitOption", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<UserTraitEntity> userTraits = new ArrayList<>();
+
+    @Builder
+    private TraitOptionEntity(TraitCategoryEntity category, String name) {
         this.category = category;
         this.name = name;
     }
 
-    public static IdealOptionEntity of (IdealCategoryEntity category, String name) {
-        return IdealOptionEntity.builder()
-                        .category(category)
-                        .name(name) 
-                        .build();
+    public static TraitOptionEntity of(TraitCategoryEntity category, String name) {
+        return TraitOptionEntity.builder()
+                .category(category)
+                .name(name)
+                .build();
     }
 }

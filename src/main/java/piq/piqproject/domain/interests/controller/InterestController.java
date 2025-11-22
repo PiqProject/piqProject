@@ -1,7 +1,5 @@
 package piq.piqproject.domain.interests.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,12 +30,11 @@ public class InterestController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<InterestResponseDto> createInterest(
-        @AuthenticationPrincipal UserEntity user,
-        @Valid @RequestBody InterestRequestDto interestRequestDto 
-    ) {
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody InterestRequestDto interestRequestDto) {
         log.info("Request to create an interest. User: {}", user.getEmail());
         return ResponseEntity.status(201)
-                                .body(interestService.createInterest(interestRequestDto));
+                .body(interestService.createInterest(interestRequestDto));
     }
 
     @GetMapping("/all")
@@ -49,10 +46,9 @@ public class InterestController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PutMapping("/{interestId}")
     public ResponseEntity<InterestResponseDto> updateInterest(
-        @AuthenticationPrincipal UserEntity user,
-        @PathVariable("interestId") Long interestId,
-        @Valid @RequestBody InterestRequestDto interestRequestDto 
-    ) {
+            @AuthenticationPrincipal UserEntity user,
+            @PathVariable("interestId") Long interestId,
+            @Valid @RequestBody InterestRequestDto interestRequestDto) {
         log.info("Request to update an interest. User: {} interestId: {}", user.getEmail(), interestId);
         return ResponseEntity.ok(interestService.updateInterest(interestId, interestRequestDto));
     }
@@ -60,9 +56,8 @@ public class InterestController {
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostMapping("/{interestId}/delete")
     public ResponseEntity<String> deleteInterest(
-        @AuthenticationPrincipal UserEntity user,
-        @PathVariable("interestId") Long interestId
-    ) {
+            @AuthenticationPrincipal UserEntity user,
+            @PathVariable("interestId") Long interestId) {
         log.info("Request to delete an interest. User: {} interestId: {}", user.getEmail(), interestId);
         interestService.deleteInterest(interestId);
         return ResponseEntity.ok("관심사 키워드 삭제에 성공하였습니다.");
