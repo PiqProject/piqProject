@@ -51,7 +51,11 @@ dependencies {
     
     // ## portone iamport
     implementation 'com.github.iamport:iamport-rest-client-java:0.2.23'
+
+    // ## elasticsearch
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 }
+
 
 tasks.named('test') {
     useJUnitPlatform()

@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.controller;
+package piq.piqproject.domain.auth.controller;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import piq.piqproject.domain.users.dto.request.LoginRequestDto;
-import piq.piqproject.domain.users.dto.request.SignUpRequestDto;
-import piq.piqproject.domain.users.dto.response.AccessTokenResponseDto;
-import piq.piqproject.domain.users.dto.response.TokensResponseDto;
-import piq.piqproject.domain.users.service.AuthService;
+import piq.piqproject.domain.auth.dto.request.LoginRequestDto;
+import piq.piqproject.domain.auth.dto.request.SignUpRequestDto;
+import piq.piqproject.domain.auth.dto.response.AccessTokenResponseDto;
+import piq.piqproject.domain.auth.dto.response.TokensResponseDto;
+import piq.piqproject.domain.auth.service.AuthService;
 
 @RestController
 @RequiredArgsConstructor

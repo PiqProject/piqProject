@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.service;
+package piq.piqproject.domain.auth.service;
 
 import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_USER;
 import static piq.piqproject.common.error.exception.ErrorCode.DISABLED_ACCOUNT_USER;
@@ -6,26 +6,25 @@ import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_REFRESH_
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_USER;
 import static piq.piqproject.common.error.exception.ErrorCode.PASSWORD_MISMATCH;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.error.exception.UnauthorizedException;
 import piq.piqproject.config.jwt.JwtTokenProvider;
-import piq.piqproject.domain.users.dto.request.LoginRequestDto;
-import piq.piqproject.domain.users.dto.request.SignUpRequestDto;
-import piq.piqproject.domain.users.dto.response.MyProfileResponseDto;
-import piq.piqproject.domain.users.dto.response.SignUpResponseDto;
-import piq.piqproject.domain.users.dto.response.TokensResponseDto;
-import piq.piqproject.domain.users.dto.response.UserProfileResponseDto;
-import piq.piqproject.domain.users.entity.RefreshTokenEntity;
+import piq.piqproject.domain.auth.dto.request.LoginRequestDto;
+import piq.piqproject.domain.auth.dto.request.SignUpRequestDto;
+import piq.piqproject.domain.auth.dto.response.SignUpResponseDto;
+import piq.piqproject.domain.auth.dto.response.TokensResponseDto;
+import piq.piqproject.domain.auth.entity.RefreshTokenEntity;
+import piq.piqproject.domain.auth.repository.RefreshTokenRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
-import piq.piqproject.domain.users.repository.RefreshTokenRepository;
+import piq.piqproject.domain.users.event.UserProfileUpdatedEvent;
 import piq.piqproject.domain.users.repository.UserRepository;
 
 @Service
@@ -36,6 +35,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 회원가입 비즈니스 로직을 처리하는 메소드
@@ -74,6 +74,9 @@ public class AuthService {
 
         // 3. 사용자 정보 저장
         userRepository.save(userEntity);
+
+        // 4. 이벤트 발행 (Elasticsearch 동기화 등)
+        eventPublisher.publishEvent(new UserProfileUpdatedEvent(userEntity.getId()));
 
         return SignUpResponseDto.toDto(userEntity);
     }
@@ -155,31 +158,4 @@ public class AuthService {
         // 6. 새로운 Access Token을 생성하여 반환
         return jwtTokenProvider.createAccessToken(user);
     }
-
-    public MyProfileResponseDto findMyProfile(UserEntity userEntity) {
-        // userEntity가 이미 DB에서 조회된 객체이므로 별도 조회가 필요 없습니다.
-        return MyProfileResponseDto.from(userEntity);
-    }
-
-    public void deleteUser(UserEntity userEntity) {
-        // ID를 사용하거나 엔티티 자체를 사용하여 삭제 로직을 수행합니다.
-        userRepository.delete(userEntity);
-    }
-
-    /**
-     * 사용자 ID(PK)를 기반으로 특정 사용자의 공개 프로필을 조회합니다.
-     *
-     * @param id 조회할 사용자의 ID
-     * @return UserProfileResponseDto
-     * @throws EntityNotFoundException 해당 ID의 사용자가 없을 경우 발생
-     */
-    @Transactional(readOnly = true)
-    public UserProfileResponseDto findUserProfileById(Long id) {
-        UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("해당 ID의 사용자를 찾을 수 없습니다: " + id));
-
-        // 2. 조회된 UserEntity를 DTO로 변환하여 반환합니다.
-        return UserProfileResponseDto.from(user);
-    }
-
 }

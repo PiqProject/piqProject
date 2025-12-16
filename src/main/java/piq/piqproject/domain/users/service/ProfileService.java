@@ -3,8 +3,8 @@ package piq.piqproject.domain.users.service;
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST;
 
 import java.util.List;
-import java.util.Set;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -39,6 +39,7 @@ import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.entity.UserIdealEntity;
 import piq.piqproject.domain.users.entity.UserInterestEntity;
 import piq.piqproject.domain.users.entity.UserTraitEntity;
+import piq.piqproject.domain.users.event.UserProfileUpdatedEvent;
 import piq.piqproject.domain.users.repository.UserIdealRepository;
 import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
@@ -64,6 +65,7 @@ public class ProfileService {
     private final UserIdealRepository userIdealRepository;
     private final UserTraitRepository userTraitRepository;
     private final MatchingRepository matchingRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 사용자의 프로필 음성을 업로드(또는 교체)하는 메서드
@@ -176,6 +178,9 @@ public class ProfileService {
                 .map(UserInterestResponseDto::of)
                 .toList();
 
+        // 이벤트 발행
+        eventPublisher.publishEvent(new UserProfileUpdatedEvent(user.getId()));
+
         return ListResponseDto.from(userInterestResponse);
     }
 
@@ -203,12 +208,9 @@ public class ProfileService {
                 .map(option -> UserIdealEntity.of(user, option))
                 .toList();
 
-        userIdealRepository.saveAll(userIdealList);
-
         List<UserIdealResponseDto> userIdealResponse = userIdealList.stream()
                 .map(UserIdealResponseDto::of)
                 .toList();
-
         return ListResponseDto.from(userIdealResponse);
     }
 
@@ -236,7 +238,7 @@ public class ProfileService {
         int score = userScoreRequestDto.getScore();
         targetUser.updateScore(score);
 
-        // 7. 변경된 유저의 최종 정보를 담아 DTO로 반환합니다.
+        // 6. 변경된 유저의 최종 정보를 담아 DTO로 반환합니다.
         return UserScoreResponseDto.of(targetUser.getNickname(), targetUser.getAverageScore());
     }
 
@@ -283,6 +285,9 @@ public class ProfileService {
         List<UserTraitResponseDto> userTraitResponse = newUserTraitList.stream()
                 .map(userTrait -> UserTraitResponseDto.from(userTrait.getTraitOption()))
                 .toList();
+
+        // 8. 이벤트 발행
+        eventPublisher.publishEvent(new UserProfileUpdatedEvent(user.getId()));
 
         return ListResponseDto.from(userTraitResponse);
     }

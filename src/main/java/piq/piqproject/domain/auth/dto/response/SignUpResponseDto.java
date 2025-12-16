@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.dto.response;
+package piq.piqproject.domain.auth.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
