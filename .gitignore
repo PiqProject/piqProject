@@ -38,3 +38,8 @@ out/
 
 ### 개인 사용 파일 ###
 JWT동작방식.txt
+
+
+### secret 파일 ###
+src/main/resources/application-secret.properties
+application-secret.properties

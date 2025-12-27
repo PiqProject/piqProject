@@ -4,7 +4,10 @@ import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_INTEREST
 
 import java.util.List;
 
-import org.springframework.context.ApplicationEventPublisher;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -13,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.dto.CoordinateDto;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.error.exception.InvalidRequestException;
@@ -29,6 +33,7 @@ import piq.piqproject.domain.traits.entity.TraitOptionEntity;
 import piq.piqproject.domain.traits.repository.TraitOptionRepository;
 import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.request.UserLocationRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
 import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
@@ -39,11 +44,11 @@ import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.entity.UserIdealEntity;
 import piq.piqproject.domain.users.entity.UserInterestEntity;
 import piq.piqproject.domain.users.entity.UserTraitEntity;
-import piq.piqproject.domain.users.event.UserProfileUpdatedEvent;
 import piq.piqproject.domain.users.repository.UserIdealRepository;
 import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
 import piq.piqproject.domain.users.repository.UserTraitRepository;
+import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
 
 /**
  * ProfileService는 사용자 프로필수정 비지니스로직을 담당합니다.
@@ -65,7 +70,7 @@ public class ProfileService {
     private final UserIdealRepository userIdealRepository;
     private final UserTraitRepository userTraitRepository;
     private final MatchingRepository matchingRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final KakaoGeocodingService kakaoGeocodingService; // [주입 확인]
 
     /**
      * 사용자의 프로필 음성을 업로드(또는 교체)하는 메서드
@@ -178,9 +183,6 @@ public class ProfileService {
                 .map(UserInterestResponseDto::of)
                 .toList();
 
-        // 이벤트 발행
-        eventPublisher.publishEvent(new UserProfileUpdatedEvent(user.getId()));
-
         return ListResponseDto.from(userInterestResponse);
     }
 
@@ -286,9 +288,41 @@ public class ProfileService {
                 .map(userTrait -> UserTraitResponseDto.from(userTrait.getTraitOption()))
                 .toList();
 
-        // 8. 이벤트 발행
-        eventPublisher.publishEvent(new UserProfileUpdatedEvent(user.getId()));
-
         return ListResponseDto.from(userTraitResponse);
+    }
+
+    /**
+     * 사용자 주소 업데이트 (좌표 변환 포함)
+     */
+    @Transactional
+    public void updateUserLocation(UserEntity principalUser, UserLocationRequestDto requestDto) {
+        String newAddress = requestDto.getAddress();
+
+        // 1. 카카오 API로 좌표 변환
+        CoordinateDto coordinate = kakaoGeocodingService.getCoordinate(newAddress);
+
+        // 좌표를 못 찾으면 예외 처리 (잘못된 주소)
+        if (coordinate == null) {
+            throw new InvalidRequestException(ErrorCode.INTERNAL_SERVER_ERROR, "유효하지 않은 주소입니다. 도로명 주소를 정확히 입력해주세요.");
+        }
+
+        // 2. 영속성 컨텍스트를 위해 UserEntity 다시 조회 (안전한 업데이트)
+        UserEntity user = userRepository.findById(principalUser.getId())
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
+
+        // 3. Point 객체 생성 (핵심 로직)
+        // SRID 4326은 WGS84(GPS 좌표계)를 의미합니다.
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+
+        // 주의: Point(x, y) 순서이므로 (경도, 위도) 순서로 넣어야 합니다.
+        // x = Longitude (경도)
+        // y = Latitude (위도)
+        Point locationPoint = geometryFactory
+                .createPoint(new Coordinate(coordinate.getLongitude(), coordinate.getLatitude()));
+
+        // 4. DB 업데이트
+        user.updateLocation(newAddress, locationPoint);
+        log.info("유저(ID:{}) 주소 업데이트 완료: {} -> ({}, {})",
+                user.getId(), newAddress, coordinate.getLatitude(), coordinate.getLongitude());
     }
 }

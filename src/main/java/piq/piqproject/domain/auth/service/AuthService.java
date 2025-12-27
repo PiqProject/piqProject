@@ -1,19 +1,24 @@
 package piq.piqproject.domain.auth.service;
 
-import static piq.piqproject.common.error.exception.ErrorCode.ALREADY_EXISTS_USER;
 import static piq.piqproject.common.error.exception.ErrorCode.DISABLED_ACCOUNT_USER;
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_REFRESH_TOKEN;
 import static piq.piqproject.common.error.exception.ErrorCode.NOT_FOUND_USER;
 import static piq.piqproject.common.error.exception.ErrorCode.PASSWORD_MISMATCH;
 
-import org.springframework.context.ApplicationEventPublisher;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import piq.piqproject.common.dto.CoordinateDto;
 import piq.piqproject.common.error.exception.ConflictException;
+import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.ForbiddenException;
+import piq.piqproject.common.error.exception.InvalidRequestException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.error.exception.UnauthorizedException;
 import piq.piqproject.config.jwt.JwtTokenProvider;
@@ -24,8 +29,8 @@ import piq.piqproject.domain.auth.dto.response.TokensResponseDto;
 import piq.piqproject.domain.auth.entity.RefreshTokenEntity;
 import piq.piqproject.domain.auth.repository.RefreshTokenRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
-import piq.piqproject.domain.users.event.UserProfileUpdatedEvent;
 import piq.piqproject.domain.users.repository.UserRepository;
+import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
 
 @Service
 @RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)
@@ -35,7 +40,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final KakaoGeocodingService kakaoGeocodingService;
 
     /**
      * 회원가입 비즈니스 로직을 처리하는 메소드
@@ -43,19 +48,35 @@ public class AuthService {
      * @param signUpRequestDto 회원가입 요청 DTO
      * @return 저장된 UserEntity
      */
-    @Transactional // 데이터베이스에 변경 작업을 하므로 트랜잭션 처리
+    @Transactional
     public SignUpResponseDto signUp(SignUpRequestDto signUpRequestDto) {
-        // 1. 이메일 중복 확인
+        // 0. 이메일 및 닉네임 중복 확인 (기존 로직 유지)
         if (userRepository.existsByEmail(signUpRequestDto.getEmail())
-                && userRepository.existsByNickname(signUpRequestDto.getNickname())) {
-            // 실무에서는 custom exception을 정의하여 사용하는 것이 좋습니다.
-            // ErrorCode Enum으로 정의해두었던 값을 사용하여 CustomException을 상속받고 있는 ConflictException에게
-            // 넘겨줍니다.
-            throw new ConflictException(ALREADY_EXISTS_USER);
+                || userRepository.existsByNickname(signUpRequestDto.getNickname())) {
+            throw new ConflictException(ErrorCode.ALREADY_EXISTS_USER); // ErrorCode 변수명에 맞게 수정 필요
         }
 
-        // 2. DTO를 Entity로 변환 (이때 비밀번호 암호화가 이루어짐)
+        // 1. 주소를 좌표로 변환
+        CoordinateDto coordinate = kakaoGeocodingService.getCoordinate(signUpRequestDto.getAddress());
+
+        // 좌표를 못 찾았을 때 예외 처리
+        if (coordinate == null) {
+            throw new InvalidRequestException(ErrorCode.INTERNAL_SERVER_ERROR, "유효하지 않은 주소입니다. 도로명 주소를 정확히 입력해주세요.");
+        }
+
+        // ▼▼▼ [수정] Point 객체 생성 (JTS) ▼▼▼
+        // SRID 4326 = WGS84 (GPS 좌표계)
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+
+        // 주의: Coordinate(x, y) 순서이므로 (경도, 위도) 순서로 넣어야 합니다.
+        Point location = geometryFactory
+                .createPoint(new Coordinate(coordinate.getLongitude(), coordinate.getLatitude()));
+        // ▲▲▲ [수정] ▲▲▲
+
+        // 2. DTO를 Entity로 변환
         String encodedPassword = passwordEncoder.encode(signUpRequestDto.getPassword());
+
+        // UserEntity.of 메서드도 파라미터가 Point를 받도록 수정되어 있어야 합니다.
         UserEntity userEntity = UserEntity.of(
                 signUpRequestDto.getEmail(),
                 signUpRequestDto.getNickname(),
@@ -65,18 +86,16 @@ public class AuthService {
                 signUpRequestDto.getAge(),
                 signUpRequestDto.getGender(),
                 signUpRequestDto.getMbti(),
-                0.0,
-                0,
+                0.0, // totalScore
+                0, // pqPoint (가입 시 기본 포인트, 필요하면 수정)
                 signUpRequestDto.getIntroduce(),
-                true);
-        // 최초 가입시 ADMIN 권한도 부여 (추후 운영자가 직접 ADMIN
-        // 권한을 부여하는 방식으로 변경할 수도 있음
+                true, // isActive
+                signUpRequestDto.getAddress(),
+                location, // Point 객체 전달
+                signUpRequestDto.getUniversity());
 
         // 3. 사용자 정보 저장
         userRepository.save(userEntity);
-
-        // 4. 이벤트 발행 (Elasticsearch 동기화 등)
-        eventPublisher.publishEvent(new UserProfileUpdatedEvent(userEntity.getId()));
 
         return SignUpResponseDto.toDto(userEntity);
     }

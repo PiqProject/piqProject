@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.locationtech.jts.geom.Point;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -30,17 +31,6 @@ import piq.piqproject.domain.traits.entity.TraitOptionEntity;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.enums.Role;
-
-/*
- * 비밀번호 (Password): 사용자의 비밀번호를 반환합니다.
- * 사용자 이름 (Username): 사용자를 식별할 수 있는 고유한 이름(ID)을 반환합니다.
- * 권한 목록 (Authorities): 사용자가 가진 권한(Role) 목록을 GrantedAuthority 객체의 컬렉션으로 반환합니다. (예: "ROLE_USER", "ROLE_ADMIN")
- * 계정 만료 여부 (isAccountNonExpired): 계정이 만료되었는지 여부를 반환합니다.
- * 계정 잠김 여부 (isAccountNonLocked): 계정이 잠겨있는지 여부를 반환합니다.
- * 자격 증명 만료 여부 (isCredentialsNonExpired): 비밀번호가 만료되었는지 여부를 반환합니다.
- * 계정 활성화 여부 (isEnabled): 계정이 활성화 상태인지 여부를 반환합니다.
- * Spring Security는 인증 과정에서 직접 UserEntity 같은 도메인 객체를 알지 못합니다.대신 UserDetails라는 표준화된 인터페이스를 통해 사용자의 정보를 전달받고,이 정보를 기반으로 인증 및 권한 검사를 수행합니다.
- */
 
 @Entity
 @Table(name = "users")
@@ -109,6 +99,14 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<UserRoleEntity> roles = new ArrayList<>();
 
+    @Column(name = "address", length = 255)
+    private String address; // 사용자 입력 주소 (예: 서울시 강남구)
+
+    @Column(name = "university")
+    private String university; 
+
+    @Column(columnDefinition = "geometry(Point, 4326)")
+    private Point location;
     /**
      * TODO: 실제로 OneToMany는 지양
      *
@@ -135,7 +133,8 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti,
-            Integer pqPoint, String introduce, Boolean isActive) {
+            Integer pqPoint, String introduce, Boolean isActive,
+            String address, Point location, String university) {
         this.email = email;
         this.nickname = nickname;
         this.password = password;
@@ -147,6 +146,18 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.pqPoint = pqPoint;
         this.introduce = introduce;
         this.isActive = isActive;
+        this.address = address;
+        this.location = location;
+        this.university = university;
+    }
+
+    public Double getLatitude() {
+        // location이 null이면 null 반환, 아니면 Y좌표 반환
+        return this.location != null ? this.location.getY() : null;
+    }
+
+    public Double getLongitude() {
+        return this.location != null ? this.location.getX() : null;
     }
 
     /**
@@ -159,7 +170,8 @@ public class UserEntity extends BaseEntity implements UserDetails {
      */
     public static UserEntity of (String email, String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
-            Integer pqPoint, String introduce, Boolean isActive ) {
+            Integer pqPoint, String introduce, Boolean isActive,
+            String address, Point location, String university ) {
         UserEntity user = UserEntity.builder()
                 .email(email)
                 .nickname(nickname)
@@ -173,10 +185,18 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 // ▼ 회원가입 시 서버에서 설정해주는 기본값들
                 .pqPoint(pqPoint)
                 .isActive(true) // 예시: 가입 시 바로 활성 상태
+                .address(address)
+                .location(location)
+                .university(university)
                 .build();
 
                  user.addRole(Role.USER); // 기본 권한 부여
                 return user;
+    }
+
+    public void updateLocation(String address, Point location) {
+        this.address = address;
+        this.location = location;
     }
 
      //== 연관관계 편의 메서드 (양방향 관계에서 중요) ==//
