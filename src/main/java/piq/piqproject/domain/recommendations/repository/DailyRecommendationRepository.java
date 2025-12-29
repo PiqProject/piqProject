@@ -45,4 +45,10 @@ public interface DailyRecommendationRepository extends JpaRepository<DailyRecomm
         List<DailyRecommendationEntity> findByActionedFalseAndCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 
         Boolean existsByUserAndRecommendedUser(UserEntity user, UserEntity recommendedUser);
+
+        boolean existsByUserAndRecommendedUserAndCreatedAtBetween(
+                        UserEntity user,
+                        UserEntity recommendedUser,
+                        LocalDateTime start,
+                        LocalDateTime end);
 }

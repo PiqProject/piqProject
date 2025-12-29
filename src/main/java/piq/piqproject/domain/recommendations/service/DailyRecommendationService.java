@@ -7,11 +7,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -115,7 +113,7 @@ public class DailyRecommendationService {
          * 
          * @return List<LocalDateTime> [시작시간, 종료시간]
          */
-        private List<LocalDateTime> getRecommendationTimeRange() {
+        public List<LocalDateTime> getRecommendationTimeRange() {
                 LocalDateTime now = LocalDateTime.now();
                 LocalTime resetTime = LocalTime.of(recommendationResetHour, 0);
 
@@ -220,6 +218,15 @@ public class DailyRecommendationService {
                 List<UserEntity> finalRecommendations = candidates.stream()
                                 .limit(requiredCount)
                                 .collect(Collectors.toList());
+
+                // [저장] 여기서 DB에 실제로 넣습니다.
+                for (UserEntity recommendedUser : finalRecommendations) {
+                        DailyRecommendationEntity recommendation = DailyRecommendationEntity.builder()
+                                        .user(user)
+                                        .recommendedUser(recommendedUser)
+                                        .build();
+                        dailyRecommendationRepository.save(recommendation);
+                }
 
                 return finalRecommendations;
         }
