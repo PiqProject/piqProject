@@ -1,5 +1,8 @@
 package piq.piqproject.domain.matches.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -33,7 +36,7 @@ public class MatchingService {
     private final UserRepository userRepository; // 유저 정보를 가져오기 위해 필요
     private final DailyRecommendationRepository dailyRecommendationRepository;
     private final DailyRecommendationService dailyRecommendationService;
-    private static final int MATCH_COST = 100;
+    private static final int MATCH_COST = 0;
 
     // 매칭 비용을 상수로 정의하여 관리 용이성 증대
 
@@ -65,8 +68,14 @@ public class MatchingService {
                 });
 
         // 3-1. 추천 기록이 있는지 확인
-        if (!dailyRecommendationRepository.existsByUserAndRecommendedUser(sender, receiver)) {
-            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "오늘의 추천 사용자에게만 매칭을 요청할 수 있습니다.");
+        List<LocalDateTime> timeRange = dailyRecommendationService.getRecommendationTimeRange();
+        LocalDateTime start = timeRange.get(0);
+        LocalDateTime end = timeRange.get(1);
+
+        // existsByUser... 로 호출
+        if (!dailyRecommendationRepository.existsByUserAndRecommendedUserAndCreatedAtBetween(sender, receiver, start,
+                end)) {
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "'오늘' 추천된 사용자에게만 매칭을 요청할 수 있습니다.");
         }
 
         // 4. 포인트 잔액 검사

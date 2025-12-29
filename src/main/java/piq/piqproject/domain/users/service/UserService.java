@@ -1,5 +1,9 @@
 package piq.piqproject.domain.users.service;
 
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -84,8 +88,30 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(password);
 
         // 3. UserEntity 생성
-        UserEntity adminUser = UserEntity.of(email, "Admin", encodedPassword, "kakaoAdmin", null,
-                30, Gender.MALE, "MBTI", 1000.0, 10000000, "관리자 계정", true);
+        // 기본 Point 객체 생성 (JTS 라이브러리 사용)
+        // SRID 4326 = WGS84 (GPS 위경도 좌표계)
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+
+        // 예시: 서울 시청 좌표 (경도 126.9780, 위도 37.5665)
+        // 주의: Coordinate(x, y) 순서이므로 (경도, 위도) 순서로 넣어야 합니다.
+        Point defaultLocation = geometryFactory.createPoint(new Coordinate(126.9780, 37.5665));
+
+        UserEntity adminUser = UserEntity.of(
+                email,
+                "Admin",
+                encodedPassword,
+                "kakaoAdmin",
+                "instagramAdmin",
+                30,
+                Gender.MALE,
+                "MBTI",
+                0.0,
+                100000000,
+                "관리자 계정",
+                true,
+                "서울시청", // address (관리자용 기본 주소)
+                defaultLocation,
+                "광운대학교");
         adminUser.addRole(Role.ADMIN); // 관리자 권한 부여
 
         // 4. DB에 저장

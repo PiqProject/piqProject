@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.request.UserLocationRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
 import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
@@ -133,5 +134,20 @@ public class ProfileController {
             @Valid @RequestBody UserScoreRequestDto userScoreRequestDto) {
         log.info("Request to score user User: {}", user.getEmail());
         return ResponseEntity.ok(profileService.scoreUser(user, userScoreRequestDto));
+    }
+
+    /**
+     * 사용자의 거주지(주소)를 변경합니다.
+     * 입력된 주소를 기반으로 위도/경도를 자동으로 계산하여 저장합니다.
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PutMapping("/me/location")
+    public ResponseEntity<String> updateUserLocation(
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserLocationRequestDto requestDto) {
+
+        profileService.updateUserLocation(user, requestDto);
+
+        return ResponseEntity.ok("주소 변경이 완료되었습니다.");
     }
 }

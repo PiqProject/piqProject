@@ -1,4 +1,4 @@
-package piq.piqproject.infra.local;
+package piq.piqproject.infra.storage.local;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;

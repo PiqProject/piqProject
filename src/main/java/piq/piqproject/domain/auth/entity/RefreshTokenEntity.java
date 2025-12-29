@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.entity;
+package piq.piqproject.domain.auth.entity;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;

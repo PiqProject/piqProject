@@ -25,12 +25,9 @@ public class DailyRecommendationController {
     private final DailyRecommendationService dailyRecommendationService;
 
     /**
-     * 오늘의 추천 사용자 카드 2장을 조회하는 API 엔드포인트입니다.
-     * 이 API는 하루 동안 동일한 결과를 반환하는 것을 보장합니다.
-     *
-     * @param userDetails Spring Security가 주입해주는 현재 인증된 사용자의 정보.
-     *                    UserDetails 인터페이스를 통해 사용자의 고유 식별자(username)를 얻습니다.
-     * @return 성공 시 HTTP 200 OK 상태 코드와 함께 추천 사용자 정보 DTO 리스트를 반환합니다.
+     * [선택 A] 기본 거리 기반 추천 받기 (무료)
+     * - 오늘 추천을 아직 안 받았다면 -> 거리 기반으로 생성 후 반환
+     * - 이미 받았다면 -> 기존 내역 반환
      */
     @GetMapping("/daily")
     public ResponseEntity<ListResponseDto<RecommendedUserResponseDto>> getDailyRecommendations(
@@ -38,10 +35,27 @@ public class DailyRecommendationController {
 
         // 1. 실제 비즈니스 로직은 Service 계층에 모두 위임합니다.
         // 컨트롤러는 단지 요청을 받고, 적절한 서비스 메서드를 호출하며, 결과를 반환하는 역할만 수행합니다.
-        List<RecommendedUserResponseDto> recommendations = dailyRecommendationService.getDailyRecommendations(user);
+        List<RecommendedUserResponseDto> recommendations = dailyRecommendationService.getDailyRecommendations(user,
+                false);
 
         // 2. 서비스로부터 받은 결과를 ResponseEntity에 담아 클라이언트에게 반환합니다.
         // ResponseEntity.ok()는 HTTP 200 OK 상태와 응답 본문을 함께 설정해줍니다.
+        return ResponseEntity.ok(ListResponseDto.from(recommendations));
+    }
+
+    /**
+     * [선택 B] 프리미엄 이상형 추천 받기 (유료)
+     * - 오늘 추천을 아직 안 받았다면 -> 포인트 차감 후 이상형 기반 생성
+     * - 이미 받았다면 -> (정책에 따라) 기존 내역 반환 또는 에러 처리
+     * (여기서는 사용자가 실수로 눌렀을 수도 있으니 기존 내역을 보여주는 것으로 구현)
+     */
+    @GetMapping("/daily/premium")
+    public ResponseEntity<ListResponseDto<RecommendedUserResponseDto>> getPremiumRecommendations(
+            @AuthenticationPrincipal UserEntity user) {
+
+        // true = 프리미엄 요청
+        List<RecommendedUserResponseDto> recommendations = dailyRecommendationService.getDailyRecommendations(user,
+                true);
         return ResponseEntity.ok(ListResponseDto.from(recommendations));
     }
 }

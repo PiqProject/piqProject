@@ -1,4 +1,4 @@
-package piq.piqproject.infra.s3;
+package piq.piqproject.infra.storage.s3;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.multipart.MultipartFile;

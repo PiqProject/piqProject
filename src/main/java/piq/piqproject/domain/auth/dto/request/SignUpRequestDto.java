@@ -1,4 +1,4 @@
-package piq.piqproject.domain.users.dto.request;
+package piq.piqproject.domain.auth.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -53,4 +53,11 @@ public class SignUpRequestDto {
 
     @NotBlank(message = "자기소개는 필수 입력 값입니다.")
     private String introduce;
+
+    @NotBlank(message = "주소는 필수 입력 값입니다.")
+    private String address;
+
+    @NotBlank(message = "대학교는 필수 입력 값입니다.")
+    private String university;
+
 }
