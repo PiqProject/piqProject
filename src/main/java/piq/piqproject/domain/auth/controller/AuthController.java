@@ -53,9 +53,8 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<AccessTokenResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
-        log.info("User login attempt: {}", loginRequestDto.getEmail());
-
         TokensResponseDto tokenResponseDto = authService.login(loginRequestDto);
+        log.info("User login attempt: {}", loginRequestDto.getEmail());
 
         // 1. Refresh Token을 위한 HttpOnly 쿠키 생성
         ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenResponseDto.getRefreshToken())
@@ -91,6 +90,7 @@ public class AuthController {
 
         // 2. 서비스 레이어에 로그아웃 처리를 위임. (Redis에서 Refresh Token 삭제)
         authService.logout(userEmail);
+        log.info("User logout attempt: {}", userEmail);
 
         // 3. 클라이언트 측의 Refresh Token 쿠키를 삭제하기 위한 쿠키를 생성
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", null)
@@ -117,7 +117,7 @@ public class AuthController {
      */
     @PostMapping("/reissue")
     public ResponseEntity<AccessTokenResponseDto> reissue(@CookieValue("refreshToken") String refreshToken) {
-        log.info("reissue 요청이 controller에 도달");
+        log.info("Reissue request received");
         // 1. Refresh Token 유효성 검사 및 새로운 Access Token 발급
         String newAccessToken = authService.reissueAccessToken(refreshToken);
         // 2. 새로운 Access Token을 응답 DTO에 저장

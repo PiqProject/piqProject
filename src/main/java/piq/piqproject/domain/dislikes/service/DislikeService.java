@@ -49,8 +49,6 @@ public class DislikeService {
                 .build();
         dislikeRepository.save(newDislike);
 
-        log.info("Dislike 기록 생성됨: From {} to {}", fromUser.getId(), toUserId);
-
         // 4. 오늘의 추천 기록 업데이트 (스케줄러 자동 처리 대상에서 제외)
         dailyRecommendationService.markRecommendationAsActioned(fromUser, toUser);
     }

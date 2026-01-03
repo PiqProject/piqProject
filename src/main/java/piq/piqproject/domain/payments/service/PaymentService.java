@@ -114,7 +114,7 @@ public class PaymentService {
 
         if (!expectedAmount.equals(actualAmount)) {
             // 결제 금액이 일치하지 않는 경우, 비정상적인 접근으로 간주하고 결제를 취소합니다.
-            log.warn("결제 금액 위변조 시도 감지: merchantUid={}, expected={}, actual={}",
+            log.error("결제 금액 위변조 시도 감지: merchantUid={}, expected={}, actual={}",
                     request.getMerchantUid(), expectedAmount, actualAmount);
 
             paymentEntity.failPayment(); // DB 상태를 '실패'로 변경

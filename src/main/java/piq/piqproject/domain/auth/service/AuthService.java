@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.dto.CoordinateDto;
 import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ErrorCode;
@@ -32,8 +33,9 @@ import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
 import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
 
+@Slf4j
 @Service
-@RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 생성 (의존성 주입)
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -64,7 +66,6 @@ public class AuthService {
             throw new InvalidRequestException(ErrorCode.INTERNAL_SERVER_ERROR, "유효하지 않은 주소입니다. 도로명 주소를 정확히 입력해주세요.");
         }
 
-        // ▼▼▼ [수정] Point 객체 생성 (JTS) ▼▼▼
         // SRID 4326 = WGS84 (GPS 좌표계)
         GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
@@ -145,7 +146,6 @@ public class AuthService {
     public void logout(String userEmail) {
         // 1. Redis에서 해당 사용자의 Refresh Token 삭제
         refreshTokenRepository.deleteById(userEmail);
-
     }
 
     /**

@@ -21,7 +21,7 @@ public class AsyncConfig {
         executor.initialize();
 
         // 5. [중요] 예외 처리 정책: 대기열도 꽉 찼을 때 어떻게 할 것인가?
-        // CallerRunsPolicy: 요청한 사람(Main Thread)이 직접 처리하게 함 (속도는 느려지지만 데이터 유실 없음)
+        // CallerRunsPolicy: 요청한 스레드(Main Thread)이 직접 처리하게 함 (속도는 느려지지만 데이터 유실 없음)
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
 
         executor.initialize();

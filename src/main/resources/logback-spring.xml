@@ -1,20 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <!-- 1. 변수 설정 -->
-    <!-- 로그가 저장될 경로 (프로젝트 루트의 logs 폴더) -->
-    <property name="LOG_PATH" value="./logs"/>
+    <springProperty scope="context" name="LOG_ROOT_PATH" source="app.log.root-path"/>
+    <springProperty scope="context" name="LOG_MAX_HISTORY" source="app.log.max-history"/>
     
-    <!-- 로그 파일 보관 기간 (일 단위) -> 14일 지나면 자동 삭제 -->
-    <property name="LOG_MAX_HISTORY" value="14"/>
-
-    <!-- 콘솔 출력 패턴 (색상 적용) -->
+    <!-- 콘솔 로그 패턴 -->
     <property name="CONSOLE_LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta(%-40.40logger{39}) : %msg%n"/>
 
-    <!-- 파일 저장 패턴 (깔끔한 텍스트) -->
+    <!-- 파일 로그 패턴 -->
     <property name="FILE_LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %-40.40logger{39} : %msg%n"/>
-
 
     <!-- 2. 어펜더(Appender) 설정: 로그를 어디에 어떻게 출력할지 정의 -->
 
@@ -25,10 +21,10 @@
         </encoder>
     </appender>
 
-    <!-- (2) 일반(Info) 파일 로그: 정상적인 흐름 기록 -->
+    <!-- (2) 일반(Info) 파일 로그 -->
     <appender name="FILE-INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!-- 현재 기록 중인 파일명 -->
-        <file>${LOG_PATH}/info.log</file>
+        <file>${LOG_ROOT_PATH}/info.log</file>
         
         <!-- INFO 레벨 이상(INFO, WARN, ERROR)만 기록 -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -39,7 +35,7 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- actived log.info는 yyyy-MM-dd의 마지막이 dd 즉 day이므로 하루가 지난후 최초 로그가 찍힐때 스트림이 닫히고 
             이름이 변경되어 history/info-yyyy-MM-dd.log로 저장됨 이후 새로운 log.info stream이 열림 -->
-            <fileNamePattern>${LOG_PATH}/history/info/info-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_ROOT_PATH}/history/info/info-%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- 최대로그저장기간이 지난 파일은 자동 삭제 (용량 관리 핵심) -->
             <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
         </rollingPolicy>
@@ -51,7 +47,7 @@
 
     <!-- (3) 에러(Error) 파일 로그: 에러만 따로 모아보기 -->
     <appender name="FILE-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/error.log</file>
+        <file>${LOG_ROOT_PATH}/error.log</file>
         
         <!-- 오직 ERROR 레벨만 기록 (WARN, INFO 제외) -->
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -61,7 +57,7 @@
         </filter>
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/history/error/error-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_ROOT_PATH}/history/error/error-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
         </rollingPolicy>
 

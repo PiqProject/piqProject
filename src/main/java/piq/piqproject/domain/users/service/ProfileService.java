@@ -8,6 +8,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -62,6 +63,7 @@ import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
 public class ProfileService {
 
     private final UserRepository userRepository;
+    @Qualifier("localUploader") // FileUploader 구현체 중 localUploader를 주입
     private final FileUploader fileUploader;
     private final FileUtil fileUtil;
     private final InterestRepository interestRepository;
@@ -108,7 +110,7 @@ public class ProfileService {
 
         } catch (Exception e) {
             // 5. [보상 트랜잭션] DB 작업 실패 시, 방금 업로드한 새 파일을 즉시 삭제
-            log.warn("DB 업데이트 실패. 업로드된 파일 롤백을 시도합니다. URL: {}", newVoiceUrl, e);
+            log.error("DB 업데이트 실패. 업로드된 파일 롤백을 시도합니다. URL: {}", newVoiceUrl, e);
             fileUploader.delete(newVoiceUrl); // 보상(취소) 로직
 
             // 반드시 원래 예외를 다시 던져서 @Transactional이 롤백을 수행하도록 해야 함
@@ -144,7 +146,6 @@ public class ProfileService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                log.info("DB 커밋 완료. 음성 파일 삭제를 시작합니다. URL: {}", voiceUrl);
                 try {
                     fileUploader.delete(voiceUrl);
                 } catch (Exception e) {
@@ -322,7 +323,5 @@ public class ProfileService {
 
         // 4. DB 업데이트
         user.updateLocation(newAddress, locationPoint);
-        log.info("유저(ID:{}) 주소 업데이트 완료: {} -> ({}, {})",
-                user.getId(), newAddress, coordinate.getLatitude(), coordinate.getLongitude());
     }
 }

@@ -2,6 +2,7 @@ package piq.piqproject.domain.userimages.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +24,7 @@ import piq.piqproject.domain.users.entity.UserEntity;
 public class UserImageService {
 
     private final UserImageRepository userImageRepository;
+    @Qualifier("localUploader") // FileUploader 구현체 중 localUploader를 주입
     private final FileUploader fileUploader; // LocalUploader 또는 S3Uploader가 주입
     private final FileUtil fileUtil;
 

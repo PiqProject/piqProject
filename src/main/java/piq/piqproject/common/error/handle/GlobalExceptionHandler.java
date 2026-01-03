@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
-import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.dto.ErrorDetailsDto;
@@ -30,7 +29,6 @@ import piq.piqproject.common.error.exception.ErrorCode;
  *                       이는 중복되는 예외 처리 코드를 줄이고 일관된 에러 응답 형식을 유지합니다.
  */
 @Slf4j
-@Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -46,7 +44,7 @@ public class GlobalExceptionHandler {
                 String code = e.getErrorCode().name();
                 String message = e.getMessage();
 
-                log.error(
+                log.warn(
                                 """
                                                 CustomException occurred
                                                 ------------------------
@@ -84,7 +82,7 @@ public class GlobalExceptionHandler {
                                                 detail.getMessage()))
                                 .collect(Collectors.joining("\n")); // 각 항목을 줄바꿈 문자로 연결
 
-                log.error(
+                log.warn(
                                 """
                                                 Validation error occurred (MethodArgumentNotValidException)
                                                 -----------------------------------------------------------
@@ -108,7 +106,7 @@ public class GlobalExceptionHandler {
 
                 ErrorCode errorCode = ErrorCode.METHOD_NOT_ALLOWED;
 
-                log.error(
+                log.warn(
                                 """
                                                 MethodNotSupportedException occurred
                                                 ------------------------------------
@@ -143,7 +141,7 @@ public class GlobalExceptionHandler {
                 String code = errorCode.name();
                 String message = errorCode.getMessage();
 
-                log.error(
+                log.warn(
                                 """
                                                 MaxUploadSizeExceededException occurred
                                                 ---------------------------------------

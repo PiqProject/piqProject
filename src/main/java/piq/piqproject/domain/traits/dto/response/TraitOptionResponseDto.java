@@ -7,8 +7,8 @@ import piq.piqproject.domain.traits.entity.TraitOptionEntity;
 @Getter
 public class TraitOptionResponseDto {
 
-    private Long id;
-    private String optionName;
+    private final Long id;
+    private final String optionName;
 
     @Builder
     public TraitOptionResponseDto(Long id, String optionName) {
