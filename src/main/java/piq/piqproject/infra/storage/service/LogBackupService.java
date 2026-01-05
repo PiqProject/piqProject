@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import piq.piqproject.common.file.FileUploader;
+import piq.piqproject.common.file.FileUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
