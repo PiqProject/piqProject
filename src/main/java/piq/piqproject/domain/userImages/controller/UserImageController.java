@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InvalidRequestException;
-import piq.piqproject.domain.userimages.service.UserImageService;
+import piq.piqproject.domain.userimages.facade.UserImageFacade;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 @Slf4j
@@ -24,7 +24,7 @@ import piq.piqproject.domain.users.entity.UserEntity;
 @RequestMapping("/api/v1/images")
 public class UserImageController {
 
-    private final UserImageService userImageService;
+    private final UserImageFacade userImageFacade;
 
     /**
      * 클라이언트로부터 이미지 파일을 받아 업로드
@@ -44,7 +44,7 @@ public class UserImageController {
             throw new InvalidRequestException(ErrorCode.FILE_UPLOAD_ERROR, "업로드할 이미지 파일이 없습니다.");
 
         // 2. 비즈니스 로직 처리를 위해 서비스 계층으로 파일과 사용자 정보를 전달
-        userImageService.uploadImage(user, imageFile);
+        userImageFacade.uploadImage(user, imageFile);
 
         // 3. 성공 응답 반환
         return ResponseEntity.ok("이미지가 성공적으로 업로드되었습니다.");
@@ -60,7 +60,7 @@ public class UserImageController {
     @PostMapping("/{imageId}/delete")
     public ResponseEntity<String> deleteImage(@AuthenticationPrincipal UserEntity user,
             @PathVariable("imageId") Long imageId) {
-        userImageService.deleteImage(user, imageId);
+        userImageFacade.deleteImage(user, imageId);
         return ResponseEntity.ok("이미지가 성공적으로 삭제되었습니다.");
     }
 
@@ -68,7 +68,7 @@ public class UserImageController {
     @PutMapping("/{imageId}/set-main")
     public ResponseEntity<String> setMainImage(@AuthenticationPrincipal UserEntity user,
             @PathVariable("imageId") Long imageId) {
-        userImageService.setMainImage(user, imageId);
+        userImageFacade.setMainImage(user, imageId);
         return ResponseEntity.ok("대표 이미지가 성공적으로 변경되었습니다.");
     }
 }

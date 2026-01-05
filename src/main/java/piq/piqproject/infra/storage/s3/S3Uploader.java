@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,7 +20,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Slf4j
 @Component
-// @Profile("prod") // 일단 개발/테스트 중에도 쓸 수 있게 주석 처리 (나중에 배포 시 프로필 관리 필요)
+@Profile("prod")
 @RequiredArgsConstructor
 public class S3Uploader implements FileUploader {
 

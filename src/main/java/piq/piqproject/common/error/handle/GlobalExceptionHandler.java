@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -44,6 +45,7 @@ public class GlobalExceptionHandler {
                 String code = e.getErrorCode().name();
                 String message = e.getMessage();
 
+                // logger에 e를 추가하면 스택 트레이스를 로깅함
                 log.warn(
                                 """
                                                 CustomException occurred
@@ -150,6 +152,59 @@ public class GlobalExceptionHandler {
                                                 message= {}
                                                 """,
                                 status.getReasonPhrase(), status.value(), code, message, e);
+
+                return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
+        }
+
+        /**
+         * JSON 파싱 실패 등 잘못된 요청 형식 처리
+         * 클라이언트에서 잘못 보낸 것이므로 따로 빼서 처리
+         * 응답: 400 Bad Request
+         */
+        @ExceptionHandler(HttpMessageNotReadableException.class)
+        public ResponseEntity<ErrorResponseDto> handleHttpMessageNotReadableException(
+                        HttpMessageNotReadableException e) {
+                ErrorCode errorCode = ErrorCode.BAD_REQUEST;
+
+                HttpStatus status = errorCode.getStatus();
+                String code = errorCode.name();
+                String message = errorCode.getMessage();
+
+                log.warn("""
+                                HttpMessageNotReadableException occurred
+                                ----------------------------------------
+                                status= {} ({})
+                                message= {}
+                                """, status.getReasonPhrase(), status.value(), e.getMessage(), e);
+
+                return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
+        }
+
+        /**
+         * [최상위 예외 핸들러]
+         * 위에서 처리되지 않은 모든 예외(NullPointerException, IllegalArgumentException 등)를 처리합니다.
+         * 보통 500 Internal Server Error로 처리합니다.
+         */
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ErrorResponseDto> handleAllException(Exception e) {
+
+                // ErrorCode에 INTERNAL_SERVER_ERROR가 정의되어 있다고 가정
+                ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
+
+                HttpStatus status = errorCode.getStatus();
+                String code = errorCode.name();
+                String message = "서버 내부 오류가 발생했습니다. 관리자에게 문의하세요.";
+
+                // 500 에러는 서버 문제이므로 warn 대신 error 레벨로 로깅하여 알람 등을 연동하기 좋게 합니다.
+                log.error("""
+                                Unhandled Exception occurred (Internal Server Error)
+                                ----------------------------------------------------
+                                status= {} ({})
+                                code= {}
+                                message= {}
+                                exception= {}
+                                """, status.getReasonPhrase(), status.value(), code, e.getMessage(),
+                                e.getClass().getName(), e);
 
                 return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
         }

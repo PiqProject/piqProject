@@ -2,11 +2,9 @@ package piq.piqproject.infra.storage.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import piq.piqproject.common.file.FileUploader;
-import piq.piqproject.common.file.FileUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,7 +20,6 @@ import java.util.zip.GZIPOutputStream;
 @RequiredArgsConstructor
 public class LogBackupService {
 
-    @Qualifier("s3Uploader")
     private final FileUploader fileUploader;
 
     @Value("${app.log.root-path}")

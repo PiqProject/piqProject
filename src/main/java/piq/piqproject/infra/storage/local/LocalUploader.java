@@ -2,6 +2,7 @@ package piq.piqproject.infra.storage.local;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,7 @@ import java.io.File;
 @Component
 @Slf4j
 @Primary
-// @Profile("local") // local 프로필일 때만 활성화
+@Profile("local") // local 프로필일 때만 활성화
 public class LocalUploader implements FileUploader {
 
     @Value("${app.upload.dir}")

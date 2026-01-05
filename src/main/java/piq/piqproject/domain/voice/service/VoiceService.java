@@ -3,7 +3,6 @@ package piq.piqproject.domain.voice.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -23,7 +22,6 @@ import piq.piqproject.domain.users.repository.UserRepository;
 public class VoiceService {
 
     private final UserRepository userRepository;
-    @Qualifier("s3Uploader")
     private final FileUploader fileUploader;
     private final FileUtil fileUtil;
 

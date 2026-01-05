@@ -6,11 +6,11 @@
     
     <!-- 콘솔 로그 패턴 -->
     <property name="CONSOLE_LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta(%-40.40logger{39}) : %msg%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta(%-40.40logger{39}) : %msg%n%ex{10}"/>
 
     <!-- 파일 로그 패턴 -->
     <property name="FILE_LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %-40.40logger{39} : %msg%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %-40.40logger{39} :  %msg%n%ex{5}"/>
 
     <!-- 2. 어펜더(Appender) 설정: 로그를 어디에 어떻게 출력할지 정의 -->
 
