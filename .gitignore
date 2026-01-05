@@ -43,3 +43,6 @@ JWT동작방식.txt
 ### secret 파일 ###
 src/main/resources/application-secret.properties
 application-secret.properties
+
+### 로그 파일 ###
+logs/
