@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <!-- TODO: 관리자접속기록 1년유지, 일반로그 3개월유지: 가비아 콘솔에서 설정해줄것 -->
     <!-- 1. 변수 설정 -->
     <springProperty scope="context" name="LOG_ROOT_PATH" source="app.log.root-path"/>
     <springProperty scope="context" name="LOG_MAX_HISTORY" source="app.log.max-history"/>
@@ -66,6 +67,18 @@
         </encoder>
     </appender>
 
+    <!-- 4. 유저 접속 로그 전용 Appender -->
+    <appender name="FILE-USER-ACCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_ROOT_PATH}/user-access.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_ROOT_PATH}/history/access/user-access-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>90</maxHistory> <!-- 법적 요구사항: 3개월(90일) -->
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} | %msg%n</pattern> <!-- 심플하게 날짜와 내용만 -->
+        </encoder>
+    </appender>
+
 
     <!-- 3. 적용 (Root Logger) -->
     <!-- 모든 패키지의 로그에 대해 아래 설정을 적용 -->
@@ -75,5 +88,10 @@
         <appender-ref ref="FILE-INFO"/>   <!-- info.log에도 저장하고 -->
         <appender-ref ref="FILE-ERROR"/>  <!-- error.log에도 저장해라 -->
     </root>
+
+    <!-- 'UserAccessLogger'라는 이름의 로거는 이 Appender를 쓴다 -->
+    <logger name="UserAccessLogger" level="INFO" additivity="false">
+        <appender-ref ref="FILE-USER-ACCESS"/>
+    </logger>
 
 </configuration>

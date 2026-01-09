@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.dto.CoordinateDto;
@@ -22,7 +23,10 @@ import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.InvalidRequestException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.error.exception.UnauthorizedException;
+import piq.piqproject.common.util.IpUtil;
 import piq.piqproject.config.jwt.JwtTokenProvider;
+import piq.piqproject.domain.admin.log.entity.AdminAccessLogEntity;
+import piq.piqproject.domain.admin.log.repository.AdminAccessLogRepository;
 import piq.piqproject.domain.auth.dto.request.LoginRequestDto;
 import piq.piqproject.domain.auth.dto.request.SignUpRequestDto;
 import piq.piqproject.domain.auth.dto.response.SignUpResponseDto;
@@ -30,8 +34,11 @@ import piq.piqproject.domain.auth.dto.response.TokensResponseDto;
 import piq.piqproject.domain.auth.entity.RefreshTokenEntity;
 import piq.piqproject.domain.auth.repository.RefreshTokenRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.enums.Role;
 import piq.piqproject.domain.users.repository.UserRepository;
 import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 @Service
@@ -43,6 +50,8 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final KakaoGeocodingService kakaoGeocodingService;
+    private final AdminAccessLogRepository adminAccessLogRepository;
+    private static final Logger accessLogger = LoggerFactory.getLogger("UserAccessLogger");
 
     /**
      * 회원가입 비즈니스 로직을 처리하는 메소드
@@ -72,7 +81,6 @@ public class AuthService {
         // 주의: Coordinate(x, y) 순서이므로 (경도, 위도) 순서로 넣어야 합니다.
         Point location = geometryFactory
                 .createPoint(new Coordinate(coordinate.getLongitude(), coordinate.getLatitude()));
-        // ▲▲▲ [수정] ▲▲▲
 
         // 2. DTO를 Entity로 변환
         String encodedPassword = passwordEncoder.encode(signUpRequestDto.getPassword());
@@ -107,8 +115,8 @@ public class AuthService {
      * @param loginRequestDto 로그인 요청 DTO (email, password)
      * @return TokenResponse
      */
-    @Transactional(readOnly = true)
-    public TokensResponseDto login(LoginRequestDto loginRequestDto) {
+    @Transactional
+    public TokensResponseDto login(LoginRequestDto loginRequestDto, HttpServletRequest request) {
         // 1. 이메일을 기반으로 사용자 조회
         UserEntity user = userRepository.findByEmail(loginRequestDto.getEmail())
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
@@ -130,6 +138,27 @@ public class AuthService {
         // 5. 생성된 Refresh Token을 Redis에 저장
         refreshTokenRepository.save(new RefreshTokenEntity(user.getEmail(), refreshToken));
 
+        // 6. 로그인 로그 남기기
+        String ip = IpUtil.getClientIp(request);
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(userRole -> userRole.getRole() == Role.ADMIN);
+
+        if (isAdmin) {
+            AdminAccessLogEntity loginLog = AdminAccessLogEntity.builder()
+                    .adminId(user.getId())
+                    .adminEmail(user.getEmail())
+                    .ip(ip)
+                    .httpMethod("Login")
+                    .url("/api/v1/auth/login")
+                    .action("관리자 로그인")
+                    .target("Login Success")
+                    .build();
+
+            adminAccessLogRepository.save(loginLog);
+        }
+
+        accessLogger.info("LOGIN | {} | {} | {}", user.getId(), user.getEmail(), ip);
+
         // 6. 생성된 토큰을 DTO에 담아 반환
         return TokensResponseDto.builder()
                 .accessToken(accessToken)
@@ -143,9 +172,10 @@ public class AuthService {
      * @return
      */
     @Transactional
-    public void logout(String userEmail) {
+    public void logout(String userEmail, HttpServletRequest request) {
         // 1. Redis에서 해당 사용자의 Refresh Token 삭제
         refreshTokenRepository.deleteById(userEmail);
+        accessLogger.info("LOGOUT | {} | {}", userEmail, IpUtil.getClientIp(request));
     }
 
     /**
