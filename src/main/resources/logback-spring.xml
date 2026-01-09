@@ -6,7 +6,7 @@
     
     <!-- 콘솔 로그 패턴 -->
     <property name="CONSOLE_LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta(%-40.40logger{39}) : %msg%n%ex{10}"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta(%-40.40logger{39}) : %msg%n%ex{100}"/>
 
     <!-- 파일 로그 패턴 -->
     <property name="FILE_LOG_PATTERN"

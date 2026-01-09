@@ -1,4 +1,4 @@
-package piq.piqproject.admin.controller;
+package piq.piqproject.domain.admin.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

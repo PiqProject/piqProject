@@ -20,6 +20,7 @@ import piq.piqproject.common.error.dto.ErrorResponseDto;
 import piq.piqproject.common.error.dto.ValidErrorResponseDto;
 import piq.piqproject.common.error.exception.CustomException;
 import piq.piqproject.common.error.exception.ErrorCode;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * @RestControllerAdvice - 전역 예외 처리(Global Exception Handling)를 위한 컨트롤러 어드바이스
@@ -176,6 +177,22 @@ public class GlobalExceptionHandler {
                                 status= {} ({})
                                 message= {}
                                 """, status.getReasonPhrase(), status.value(), e.getMessage(), e);
+
+                return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
+        }
+
+        /**
+         * 잘못된 URL 요청 시 (404 Not Found)
+         * Spring Boot 3.2+부터 NoResourceFoundException이 발생합니다.
+         */
+        @ExceptionHandler(NoResourceFoundException.class)
+        public ResponseEntity<ErrorResponseDto> handleNoResourceFoundException(NoResourceFoundException e) {
+                // ErrorCode에 NOT_FOUND_RESOURCE 같은 게 있다면 사용, 없다면 직접 작성
+                HttpStatus status = HttpStatus.NOT_FOUND;
+                String code = "NOT_FOUND";
+                String message = "요청한 리소스를 찾을 수 없습니다. URL을 확인해주세요.";
+
+                log.warn("No resource found: {} {}", e.getHttpMethod(), e.getResourcePath());
 
                 return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
         }

@@ -207,6 +207,13 @@ public class UserEntity extends BaseEntity implements UserDetails {
         .build();
         this.roles.add(newUserRole);
     }
+
+    /**
+     * [관리자용] 소개글 강제 초기화
+     */
+    public void resetIntroduce() {
+        this.introduce = "관리자에 의해 규정 위반으로 초기화된 소개글입니다.";
+    }
     
     public void deductPqPoints(int amount) {
         this.pqPoint -= amount;
@@ -218,6 +225,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     public void updateVoiceUrl(String voiceUrl) {
         this.voiceUrl = voiceUrl;
+    }
+
+    public void updateActiveStatus(Boolean activation){
+        this.isActive = activation;
     }
 
     /**

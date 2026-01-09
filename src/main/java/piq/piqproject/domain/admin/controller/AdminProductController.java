@@ -1,4 +1,4 @@
-package piq.piqproject.admin.controller;
+package piq.piqproject.domain.admin.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
