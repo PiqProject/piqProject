@@ -21,6 +21,8 @@ import piq.piqproject.domain.admin.dto.response.UserAdminDetailResponseDto;
 import piq.piqproject.domain.admin.dto.response.UserAdminResponseDto;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.userimages.repository.UserImageRepository;
+import piq.piqproject.domain.points.enums.PointType;
+import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
 
@@ -33,6 +35,7 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final UserImageRepository userImageRepository;
     private final FileUploader fileUploader;
+    private final PointService pointService;
 
     /**
      * 회원 목록 조회 (검색 지원)
@@ -79,19 +82,18 @@ public class AdminUserService {
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
 
         int amount = requestDto.getAmount();
+        String reason = requestDto.getReason();
 
         if (amount > 0) {
-            user.refundPqPoints(amount); // 지급
+            pointService.chargePoints(user, amount, PointType.ADMIN, "관리자 수동 지급: " + reason);
         } else if (amount < 0) {
-            // 차감 시 보유 포인트보다 많은지 체크 로직
-            if (user.getPqPoint() >= Math.abs(amount)) {
-                user.deductPqPoints(Math.abs(amount));
-            } else {
-                user.deductPqPoints(user.getPqPoint());
+            int absoluteAmount = Math.abs(amount);
+            // 차감 시 보유 포인트보다 많은지 체크 로직 (기존 drain 로직 유지)
+            int actualDeductAmount = Math.min(user.getPqPoint(), absoluteAmount);
+            if (actualDeductAmount > 0) {
+                pointService.usePoints(user, actualDeductAmount, "관리자 수동 차감: " + reason);
             }
         }
-
-        // TODO: 포인트 변동 내역(PointHistory) 엔티티가 있다면 여기에 사유(reason)와 함께 저장해야 합니다.
     }
 
     /**
