@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.annotation.AuditLog;
 import piq.piqproject.domain.interests.dto.request.InterestRequestDto;
 import piq.piqproject.domain.interests.dto.response.InterestResponseDto;
 import piq.piqproject.domain.interests.service.InterestService;
@@ -37,6 +38,7 @@ public class AdminInterestController {
      * @return 생성된 관심사 정보
      */
     @PostMapping
+    @AuditLog(action = "관심사 생성")
     public ResponseEntity<InterestResponseDto> createInterest(
             @AuthenticationPrincipal UserEntity user,
             @Valid @RequestBody InterestRequestDto interestRequestDto) {
@@ -54,6 +56,7 @@ public class AdminInterestController {
      * @return 수정된 관심사 정보
      */
     @PutMapping("/{interestId}")
+    @AuditLog(action = "관심사 수정")
     public ResponseEntity<InterestResponseDto> updateInterest(
             @AuthenticationPrincipal UserEntity user,
             @PathVariable("interestId") Long interestId,
@@ -70,6 +73,7 @@ public class AdminInterestController {
      * @return 성공 메시지
      */
     @PostMapping("/{interestId}/delete")
+    @AuditLog(action = "관심사 삭제")
     public ResponseEntity<String> deleteInterest(
             @AuthenticationPrincipal UserEntity user,
             @PathVariable("interestId") Long interestId) {

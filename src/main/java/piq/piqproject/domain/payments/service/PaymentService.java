@@ -27,7 +27,9 @@ import piq.piqproject.domain.payments.dto.Request.PaymentVerificationRequestDto;
 import piq.piqproject.domain.payments.dto.Response.PaymentHistoryResponseDto;
 import piq.piqproject.domain.payments.entity.PaymentEntity;
 import piq.piqproject.domain.payments.enums.PaymentStatus;
-import piq.piqproject.domain.payments.repository.PaymentRepository; // Payment Repository
+import piq.piqproject.domain.payments.repository.PaymentRepository;
+import piq.piqproject.domain.points.enums.PointType;
+import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.products.entity.ProductEntity;
 import piq.piqproject.domain.products.repository.ProductRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
@@ -38,7 +40,11 @@ import piq.piqproject.domain.users.entity.UserEntity;
 public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
+    private final PointService pointService;
     private IamportClient iamportClient;
+
+    @Value("${payment.refund.limit-days:7}") // 값이 없으면 기본 7일
+    private int refundLimitDays;
 
     @Value("${portone.api.key}")
     private String restApiKey;
@@ -93,7 +99,7 @@ public class PaymentService {
     @Transactional
     public void verifyPayment(PaymentVerificationRequestDto request) {
         // 1. 우리 DB에서 merchant_uid로 결제 정보(PaymentEntity)를 조회합니다.
-        PaymentEntity paymentEntity = paymentRepository.findByMerchantUid(request.getMerchantUid())
+        PaymentEntity paymentEntity = paymentRepository.findByMerchantUidWithLock(request.getMerchantUid())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "해당 merchant_uid에 대한 결제 정보를 찾을 수 없습니다."));
 
         // 2. 포트원 서버를 통해 imp_uid로 실제 결제 정보를 조회합니다.
@@ -128,7 +134,17 @@ public class PaymentService {
         // 포트원 응답에서 결제 상태가 "paid"인지 추가로 확인하면 더 안전합니다.
         if ("paid".equals(iamportResponse.getResponse().getStatus())) {
             paymentEntity.completePayment(request.getImpUid()); // DB 상태를 'PAID'로 변경하고, impUid 저장
-            // TODO: 사용자에게 실제 아이템을 지급하는 로직을 여기에 추가 (예: user.addPoints(1000))
+            UserEntity user = paymentEntity.getUser();
+            int pointsToAdd = paymentEntity.getProduct().getPoint(); // 상품에 정의된 포인트 지급
+
+            pointService.chargePoints(
+                    user,
+                    pointsToAdd,
+                    PointType.CHARGE,
+                    "포인트 충전 (상품ID: " + paymentEntity.getProduct().getId() + ")");
+
+            log.info("[Payment Success] User: {}, Amount: {}, Points: +{}",
+                    user.getId(), paymentEntity.getAmount(), pointsToAdd);
         } else {
             // 결제는 됐으나, 포트원 최종 상태가 'paid'가 아닌 경우 (예: 'ready' 등)
             // 비정상 상태로 간주하고 실패 처리
@@ -146,34 +162,49 @@ public class PaymentService {
      */
     @Transactional
     public void cancelPayment(PaymentCancelRequestDto request, UserEntity user) {
-        // TODO:환불시 해당 금액을 소지중인지 확인하는 로직 필요+구매후 7일 같은 시간적인 부분 확인 필요->정확한 로직은 entity에서 쓰고
-        // service에선 이를 호출만 하는식으로 구현
-
-        // 1. 우리 DB에서 merchant_uid로 결제 정보를 조회합니다.
+        // 1. DB 조회
         PaymentEntity payment = paymentRepository.findByMerchantUid(request.getMerchantUid())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "해당 merchant_uid에 대한 결제 정보를 찾을 수 없습니다."));
 
-        // 2. ★★★ 핵심 검증 로직 ★★★
-        // 2-1. 결제 소유권 검증: 현재 요청한 사용자가 실제 결제를 한 사용자가 맞는지 확인합니다.
+        // 2.검증 (소유권, 상태)
+        // 2-1. 결제 소유권 검증
         if (!payment.getUser().getId().equals(user.getId())) {
             throw new InternalServerException(ErrorCode.NOT_OWNER, "해당 결제를 갖는 사용자가 아닙니다.");
         }
 
-        // 2-2. 결제 상태 검증: 이미 취소되었거나, 결제 완료 상태가 아닌 경우 취소할 수 없습니다.
+        // 2-2. 결제 상태 검증
         if (payment.getStatus() != PaymentStatus.PAID) {
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR,
                     "이미 취소되었거나 결제 완료되지 않은 건은 취소할 수 없습니다.");
         }
 
-        // 3. 포트원 결제 취소 API 호출
+        // 2-3. 환불 기간 검증
+        payment.validateRefundableDate(refundLimitDays);
+
+        // 3. 포인트 차감
+        int pointsToRevoke = payment.getProduct().getPoint();
+
+        try {
+            // 환불로 인한 포인트 차감 (PointType.REFUND)
+            // 여기서는 usePoints를 써서 차감 효과를 냄.
+            pointService.usePoints(
+                    user,
+                    pointsToRevoke,
+                    "결제 취소/환불 (주문번호: " + payment.getMerchantUid() + ")");
+
+            log.info("[Payment Cancel] User: {}, Refund Amount: {}, Points Revoked: -{}",
+                    user.getId(), payment.getAmount(), pointsToRevoke);
+
+        } catch (Exception e) {
+            log.error("[Refund Fail] 포인트 부족으로 회수 실패. User: {}", user.getId());
+            throw new InternalServerException(ErrorCode.NOT_ENOUGH_POINT, "이미 포인트를 사용하여 환불할 수 없습니다.");
+        }
+
+        // 4. 포트원 결제 취소 API 호출
         requestCancelToPortone(payment.getImpUid(), request.getReason(), payment.getAmount());
 
-        // 4. API 호출이 성공적으로 완료되면, 우리 DB의 상태를 'CANCELLED'로 변경합니다.
-        payment.cancelPayment(); // PaymentEntity 내부에 상태를 CANCELLED로 바꾸는 메소드
-
-        // 5. (중요) 사용자에게 지급되었던 아이템이나 포인트를 회수하는 로직을 여기에 추가합니다.
-        // 예: user.revokeItem(payment.getProduct());
-        log.info("DB 결제 상태 'CANCELLED'로 변경 및 아이템 회수 완료");
+        // 5. DB 상태 변경(Paid -> Cancelled)
+        payment.cancelPayment();
     }
 
     /**

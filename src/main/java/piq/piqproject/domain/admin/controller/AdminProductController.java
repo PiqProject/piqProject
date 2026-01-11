@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.annotation.AuditLog;
 import piq.piqproject.domain.products.dto.request.ProductRequestDto;
 import piq.piqproject.domain.products.dto.response.ProductResponseDto;
 import piq.piqproject.domain.products.service.ProductService;
@@ -38,6 +39,7 @@ public class AdminProductController {
      * @return 생성된 상품 정보
      */
     @PostMapping
+    @AuditLog(action = "상품 생성")
     public ResponseEntity<ProductResponseDto> createProduct(
             @AuthenticationPrincipal UserEntity user,
             @Valid @RequestBody ProductRequestDto productRequestDto) {
@@ -56,6 +58,7 @@ public class AdminProductController {
      * @return 수정된 상품 정보
      */
     @PutMapping("/{productId}")
+    @AuditLog(action = "상품 수정")
     public ResponseEntity<ProductResponseDto> updateProduct(
             @AuthenticationPrincipal UserEntity user,
             @PathVariable("productId") Long productId,
@@ -73,6 +76,7 @@ public class AdminProductController {
      * @return 성공 메시지
      */
     @PostMapping("/{productId}/delete")
+    @AuditLog(action = "상품 삭제")
     public ResponseEntity<String> deleteProduct(
             @AuthenticationPrincipal UserEntity user,
             @PathVariable("productId") Long productId) {

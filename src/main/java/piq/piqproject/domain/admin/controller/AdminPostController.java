@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import piq.piqproject.common.annotation.AuditLog;
 import piq.piqproject.domain.posts.dto.request.AnnouncementRequestDto;
 import piq.piqproject.domain.posts.dto.request.EventRequestDto;
 import piq.piqproject.domain.posts.dto.response.PostResponseDto;
@@ -34,6 +36,7 @@ public class AdminPostController {
      * @return 생성된 공지사항 정보
      */
     @PostMapping("/announcement")
+    @AuditLog(action = "공지사항 생성")
     public ResponseEntity<PostResponseDto> createAnnouncement(
             @AuthenticationPrincipal UserEntity user,
             @Valid @RequestBody AnnouncementRequestDto announcementRequestDto) {
@@ -51,6 +54,7 @@ public class AdminPostController {
      * @return 생성된 이벤트 정보
      */
     @PostMapping("/event")
+    @AuditLog(action = "이벤트 생성")
     public ResponseEntity<PostResponseDto> createEvent(
             @AuthenticationPrincipal UserEntity user,
             @Valid @RequestBody EventRequestDto eventRequestDto) {
@@ -68,6 +72,7 @@ public class AdminPostController {
      * @return 수정된 공지사항 정보
      */
     @PutMapping("/announcement/{postId}")
+    @AuditLog(action = "공지사항 수정")
     public ResponseEntity<PostResponseDto> updateAnnouncement(
             @PathVariable("postId") Long postId,
             @Valid @RequestBody AnnouncementRequestDto announcementRequestDto) {
@@ -84,6 +89,7 @@ public class AdminPostController {
      * @return 수정된 이벤트 정보
      */
     @PutMapping("/event/{postId}")
+    @AuditLog(action = "이벤트 수정")
     public ResponseEntity<PostResponseDto> updateEvent(
             @PathVariable("postId") Long postId,
             @Valid @RequestBody EventRequestDto eventRequestDto) {
@@ -99,6 +105,7 @@ public class AdminPostController {
      * @return 성공 메시지
      */
     @PostMapping("/{postId}/delete")
+    @AuditLog(action = "게시물 삭제")
     public ResponseEntity<String> deletePost(@PathVariable("postId") Long postId) {
         log.info("Request to delete a post. Post ID: {}", postId);
 

@@ -40,6 +40,9 @@ public class LogBackupService {
 
         // 2. Error 로그 처리 (폴더 구조: {LOG_ROOT_PATH}/history/error/error-날짜.log)
         processLogFile("error", "error-" + dateStr + ".log");
+
+        // 3. Access 로그 처리 (폴더 구조: {LOG_ROOT_PATH}/history/access/user-access-날짜.log)
+        processLogFile("access", "user-access-" + dateStr + ".log");
     }
 
     private void processLogFile(String type, String fileName) {
@@ -100,6 +103,7 @@ public class LogBackupService {
         // 결과:
         // logs/2025/12/30/info.log.gz
         // logs/2025/12/30/error.log.gz
+        // logs/2025/12/30/access.log.gz
         LocalDate yesterday = LocalDate.now().minusDays(1);
         String datePath = yesterday.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
 

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.annotation.AuditLog;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.traits.dto.request.CreateTraitOptionRequestDto;
 import piq.piqproject.domain.traits.dto.request.DeleteTraitOptionRequestDto;
@@ -41,6 +42,7 @@ public class AdminTraitController {
      * @return 생성된 카테고리 및 옵션 리스트
      */
     @PostMapping
+    @AuditLog(action = "이상형 카테고리 생성")
     public ResponseEntity<ListResponseDto<TraitResponseDto>> createCategoriesWithOptions(
             @AuthenticationPrincipal UserEntity user,
             @Valid @RequestBody List<TraitRequestDto> traitRequestDtos) {
@@ -58,6 +60,7 @@ public class AdminTraitController {
      * @return 생성된 카테고리의 옵션 리스트
      */
     @PostMapping("/{categoryId}/options")
+    @AuditLog(action = "이상형 카테고리 옵션 생성")
     public ResponseEntity<TraitResponseDto> addOptions(
             @AuthenticationPrincipal UserEntity user,
             @PathVariable("categoryId") Long categoryId,
@@ -75,6 +78,7 @@ public class AdminTraitController {
      * @return 성공 메시지
      */
     @PostMapping("/options/delete")
+    @AuditLog(action = "이상형 카테고리 옵션 삭제")
     public ResponseEntity<String> deleteOptions(
             @AuthenticationPrincipal UserEntity user,
             @Valid @RequestBody DeleteTraitOptionRequestDto deleteTraitOptionRequestDto) {
@@ -91,6 +95,7 @@ public class AdminTraitController {
      * @return 성공 메시지
      */
     @PostMapping("/{categoryId}/delete")
+    @AuditLog(action = "이상형 카테고리 삭제")
     public ResponseEntity<String> deleteCategory(
             @AuthenticationPrincipal UserEntity user,
             @PathVariable("categoryId") Long categoryId) {
