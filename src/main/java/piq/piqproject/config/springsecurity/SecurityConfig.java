@@ -44,9 +44,6 @@ public class SecurityConfig {
             "/api/v1/shops/all",
             "/api/v1/interests/all",
             "/api/v1/ideals/all",
-            "/h2-console/**", // H2 콘솔 접근 허용
-            "/swagger-ui/**", // Swagger UI 접근 허용
-            "/v3/api-docs/**", // Swagger API 문서 접근 허용
     };
 
     // 1. 비밀번호 암호화를 위한 PasswordEncoder Bean 등록
@@ -92,13 +89,7 @@ public class SecurityConfig {
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
                 // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
-                .anyRequest().authenticated())
-
-                // [추가] H2 콘솔을 위한 헤더 설정
-                // H2 콘솔은 iframe을 사용하므로, X-Frame-Options 헤더를 비활성화하거나 동일 출처(sameOrigin)로 설정해야
-                // 합니다.
-                .headers(headers -> headers
-                        .frameOptions(frameOptions -> frameOptions.sameOrigin()));
+                .anyRequest().authenticated());
 
         // 다른 필터를 추가할 경우 여기에 추가할것
         // JWT Filter(custom Filter)를 Spring Security 이전에 추가

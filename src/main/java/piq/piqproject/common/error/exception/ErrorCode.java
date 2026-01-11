@@ -17,6 +17,7 @@ public enum ErrorCode {
     POST_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "해당 URL에서 접근할 수 없는 타입의 게시글입니다."),
     INVALID_MATCH_STATUS(HttpStatus.BAD_REQUEST, "성사된 매칭에 대해서만 점수를 매길 수 있습니다."),
     INVALID_PAYMENT_AMOUNT(HttpStatus.BAD_REQUEST, "결제 금액이 유효하지 않습니다."),
+    BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청 형식입니다. JSON 포맷이나 데이터 타입을 확인해주세요."),
 
     // UNAUTHORIZED (401) : 인증되지 않은 접근,
     JWT_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "JWT 토큰이 만료되었습니다."),
@@ -64,6 +65,8 @@ public enum ErrorCode {
     FILE_DELETE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제 중 오류가 발생했습니다."),
     AUTHORITY_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "권한 정보 처리 중 오류가 발생했습니다."),
     FILE_SIZE_EXCEEDED(HttpStatus.PAYLOAD_TOO_LARGE, "업로드 파일 크기가 서버에서 설정한 최대치를 초과했습니다."),
+    NOT_ENOUGH_POINT(HttpStatus.INTERNAL_SERVER_ERROR, "포인트가 부족합니다."),
+
     ;
 
     private final HttpStatus status;

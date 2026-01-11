@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,16 +53,16 @@ public class AuthController {
      * @return ResponseEntity<AccessTokenResponseDto>
      */
     @PostMapping("/login")
-    public ResponseEntity<AccessTokenResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<AccessTokenResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto,
+            HttpServletRequest request) {
+        TokensResponseDto tokenResponseDto = authService.login(loginRequestDto, request);
         log.info("User login attempt: {}", loginRequestDto.getEmail());
-
-        TokensResponseDto tokenResponseDto = authService.login(loginRequestDto);
 
         // 1. Refresh Token을 위한 HttpOnly 쿠키 생성
         ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenResponseDto.getRefreshToken())
                 .maxAge(7 * 24 * 60 * 60) // 쿠키 수명 7일로 설정
                 .path("/") // 모든 경로에서 쿠키 사용
-                // .secure(true) // HTTPS 환경에서만 쿠키 전송
+                // .secure(true) // TODO: HTTPS 환경에서만 쿠키 전송
                 .sameSite("None") // 다른 도메인에서도 쿠키 전송 허용 (CORS 환경)?
                 .httpOnly(true) // JavaScript 접근 방지
                 .build();
@@ -84,13 +85,14 @@ public class AuthController {
      * 
      */
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<String> logout(@AuthenticationPrincipal UserDetails userDetails, HttpServletRequest request) {
 
         // 1. 현재 인증된 사용자의 이메일(username)을 가져옵니다.
         String userEmail = userDetails.getUsername();
 
         // 2. 서비스 레이어에 로그아웃 처리를 위임. (Redis에서 Refresh Token 삭제)
-        authService.logout(userEmail);
+        authService.logout(userEmail, request);
+        log.info("User logout attempt: {}", userEmail);
 
         // 3. 클라이언트 측의 Refresh Token 쿠키를 삭제하기 위한 쿠키를 생성
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", null)
@@ -117,7 +119,7 @@ public class AuthController {
      */
     @PostMapping("/reissue")
     public ResponseEntity<AccessTokenResponseDto> reissue(@CookieValue("refreshToken") String refreshToken) {
-        log.info("reissue 요청이 controller에 도달");
+        log.info("Reissue request received");
         // 1. Refresh Token 유효성 검사 및 새로운 Access Token 발급
         String newAccessToken = authService.reissueAccessToken(refreshToken);
         // 2. 새로운 Access Token을 응답 DTO에 저장

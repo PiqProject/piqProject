@@ -13,6 +13,7 @@ java {
     }
 }
 
+
 configurations {
     compileOnly {
         extendsFrom annotationProcessor
@@ -30,7 +31,6 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
 
     //validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -57,9 +57,17 @@ dependencies {
 
     // ## webflux(webClient)
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // ## AWS S3 SDK (가비아 오브젝트 스토리지 연동용, 가비아는 S3와 호환)
+    implementation platform('software.amazon.awssdk:bom:2.21.1') // 버전 관리
+    implementation 'software.amazon.awssdk:s3'
 }
 
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+compileJava {
+    options.compilerArgs << '-parameters'
 }

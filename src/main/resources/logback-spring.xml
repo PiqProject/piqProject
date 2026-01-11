@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- TODO: 관리자접속기록 1년유지, 일반로그 3개월유지: 가비아 콘솔에서 설정해줄것 -->
+    <!-- 1. 변수 설정 -->
+    <springProperty scope="context" name="LOG_ROOT_PATH" source="app.log.root-path"/>
+    <springProperty scope="context" name="LOG_MAX_HISTORY" source="app.log.max-history"/>
+    
+    <!-- 콘솔 로그 패턴 -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta(%-40.40logger{39}) : %msg%n%ex{100}"/>
+
+    <!-- 파일 로그 패턴 -->
+    <property name="FILE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %-40.40logger{39} :  %msg%n%ex{5}"/>
+
+    <!-- 2. 어펜더(Appender) 설정: 로그를 어디에 어떻게 출력할지 정의 -->
+
+    <!-- (1) 콘솔(Console) 로그: 개발할 때 눈으로 보는 용도 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- (2) 일반(Info) 파일 로그 -->
+    <appender name="FILE-INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 현재 기록 중인 파일명 -->
+        <file>${LOG_ROOT_PATH}/info.log</file>
+        
+        <!-- INFO 레벨 이상(INFO, WARN, ERROR)만 기록 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <!-- 파일 교체(Rolling) 정책: 날짜별로 파일 분리 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- actived log.info는 yyyy-MM-dd의 마지막이 dd 즉 day이므로 하루가 지난후 최초 로그가 찍힐때 스트림이 닫히고 
+            이름이 변경되어 history/info-yyyy-MM-dd.log로 저장됨 이후 새로운 log.info stream이 열림 -->
+            <fileNamePattern>${LOG_ROOT_PATH}/history/info/info-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 최대로그저장기간이 지난 파일은 자동 삭제 (용량 관리 핵심) -->
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- (3) 에러(Error) 파일 로그: 에러만 따로 모아보기 -->
+    <appender name="FILE-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_ROOT_PATH}/error.log</file>
+        
+        <!-- 오직 ERROR 레벨만 기록 (WARN, INFO 제외) -->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_ROOT_PATH}/history/error/error-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 4. 유저 접속 로그 전용 Appender -->
+    <appender name="FILE-USER-ACCESS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_ROOT_PATH}/user-access.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_ROOT_PATH}/history/access/user-access-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>90</maxHistory> <!-- 법적 요구사항: 3개월(90일) -->
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} | %msg%n</pattern> <!-- 심플하게 날짜와 내용만 -->
+        </encoder>
+    </appender>
+
+
+    <!-- 3. 적용 (Root Logger) -->
+    <!-- 모든 패키지의 로그에 대해 아래 설정을 적용 -->
+    <!-- INFO 레벨 이상의 로그를 콘솔, 파일로 저장 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>     <!-- 콘솔에도 찍고 -->
+        <appender-ref ref="FILE-INFO"/>   <!-- info.log에도 저장하고 -->
+        <appender-ref ref="FILE-ERROR"/>  <!-- error.log에도 저장해라 -->
+    </root>
+
+    <!-- 'UserAccessLogger'라는 이름의 로거는 이 Appender를 쓴다 -->
+    <logger name="UserAccessLogger" level="INFO" additivity="false">
+        <appender-ref ref="FILE-USER-ACCESS"/>
+    </logger>
+
+</configuration>

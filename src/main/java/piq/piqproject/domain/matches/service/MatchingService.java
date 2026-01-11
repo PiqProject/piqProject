@@ -23,6 +23,8 @@ import piq.piqproject.domain.matches.enums.MatchingStatus;
 import piq.piqproject.domain.matches.repository.MatchingRepository;
 import piq.piqproject.domain.recommendations.repository.DailyRecommendationRepository;
 import piq.piqproject.domain.recommendations.service.DailyRecommendationService;
+import piq.piqproject.domain.points.enums.PointType;
+import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
 
@@ -36,6 +38,7 @@ public class MatchingService {
     private final UserRepository userRepository; // 유저 정보를 가져오기 위해 필요
     private final DailyRecommendationRepository dailyRecommendationRepository;
     private final DailyRecommendationService dailyRecommendationService;
+    private final PointService pointService;
     private static final int MATCH_COST = 0;
 
     // 매칭 비용을 상수로 정의하여 관리 용이성 증대
@@ -78,15 +81,8 @@ public class MatchingService {
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "'오늘' 추천된 사용자에게만 매칭을 요청할 수 있습니다.");
         }
 
-        // 4. 포인트 잔액 검사
-        if (sender.getPqPoint() < MATCH_COST) {
-            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "매칭을 요청하기 위한 PQ 포인트가 부족합니다.");
-        }
-
-        // 5. 포인트 차감
-        // UserEntity의 상태를 변경합니다.
-        // @Transactional에 의해 이 변경사항은 트랜잭션 커밋 시점에 DB에 반영됩니다.
-        sender.deductPqPoints(MATCH_COST);
+        // 4. & 5. 포인트 차감 (PointService에서 잔액 체크 포함)
+        pointService.usePoints(sender, MATCH_COST, "매칭 요청 포인트 차감");
 
         // 6. 매칭 엔티티 생성 및 저장 (초기 상태는 PENDING)
         MatchingEntity newMatch = MatchingEntity.builder()
@@ -143,7 +139,7 @@ public class MatchingService {
         // 5. sender의 pqPoint환급
         if (newStatus == MatchingStatus.FAIL) {
             UserEntity sender = matching.getSender();
-            sender.refundPqPoints(MATCH_COST);
+            pointService.chargePoints(sender, MATCH_COST, PointType.REFUND, "매칭 거절 포인트 환불");
         }
 
         return MatchingResponseDto.from(matching, currentId);

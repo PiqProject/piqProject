@@ -5,12 +5,15 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import piq.piqproject.common.error.exception.ErrorCode;
+import piq.piqproject.common.error.exception.InvalidRequestException;
 import piq.piqproject.domain.BaseEntity;
 import piq.piqproject.domain.payments.enums.PaymentStatus;
 import piq.piqproject.domain.products.entity.ProductEntity;
 import piq.piqproject.domain.users.entity.UserEntity; // 사용자 엔티티
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "payments")
@@ -70,7 +73,7 @@ public class PaymentEntity extends BaseEntity {
      * - Payment 입장에서는 하나의 결제는 하나의 상품에 대해 이루어집니다. (Payment 입장에서 ManyToOne)
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shop_id")
+    @JoinColumn(name = "product_id")
     private ProductEntity product;
 
     // === 빌더 패턴 ===
@@ -123,6 +126,21 @@ public class PaymentEntity extends BaseEntity {
     public void expirePayment() {
         if (this.status == PaymentStatus.READY) {
             this.status = PaymentStatus.EXPIRED;
+        }
+    }
+
+    /**
+     * 환불 가능 기간이 지났는지 검증합니다.
+     * 
+     * @param limitDays 환불 제한 기간 (일 단위)
+     * @throws InvalidRequestException 기간이 지났을 경우
+     */
+    public void validateRefundableDate(int limitDays) {
+        LocalDateTime deadline = this.getCreatedAt().plusDays(limitDays);
+
+        if (LocalDateTime.now().isAfter(deadline)) {
+            throw new InvalidRequestException(ErrorCode.BAD_REQUEST,
+                    "환불 가능 기간(" + limitDays + "일)이 지났습니다.");
         }
     }
 }

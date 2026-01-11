@@ -1,0 +1,3 @@
+s3 로그 url: 
+logs/yyyy/mm/dd/error.log.gz
+logs/yyyy/mm/dd/info.log.gz

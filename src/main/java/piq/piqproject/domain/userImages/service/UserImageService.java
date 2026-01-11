@@ -1,63 +1,48 @@
 package piq.piqproject.domain.userimages.service;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.error.exception.UnauthorizedException;
 import piq.piqproject.common.file.FileUploader;
-import piq.piqproject.common.file.FileUtil;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.userimages.repository.UserImageRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class UserImageService {
 
     private final UserImageRepository userImageRepository;
-    private final FileUploader fileUploader; // LocalUploader 또는 S3Uploader가 주입
-    private final FileUtil fileUtil;
+    private final FileUploader fileUploader;
 
-    private static final int MAX_IMAGE_COUNT = 6; // 비즈니스 규칙: 사용자당 최대 이미지 개수
+    private static final int MAX_IMAGE_COUNT = 4; // 비즈니스 규칙: 사용자당 최대 이미지 개수
 
     /**
-     * 사용자의 이미지를 업로드합니다.
+     * [DB 저장 전용 메서드]
+     * Facade에서 호출되며, 이 메서드가 실행될 때 비로소 트랜잭션이 시작됩니다.
+     * S3 업로드는 이미 끝난 상태입니다.
      */
     @Transactional
-    public void uploadImage(UserEntity user, MultipartFile imageFile) {
-        // 1. 비즈니스 규칙 검증: 이미지 개수 제한
+    public void saveImageToDb(UserEntity user, String imageUrl) {
+        // 1. 비즈니스 규칙 검증 (이미지 개수 제한)
+        // DB 락이 필요하다면 여기서 수행되므로 안전함
         validateImageCount(user);
 
-        // 2. 파일 유효성 검증: 이미지 파일인지 확인
-        if (!fileUtil.isImageFile(imageFile)) {
-            throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, " 이미지 파일이 아닙니다.");
-        }
-
-        // 3. 파일 경로/이름 생성
-        // fullPath는 루트에서부터가 아닌 사진을 저장하기로한 최상위 디렉토리까지만을 의미한다.
-        // 저장위치의 최상위 C:/는 FileUploader가 관리한다.
-        String directoryPath = fileUtil.createDirectoryPath("images");
-        String fileName = fileUtil.createUniqueFileName(imageFile.getOriginalFilename());
-        String relativePath = directoryPath + "/" + fileName;
-
-        // 4. FileUploader를 통해 파일을 스토리지에 업로드하고, 최종 URL을 받아옴
-        // fullPath는 절대경로가 아님을 유의, 실제 저장 위치는 FileUploader 구현체에 따라 다름
-        // fullPath 예시: /images/2025/09/17/~~~~.jpg
-        // imageUrl은 절대경로가된다.
-        String imageUrl = fileUploader.upload(imageFile, relativePath);
-
-        // 5. DB에 이미지 정보 저장
-        // 현재 대표 이미지가 없는 경우, 이 이미지를 대표 이미지로 설정
+        // 2. 첫 이미지인지 확인 (대표 이미지 자동 설정용)
         boolean isMain = !userImageRepository.existsByUserAndIsMainImage(user, true);
 
+        // 3. 엔티티 생성 및 저장
         UserImageEntity newImage = UserImageEntity.builder()
                 .user(user)
                 .imageUrl(imageUrl)
@@ -75,33 +60,46 @@ public class UserImageService {
     }
 
     /**
-     * 사용자의 이미지를 삭제합니다.
-     * 이 메서드는 데이터베이스 변경과 외부 스토리지 I/O를 포함하므로,
-     * 트랜잭션 경계와 예외 처리에 주의해야 합니다.
+     * 사용자의 이미지를 삭제
      *
      * @param user    삭제를 요청하는 인증된 사용자
      * @param imageId 삭제할 이미지의 고유 ID
      */
     @Transactional
     public void deleteImage(UserEntity user, Long imageId) {
-        // Step 1: 영속성 컨텍스트 내에서 엔티티 조회 (Fail-Fast)
+        // 1. 영속성 컨텍스트 내에서 엔티티 조회
         UserImageEntity imageToDelete = userImageRepository.findById(imageId)
                 .orElseThrow(
                         () -> new NotFoundException(ErrorCode.FILE_DELETE_ERROR,
-                                "존재하지 않는 이미지입니다. ID: " + imageId));
+                                "존재하지 않는 이미지입니다. ID. " + imageId));
 
-        // Step 2: 권한 검증 (Authorization)
+        // 2. 권한 검증
         validateOwnership(user, imageToDelete);
 
-        // Step 3: 외부 스토리지의 물리적 파일 삭제
-        // TODO ※ 이 작업은 데이터베이스 트랜잭션의 롤백 대상이 아님
-        fileUploader.delete(imageToDelete.getImageUrl());
+        String imageUrl = imageToDelete.getImageUrl();
+        boolean wasMainImage = imageToDelete.getIsMainImage();
 
-        // Step 4: 데이터베이스에서 엔티티 삭제
+        // 3. DB 삭제 (먼저 수행)
         userImageRepository.delete(imageToDelete);
 
-        // Step 5: 비즈니스 규칙 후처리 (Edge Case Handling)
-        handleMainImageAfterDeletion(user, imageToDelete);
+        // 4. 후처리 (대표 이미지 재설정) - DB 삭제가 일어났으므로 트랜잭션 내에서 수행
+        if (wasMainImage) {
+            handleMainImageAfterDeletion(user, imageId);
+        }
+
+        // 5. [트랜잭션 동기화] S3 파일 삭제는 커밋 후에 실행
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    fileUploader.delete(imageUrl);
+                    log.info("S3 이미지 삭제 완료: {}", imageUrl);
+                } catch (Exception e) {
+                    // TODO: S3 이미지 삭제 실패 시 DB에 저장하고 스케쥴러로 정리하는 로직 필요
+                    log.error(" 이미지 삭제 실패. URL: {}", imageUrl, e);
+                }
+            }
+        });
     }
 
     /**
@@ -122,19 +120,17 @@ public class UserImageService {
      * @param user         이미지 소유자
      * @param deletedImage 방금 삭제된 이미지 엔티티
      */
-    private void handleMainImageAfterDeletion(UserEntity user, UserImageEntity deletedImage) {
-        // 삭제된 이미지가 대표 이미지가 아니었다면, 아무것도 할 필요 없음
-        if (!deletedImage.getIsMainImage()) {
-            return;
-        }
-
-        // 대표 이미지가 삭제되었으므로, 남은 이미지 중 하나를 새 대표로 지정
+    private void handleMainImageAfterDeletion(UserEntity user, Long deletedImageId) {
         List<UserImageEntity> remainingImages = userImageRepository.findAllByUser(user);
-        if (!remainingImages.isEmpty()) {
-            UserImageEntity newMainImage = remainingImages.get(0); // 예: 첫 번째 이미지를 새 대표로
+
+        // 삭제된 이미지가 리스트에 포함되어 있다면 제외 (안전장치)
+        UserImageEntity newMainImage = remainingImages.stream()
+                .filter(img -> !img.getImageId().equals(deletedImageId)) // ID로 비교해서 제외
+                .findFirst()
+                .orElse(null);
+
+        if (newMainImage != null) {
             newMainImage.setMainImage(true);
-            // userImageRepository.save(newMainImage)는 필요 없음
-            // -> 영속성 컨텍스트의 'Dirty Checking'에 의해 트랜잭션 커밋 시 자동 업데이트됨
         }
     }
 
@@ -143,15 +139,15 @@ public class UserImageService {
      */
     @Transactional
     public void setMainImage(UserEntity user, Long imageId) {
-        // 1. 현재 유저의 기존 대표 이미지를 찾아서 false로 변경
+        // 1. 기존 대표 이미지 해제
         userImageRepository.findByUserAndIsMainImage(user, true)
                 .ifPresent(oldMainImage -> oldMainImage.setMainImage(false));
 
-        // 2. 새로 지정된 이미지에 대한 UserImageEntity를 가져옴
+        // 2. 새 대표 이미지 설정
         UserImageEntity newMainImage = userImageRepository.findById(imageId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "존재하지 않는 이미지입니다."));
 
-        // 본인 소유의 이미지가 맞는지 확인하는 로직
+        // 3. 권한 확인
         if (!newMainImage.getUser().getId().equals(user.getId())) {
             throw new UnauthorizedException(ErrorCode.AUTHORITY_ERROR, "이미지를 변경할 권한이 없습니다.");
         }

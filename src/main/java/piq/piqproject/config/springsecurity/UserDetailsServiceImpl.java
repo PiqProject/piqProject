@@ -1,12 +1,14 @@
 package piq.piqproject.config.springsecurity;
 
-import lombok.RequiredArgsConstructor;
-import piq.piqproject.domain.users.repository.UserRepository;
-
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import lombok.RequiredArgsConstructor;
+import piq.piqproject.common.error.exception.CustomException;
+import piq.piqproject.common.error.exception.ErrorCode;
+import piq.piqproject.common.error.exception.NotFoundException;
+import piq.piqproject.domain.users.repository.UserRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +22,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      * UserEntity가 UserDetails를 구현했으므로, UserEntity 객체 자체를 반환할 수 있습니다.
      */
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws CustomException {
         return userRepository.findByEmailWithRoles(email)
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "사용자를 찾을 수 없습니다: " + email));
     }
 }

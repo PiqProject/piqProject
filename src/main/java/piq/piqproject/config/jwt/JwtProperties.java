@@ -8,8 +8,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@Component // spring bean으로 만듦
-@ConfigurationProperties("jwt") // application.properties에서 jwt접두사 속성을 class의 필드에 매핑
+@Component
+@ConfigurationProperties("jwt") // application.properties의 jwt접두사를 가진 속성들을 class의 필드에 매핑시킴
 public class JwtProperties {
     private String issuer;
     private String secretKey;

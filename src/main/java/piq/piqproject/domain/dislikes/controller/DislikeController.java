@@ -36,12 +36,12 @@ public class DislikeController {
             @AuthenticationPrincipal UserEntity user,
             @RequestBody DislikeRequestDto requestDto) {
 
-        log.info("사용자 ID {} 가 사용자 ID {} 를 '싫어요' 처리합니다.", user.getId(), requestDto.getDislikedUserId());
-
         // 1. 컨트롤러는 요청을 받아 필요한 데이터를 서비스 계층으로 전달하는 역할만 수행합니다.
         // - 누가 (user)
         // - 누구를 (requestDto.getDislikedUserId())
         dislikeService.createDislike(user, requestDto.getDislikedUserId());
+        log.info("Dislike created successfully: user {} disliked user {}", user.getId(),
+                requestDto.getDislikedUserId());
 
         // 2. 별도의 반환 데이터가 필요 없으므로, HTTP 200 OK 상태만 응답합니다.
         // .build()는 내용 없는 응답을 생성합니다.

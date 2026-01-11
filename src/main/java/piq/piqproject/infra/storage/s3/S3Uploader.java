@@ -1,33 +1,99 @@
 package piq.piqproject.infra.storage.s3;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.error.exception.ErrorCode;
+import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.file.FileUploader;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-//TODO: S3 SDK 의존성 추가 및 업로드 로직 구현해야함 /현재는 임시로 만든 클래스
-// @Component
-@Profile("prod") // prod 프로필일 때만 활성화
+@Slf4j
+@Component
+@Profile("prod")
+@RequiredArgsConstructor
 public class S3Uploader implements FileUploader {
 
-    // ... 이전 답변의 S3 클라이언트 및 업로드 로직 ...
+    private final S3Client s3Client;
 
+    @Value("${cloud.s3.bucket}")
+    private String bucket;
+
+    /**
+     * MultipartFile을 S3에 업로드
+     * 
+     * @param file MultipartFile
+     * @param key  S3 키(파일이름(경로))
+     * @return 업로드된 S3 키
+     */
     @Override
-    public String upload(MultipartFile file, String fullPath) {
-        // S3에 fullPath를 key로 하여 파일을 업로드하고,
-        // 최종적으로 접근 가능한 URL을 반환하는 로직 구현
-        // return amazonS3Client.getUrl(bucket, fullPath).toString();
-        return "S3_UPLOADED_URL/" + fullPath; // 예시 URL
+    public String upload(MultipartFile file, String key) {
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(file.getContentType())
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+
+            // 업로드된 S3 키를 반환
+            return key;
+        } catch (IOException e) {
+            log.error("S3 파일 업로드 실패 (MultipartFile): {}", key, e);
+            throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "S3 파일 업로드 실패");
+        }
     }
 
+    /**
+     * [서버 내부 파일 전용] File 객체를 S3에 업로드
+     * 
+     * @param file File 객체
+     * @param key  S3 키(파일이름(경로))
+     * @return 업로드된 S3 키
+     */
     @Override
-    public void delete(String fileUrl) {
+    public String upload(File file, String key) {
         try {
-            // S3에 저장된 파일의 key는 전체 URL이 아니라, URL에서 도메인 부분을 제외한 경로입니다.
-            // String fileKey = fileUrl.substring(fileUrl.indexOf("images/"));
-            // amazonS3Client.deleteObject(bucket, fileKey);
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromFile(file));
+            return key;
         } catch (Exception e) {
-            System.err.println("S3 파일 삭제 실패: " + fileUrl);
+            log.error("S3 파일 업로드 실패 (File): {}", key, e);
+            throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "S3 파일 업로드 실패");
+        }
+    }
+
+    /**
+     * S3에서 파일 삭제
+     * 
+     * @param key S3 키(파일이름(경로))
+     */
+    @Override
+    public void delete(String key) {
+        try {
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteObjectRequest);
+        } catch (Exception e) {
+            log.error("S3 파일 삭제 실패: {}", key, e);
         }
     }
 }

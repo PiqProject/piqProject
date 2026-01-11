@@ -7,7 +7,11 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
 import piq.piqproject.domain.payments.entity.PaymentEntity;
 import piq.piqproject.domain.payments.enums.PaymentStatus;
 import piq.piqproject.domain.users.entity.UserEntity;
@@ -36,4 +40,14 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
      * @return 조건에 맞는 결제 엔티티 리스트
      */
     List<PaymentEntity> findAllByStatusAndCreatedAtBefore(PaymentStatus status, LocalDateTime dateTime);
+
+    /**
+     * [비관적 락 적용] 결제 검증 시 사용
+     * PESSIMISTIC_WRITE: 해당 데이터에 '배타적 락(Exclusive Lock)'을 겁니다.
+     * 트랜잭션이 끝날 때까지 다른 트랜잭션은 이 데이터를 읽거나 수정할 수 없습니다.
+     * SQL: SELECT * FROM payments WHERE merchant_uid = ? FOR UPDATE
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from PaymentEntity p where p.merchantUid = :merchantUid")
+    Optional<PaymentEntity> findByMerchantUidWithLock(@Param("merchantUid") String merchantUid);
 }

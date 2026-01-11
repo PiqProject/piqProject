@@ -6,9 +6,9 @@ services:
     image: postgis/postgis:15-3.3-alpine # 가벼운 Alpine 버전
     container_name: postgres
     environment:
-      POSTGRES_DB: piqdb # DB 이름
-      POSTGRES_USER: postgres # 계정
-      POSTGRES_PASSWORD: password # 비밀번호
+      POSTGRES_DB: piqdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432" # 포트 연결
     volumes:

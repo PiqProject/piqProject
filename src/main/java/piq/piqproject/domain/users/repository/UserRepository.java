@@ -108,4 +108,10 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
       @Param("radius") double radius,
       @Param("excludedIds") Set<Long> excludedIds,
       @Param("limit") int limit);
+
+  /**
+   * [관리자용] 회원 검색 및 페이징
+   * 닉네임 또는 이메일에 검색어가 포함된 유저를 찾습니다.
+   */
+  Page<UserEntity> findByNicknameContainingOrEmailContaining(String nickname, String email, Pageable pageable);
 }
