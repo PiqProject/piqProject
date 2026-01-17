@@ -24,6 +24,7 @@ public class MyProfileResponseDto {
         private Integer pqPoint;
         private Double score;
         private Boolean isActive;
+        private Boolean isAppAlarm;
         private ListResponseDto<UserImageResponseDto> userImages;
         private String voiceUrl;
         private ListResponseDto<UserInterestResponseDto> userInterests;
@@ -35,7 +36,8 @@ public class MyProfileResponseDto {
         public MyProfileResponseDto(Long id, String nickname, String email, String kakaoTalkId, String instagramId,
                         Integer age,
                         Gender gender,
-                        String mbti, String introduce, Integer pqPoint, Boolean isActive, Double score,
+                        String mbti, String introduce, Integer pqPoint, Boolean isActive, Boolean isAppAlarm,
+                        Double score,
                         ListResponseDto<UserImageResponseDto> userImages, String voiceUrl,
                         ListResponseDto<UserInterestResponseDto> userInterests,
                         ListResponseDto<UserTraitResponseDto> userTraits,
@@ -51,6 +53,7 @@ public class MyProfileResponseDto {
                 this.introduce = introduce;
                 this.pqPoint = pqPoint;
                 this.isActive = isActive;
+                this.isAppAlarm = isAppAlarm;
                 this.score = score;
                 this.userImages = userImages;
                 this.voiceUrl = voiceUrl;
@@ -99,6 +102,7 @@ public class MyProfileResponseDto {
                                 .introduce(userEntity.getIntroduce())
                                 .pqPoint(userEntity.getPqPoint())
                                 .isActive(userEntity.getIsActive())
+                                .isAppAlarm(userEntity.getIsAppAlarm())
                                 .score(userEntity.getAverageScore())
                                 .userImages(imageListResponse)
                                 .voiceUrl(userEntity.getVoiceUrl())

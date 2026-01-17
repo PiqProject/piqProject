@@ -118,4 +118,11 @@ public class UserService {
         userRepository.save(adminUser);
     }
 
+    @Transactional
+    public void updateAppAlarmStatus(Long userId, Boolean isAppAlarm) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "해당 ID의 사용자를 찾을 수 없습니다: " + userId));
+        user.updateAppAlarmStatus(isAppAlarm);
+    }
+
 }

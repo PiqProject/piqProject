@@ -26,6 +26,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import piq.piqproject.domain.BaseEntity;
+import piq.piqproject.domain.alarms.entity.DeviceTokenEntity;
 import piq.piqproject.domain.reviews.entity.ReviewEntity;
 import piq.piqproject.domain.traits.entity.TraitOptionEntity;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
@@ -94,6 +95,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
     
     @Column(name="is_active", nullable = false) 
     private Boolean isActive; // 활성화 여부
+
+    @Column(name = "is_app_alarm", nullable = false)
+    private Boolean isAppAlarm; // 앱 알림 수신 동의 여부
     
  // --- 기존 @ElementCollection 필드를 아래 코드로 교체 ---
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -130,10 +134,13 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private final List<UserTraitEntity> userTraits = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private final List<DeviceTokenEntity> deviceTokens = new ArrayList<>();
+
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti,
-            Integer pqPoint, String introduce, Boolean isActive,
+            Integer pqPoint, String introduce, Boolean isActive, Boolean isAppAlarm,
             String address, Point location, String university) {
         this.email = email;
         this.nickname = nickname;
@@ -146,6 +153,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.pqPoint = pqPoint;
         this.introduce = introduce;
         this.isActive = isActive;
+        this.isAppAlarm = isAppAlarm != null ? isAppAlarm : true;
         this.address = address;
         this.location = location;
         this.university = university;
@@ -185,6 +193,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 // ▼ 회원가입 시 서버에서 설정해주는 기본값들
                 .pqPoint(pqPoint)
                 .isActive(true) // 예시: 가입 시 바로 활성 상태
+                .isAppAlarm(true) // 기본값 true 설정
                 .address(address)
                 .location(location)
                 .university(university)
@@ -229,6 +238,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     public void updateActiveStatus(Boolean activation){
         this.isActive = activation;
+    }
+
+    public void updateAppAlarmStatus(Boolean isAppAlarm){
+        this.isAppAlarm = isAppAlarm;
     }
 
     /**
