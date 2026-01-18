@@ -12,6 +12,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+
+import piq.piqproject.common.annotation.RequireActiveUser;
 import piq.piqproject.domain.reviews.dto.ReviewRequestDto;
 import piq.piqproject.domain.reviews.dto.ReviewResponseDto;
 import piq.piqproject.domain.reviews.service.ReviewService;
@@ -47,6 +49,7 @@ public class ReviewController {
      */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostMapping
+    @RequireActiveUser
     public ResponseEntity<ReviewResponseDto> createReview(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ReviewRequestDto reviewRequestDto) {
@@ -79,6 +82,7 @@ public class ReviewController {
      */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PutMapping("/{reviewId}")
+    @RequireActiveUser
     public ResponseEntity<ReviewResponseDto> updateReview(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ReviewRequestDto reviewRequestDto,
