@@ -153,7 +153,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.pqPoint = pqPoint;
         this.introduce = introduce;
         this.isActive = isActive;
-        this.isAppAlarm = isAppAlarm != null ? isAppAlarm : true;
+        this.isAppAlarm = isAppAlarm != null ? isAppAlarm : false;
         this.address = address;
         this.location = location;
         this.university = university;
@@ -193,7 +193,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 // ▼ 회원가입 시 서버에서 설정해주는 기본값들
                 .pqPoint(pqPoint)
                 .isActive(true) // 예시: 가입 시 바로 활성 상태
-                .isAppAlarm(true) // 기본값 true 설정
+                .isAppAlarm(false) // 기본값 true 설정
                 .address(address)
                 .location(location)
                 .university(university)
