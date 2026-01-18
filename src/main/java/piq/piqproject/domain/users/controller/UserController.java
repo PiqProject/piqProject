@@ -7,6 +7,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -84,5 +85,20 @@ public class UserController {
     public ResponseEntity<String> deleteMyAccount(@AuthenticationPrincipal UserEntity userEntity) {
         userService.deleteUser(userEntity); // 서비스 계층에 사용자 엔티티를 직접 전달
         return ResponseEntity.ok("회원 탈퇴가 성공적으로 처리되었습니다.");
+    }
+
+    /**
+     * 사용자의 알림 활성화 여부를 업데이트합니다.
+     * 
+     * @param userEntity @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param isAppAlarm 활성화 여부 (true/false)
+     * @return 성공 응답
+     */
+    @PatchMapping("/app-alarm")
+    public ResponseEntity<String> updateAppAlarmStatus(
+            @AuthenticationPrincipal UserEntity userEntity,
+            @RequestParam("isAppAlarm") Boolean isAppAlarm) {
+        userService.updateAppAlarmStatus(userEntity.getId(), isAppAlarm);
+        return ResponseEntity.ok("앱 알림 수신 여부가 성공적으로 변경되었습니다.");
     }
 }

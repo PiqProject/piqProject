@@ -61,6 +61,9 @@ dependencies {
     // ## AWS S3 SDK (가비아 오브젝트 스토리지 연동용, 가비아는 S3와 호환)
     implementation platform('software.amazon.awssdk:bom:2.21.1') // 버전 관리
     implementation 'software.amazon.awssdk:s3'
+
+    // ## Firebase Admin SDK (FCM용)
+    implementation 'com.google.firebase:firebase-admin:9.4.1'
 }
 
 
