@@ -46,3 +46,6 @@ application-secret.properties
 
 ### 로그 파일 ###
 logs/
+
+### firebase 파일 ###
+src/main/resources/firebase/serviceAccountKey.json
