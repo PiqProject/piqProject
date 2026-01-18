@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import piq.piqproject.common.annotation.RequireActiveUser;
 import piq.piqproject.domain.matches.dto.request.MatchingRequestDto;
 import piq.piqproject.domain.matches.dto.request.UpdateMatchingRequestDto;
 import piq.piqproject.domain.matches.dto.response.ContactExchangeResponseDto;
@@ -39,6 +40,7 @@ public class MatchingController {
      * @return 생성된 매칭 정보
      */
     @PostMapping
+    @RequireActiveUser
     public ResponseEntity<MatchingResponseDto> createMatch(@AuthenticationPrincipal UserEntity userEntity,
             @Valid @RequestBody MatchingRequestDto requestDto) {
         MatchingResponseDto response = matchingService.createMatch(userEntity.getId(), requestDto);
@@ -57,6 +59,7 @@ public class MatchingController {
      * @return 업데이트된 매칭 정보
      */
     @PatchMapping("/{matchId}")
+    @RequireActiveUser
     public ResponseEntity<MatchingResponseDto> updateMatch(
             @PathVariable("matchId") Long matchId,
             @AuthenticationPrincipal UserEntity userEntity,
@@ -100,6 +103,7 @@ public class MatchingController {
      * 매칭 성공 후 연락처 교환 API
      */
     @GetMapping("/{matchId}/exchange-contact")
+    @RequireActiveUser
     public ResponseEntity<ContactExchangeResponseDto> exchangeContact(
             @PathVariable("matchId") Long matchId,
             @AuthenticationPrincipal UserEntity userEntity) {

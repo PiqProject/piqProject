@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
+import piq.piqproject.common.annotation.RequireActiveUser;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.recommendations.dto.RecommendedUserResponseDto;
 import piq.piqproject.domain.recommendations.service.DailyRecommendationService;
@@ -30,6 +31,7 @@ public class DailyRecommendationController {
      * - 이미 받았다면 -> 기존 내역 반환
      */
     @GetMapping("/daily")
+    @RequireActiveUser
     public ResponseEntity<ListResponseDto<RecommendedUserResponseDto>> getDailyRecommendations(
             @AuthenticationPrincipal UserEntity user) {
 
@@ -50,6 +52,7 @@ public class DailyRecommendationController {
      * (여기서는 사용자가 실수로 눌렀을 수도 있으니 기존 내역을 보여주는 것으로 구현)
      */
     @GetMapping("/daily/premium")
+    @RequireActiveUser
     public ResponseEntity<ListResponseDto<RecommendedUserResponseDto>> getPremiumRecommendations(
             @AuthenticationPrincipal UserEntity user) {
 

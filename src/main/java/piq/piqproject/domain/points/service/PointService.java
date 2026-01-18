@@ -44,6 +44,19 @@ public class PointService {
     }
 
     /**
+     * [관리자용] 포인트 회수 (보유량 내에서만 회수)
+     */
+    @Transactional
+    public void revokePointsSafely(UserEntity user, int targetAmount, String description) {
+        // 1. 엔티티 로직 호출 (실제 차감된 양 반환)
+        int actualDeducted = user.deductPointsFloorZero(targetAmount);
+
+        // 2. 히스토리 기록 (실제 차감된 만큼만)
+        if (actualDeducted > 0)
+            saveHistory(user, PointType.REFUND, -actualDeducted, description);
+    }
+
+    /**
      * 포인트 충전/지급 (증가)
      */
     @Transactional

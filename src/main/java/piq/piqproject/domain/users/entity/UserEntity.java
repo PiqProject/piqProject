@@ -112,7 +112,6 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(columnDefinition = "geometry(Point, 4326)")
     private Point location;
     /**
-     * TODO: 실제로 OneToMany는 지양
      *
      * [이유]
      * - 성능 및 메모리 문제 (N+1 쿼리)
@@ -226,6 +225,13 @@ public class UserEntity extends BaseEntity implements UserDetails {
     
     public void deductPqPoints(int amount) {
         this.pqPoint -= amount;
+    }
+
+    // [관리자 환불용] 포인트 차감 (0 미만으로 떨어지지 않음)
+    public int deductPointsFloorZero(int amount) {
+        int actualDeducted = Math.min(this.pqPoint, amount);
+        this.pqPoint -= actualDeducted;
+        return actualDeducted;
     }
 
     public void refundPqPoints(int amount) {
