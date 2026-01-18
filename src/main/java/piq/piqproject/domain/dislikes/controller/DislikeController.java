@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.annotation.RequireActiveUser;
 import piq.piqproject.domain.dislikes.dto.request.DislikeRequestDto;
 import piq.piqproject.domain.dislikes.service.DislikeService;
 import piq.piqproject.domain.users.entity.UserEntity;
@@ -32,6 +33,7 @@ public class DislikeController {
      * @return 성공 시 HTTP 200 OK 상태 코드와 빈 응답 본문을 반환합니다.
      */
     @PostMapping
+    @RequireActiveUser
     public ResponseEntity<Void> createDislike(
             @AuthenticationPrincipal UserEntity user,
             @RequestBody DislikeRequestDto requestDto) {

@@ -148,4 +148,5 @@ public class AdminUserController {
 
         return ResponseEntity.ok("부적절한 음성 소개가 삭제되었습니다.");
     }
+
 }
