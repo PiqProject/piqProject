@@ -11,7 +11,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum Role {
     USER("ROLE_USER", "일반 사용자"),
-    ADMIN("ROLE_ADMIN", "신");
+    ADMIN("ROLE_ADMIN", "신"),
+    // 신규 가입자 -> 일부 API만 접근가능 -> 프로필 정보 입력하면 ROLE_USER
+    GUEST("ROLE_GUEST", "임시 사용자");
+
     // 나중에 새로운 역할이 필요하면 여기에 추가하면 됩니다. 예: GUEST, MANAGER 등
 
     private final String key;

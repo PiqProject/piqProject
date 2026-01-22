@@ -18,9 +18,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
   // 이메일을 통해 사용자를 찾는 메소드
   Optional<UserEntity> findByEmail(@Param("email") String email);
 
-  // 이메일로 사용자를 찾을 때, roles 컬렉션까지 JOIN FETCH로 함께 가져온다.
-  @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.roles WHERE u.email = :email")
-  Optional<UserEntity> findByEmailWithRoles(@Param("email") String email);
+  @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.roles WHERE u.id = :id")
+  Optional<UserEntity> findByIdWithRoles(@Param("id") Long id);
 
   // 이메일 존재 여부 확인
   boolean existsByEmail(String email);
@@ -114,4 +113,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
    * 닉네임 또는 이메일에 검색어가 포함된 유저를 찾습니다.
    */
   Page<UserEntity> findByNicknameContainingOrEmailContaining(String nickname, String email, Pageable pageable);
+
+  Optional<UserEntity> findBySocialId(String socialId);
 }

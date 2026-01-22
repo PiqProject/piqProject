@@ -14,9 +14,9 @@ import lombok.NoArgsConstructor;
 @RedisHash(value = "refreshToken", timeToLive = 604800)
 public class RefreshTokenEntity {
 
-    // Redis에서 userEmail을 key로 사용
+    // Redis에서 userId를 key로 사용
     @Id
-    private String userEmail;
+    private Long userId;
 
     // Value가 될 Refresh Token 값
     private String refreshToken;

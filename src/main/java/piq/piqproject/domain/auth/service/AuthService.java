@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.dto.CoordinateDto;
 import piq.piqproject.common.error.exception.ConflictException;
+import piq.piqproject.common.error.exception.CustomException;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.InvalidRequestException;
@@ -27,14 +28,20 @@ import piq.piqproject.common.util.IpUtil;
 import piq.piqproject.config.jwt.JwtTokenProvider;
 import piq.piqproject.domain.admin.log.entity.AdminAccessLogEntity;
 import piq.piqproject.domain.admin.log.repository.AdminAccessLogRepository;
+import piq.piqproject.domain.auth.dto.SocialUserInfo;
 import piq.piqproject.domain.auth.dto.request.LoginRequestDto;
 import piq.piqproject.domain.auth.dto.request.SignUpRequestDto;
+import piq.piqproject.domain.auth.dto.request.SocialLoginRequestDto;
 import piq.piqproject.domain.auth.dto.response.SignUpResponseDto;
 import piq.piqproject.domain.auth.dto.response.TokensResponseDto;
 import piq.piqproject.domain.auth.entity.RefreshTokenEntity;
 import piq.piqproject.domain.auth.repository.RefreshTokenRepository;
+import piq.piqproject.domain.auth.service.social.AppleLoadStrategy;
+import piq.piqproject.domain.auth.service.social.KakaoLoadStrategy;
+import piq.piqproject.domain.auth.service.social.SocialLoadStrategy;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.enums.Role;
+import piq.piqproject.domain.users.enums.SocialType;
 import piq.piqproject.domain.users.repository.UserRepository;
 import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
 import org.slf4j.Logger;
@@ -52,6 +59,8 @@ public class AuthService {
     private final KakaoGeocodingService kakaoGeocodingService;
     private final AdminAccessLogRepository adminAccessLogRepository;
     private static final Logger accessLogger = LoggerFactory.getLogger("UserAccessLogger");
+    private final KakaoLoadStrategy kakaoLoadStrategy;
+    private final AppleLoadStrategy appleLoadStrategy;
 
     /**
      * 회원가입 비즈니스 로직을 처리하는 메소드
@@ -101,7 +110,9 @@ public class AuthService {
                 true, // isActive
                 signUpRequestDto.getAddress(),
                 location, // Point 객체 전달
-                signUpRequestDto.getUniversity());
+                signUpRequestDto.getUniversity(),
+                SocialType.NONE, // 소셜 타입
+                "-1"); // 소셜 ID
 
         // 3. 사용자 정보 저장
         userRepository.save(userEntity);
@@ -136,7 +147,7 @@ public class AuthService {
         String accessToken = jwtTokenProvider.createAccessToken(user);
 
         // 5. 생성된 Refresh Token을 Redis에 저장
-        refreshTokenRepository.save(new RefreshTokenEntity(user.getEmail(), refreshToken));
+        refreshTokenRepository.save(new RefreshTokenEntity(user.getId(), refreshToken));
 
         // 6. 로그인 로그 남기기
         String ip = IpUtil.getClientIp(request);
@@ -172,10 +183,10 @@ public class AuthService {
      * @return
      */
     @Transactional
-    public void logout(String userEmail, HttpServletRequest request) {
+    public void logout(Long userId, HttpServletRequest request) {
         // 1. Redis에서 해당 사용자의 Refresh Token 삭제
-        refreshTokenRepository.deleteById(userEmail);
-        accessLogger.info("LOGOUT | {} | {}", userEmail, IpUtil.getClientIp(request));
+        refreshTokenRepository.deleteById(userId);
+        accessLogger.info("LOGOUT | {} | {}", userId, IpUtil.getClientIp(request));
     }
 
     /**
@@ -189,22 +200,80 @@ public class AuthService {
         // 1. Refresh Token의 유효성을 먼저 검증
         jwtTokenProvider.validateToken(refreshToken);
 
-        // 2. Refresh Token에서 사용자의 이메일을 추출
-        String userEmail = jwtTokenProvider.getUserEmail(refreshToken);
+        // 2. Refresh Token에서 사용자의 id을 추출
+        Long userId = jwtTokenProvider.getUserId(refreshToken);
 
-        // 3. Redis에 저장된 Refresh Token을 이메일로 조회
-        RefreshTokenEntity storedRefreshToken = refreshTokenRepository.findById(userEmail)
+        // 3. Redis에 저장된 Refresh Token을 id로 조회
+        RefreshTokenEntity storedRefreshToken = refreshTokenRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_REFRESH_TOKEN));
 
         // 4. 클라이언트로부터 받은 Refresh Token과 Redis에 저장된 토큰이 일치하는지 확인
-        storedRefreshToken.getRefreshToken().equals(refreshToken);
+        if (!storedRefreshToken.getRefreshToken().equals(refreshToken)) {
+            throw new UnauthorizedException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
 
         // 5. 새로운 Access Token을 생성하기 위해 사용자 정보를 DB에서 조회
         // (보안 상 이유로, 토큰에 모든 정보를 담기보다 DB에서 최신 정보를 가져오는 것이 안전)
-        UserEntity user = userRepository.findByEmail(userEmail)
+        UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
 
         // 6. 새로운 Access Token을 생성하여 반환
         return jwtTokenProvider.createAccessToken(user);
     }
+
+    @Transactional
+    public TokensResponseDto socialLogin(SocialLoginRequestDto request) {
+
+        // 1. 소셜 타입에 따라 전략 선택
+        SocialLoadStrategy strategy = getStrategy(request.getSocialType());
+
+        // 2. 소셜 서버(또는 토큰)로부터 유저 정보 가져오기
+        SocialUserInfo socialInfo = strategy.getUserInfo(request.getToken());
+
+        // 3. 회원가입 또는 로그인 처리
+        UserEntity user = getOrCreateUser(socialInfo);
+
+        // 4. 우리 앱의 JWT 토큰 발급
+        String accessToken = jwtTokenProvider.createAccessToken(user);
+        String refreshToken = jwtTokenProvider.createRefreshToken(user);
+
+        // 5. 생성된 Refresh Token을 Redis에 저장 -> 덮어쓰기 방식으로 동작함
+        refreshTokenRepository.save(new RefreshTokenEntity(user.getId(), refreshToken));
+
+        // 6. 로그인 로그 남기기
+        accessLogger.info("SOCIAL_LOGIN({}) | {} | {}", user.getId(), request.getSocialType(), user.getEmail());
+        return new TokensResponseDto(accessToken, refreshToken);
+    }
+
+    // 소셜 타입별 전략 반환
+    private SocialLoadStrategy getStrategy(SocialType socialType) {
+        return switch (socialType) {
+            case KAKAO -> kakaoLoadStrategy;
+            case APPLE -> appleLoadStrategy;
+            default -> throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "지원하지 않는 소셜 로그인입니다.");
+        };
+    }
+
+    // 유저 조회 및 생성 (핵심 로직)
+    private UserEntity getOrCreateUser(SocialUserInfo socialInfo) {
+        // A. 소셜 ID로 이미 가입된 유저인지 확인
+        return userRepository.findBySocialId(socialInfo.getSocialId())
+                .orElseGet(() -> {
+                    // B. 없으면 이메일로 가입된 유저가 있는지 확인 (계정 통합)
+                    if (socialInfo.getEmail() != null) {
+                        return userRepository.findByEmail(socialInfo.getEmail())
+                                .orElseGet(() -> createUser(socialInfo)); // C. 아예 없으면 신규 가입
+                    }
+                    return createUser(socialInfo);
+                });
+    }
+
+    // 신규 유저 생성
+    private UserEntity createUser(SocialUserInfo socialInfo) {
+        return userRepository.save(UserEntity.createSocialUser(
+                socialInfo.getEmail(),
+                socialInfo.getSocialType(),
+                socialInfo.getSocialId()));
+    }
+
 }

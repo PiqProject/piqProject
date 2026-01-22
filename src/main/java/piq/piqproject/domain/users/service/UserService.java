@@ -20,6 +20,7 @@ import piq.piqproject.domain.users.dto.response.UserSimpleProfileResponseDto;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.enums.Role;
+import piq.piqproject.domain.users.enums.SocialType;
 import piq.piqproject.domain.users.repository.UserRepository;
 
 /**
@@ -111,7 +112,9 @@ public class UserService {
                 true,
                 "서울시청", // address (관리자용 기본 주소)
                 defaultLocation,
-                "광운대학교");
+                "광운대학교",
+                SocialType.NONE, // 소셜 타입
+                "-1"); // 소셜 ID
         adminUser.addRole(Role.ADMIN); // 관리자 권한 부여
 
         // 4. DB에 저장
