@@ -125,4 +125,11 @@ public class UserService {
         user.updateAppAlarmStatus(isAppAlarm);
     }
 
+    @Transactional
+    public void updateWebAlarmStatus(Long id, Boolean isWebAlarm) {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "해당 ID의 사용자를 찾을 수 없습니다: " + id));
+        user.updateWebAlarmStatus(isWebAlarm);
+    }
+
 }

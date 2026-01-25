@@ -98,6 +98,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     @Column(name = "is_app_alarm", nullable = false)
     private Boolean isAppAlarm; // 앱 알림 수신 동의 여부
+
+    @Column(name = "is_web_alarm", nullable = false)
+    private Boolean isWebAlarm; // 웹 알림 수신 동의 여부
     
  // --- 기존 @ElementCollection 필드를 아래 코드로 교체 ---
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -248,6 +251,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     public void updateAppAlarmStatus(Boolean isAppAlarm){
         this.isAppAlarm = isAppAlarm;
+    }
+
+    public void updateWebAlarmStatus(Boolean isWebAlarm) {
+        this.isWebAlarm = isWebAlarm;
     }
 
     /**
