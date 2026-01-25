@@ -10,6 +10,10 @@ import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
 import piq.piqproject.domain.userimages.service.UserImageService;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.verification.entity.VerificationEntity;
+import piq.piqproject.domain.verification.enums.ContentType;
+import piq.piqproject.domain.verification.enums.VerificationStatus;
+import piq.piqproject.domain.verification.repository.VerificationRepository;
 
 @Slf4j
 @Component
@@ -19,6 +23,7 @@ public class UserImageFacade {
     private final UserImageService userImageService;
     private final FileUtil fileUtil;
     private final FileUploader fileUploader;
+    private final VerificationRepository verificationRepository;
 
     /**
      * [이미지 업로드 오케스트레이션]
@@ -39,6 +44,13 @@ public class UserImageFacade {
 
         // 3. S3 업로드 수행 (네트워크 I/O 발생 - 트랜잭션 밖에서 수행)
         String imageUrl = fileUploader.upload(imageFile, s3Path);
+
+        // 이미지 검증 준비
+        VerificationEntity verification = VerificationEntity.of(user, ContentType.IMAGE, imageUrl,
+                VerificationStatus.PENDING);
+        verificationRepository.save(verification);
+
+        // TODO: 관리자에게 알림 보내기
 
         try {
             // 4. DB 저장 위임 (여기서부터 트랜잭션 시작)

@@ -51,9 +51,6 @@ public class SignUpRequestDto {
     @Size(max = 4, message = "MBTI는 4글자여야 합니다.")
     private String mbti;
 
-    @NotBlank(message = "자기소개는 필수 입력 값입니다.")
-    private String introduce;
-
     @NotBlank(message = "주소는 필수 입력 값입니다.")
     private String address;
 

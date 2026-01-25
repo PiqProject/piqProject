@@ -15,6 +15,10 @@ import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
+import piq.piqproject.domain.verification.entity.VerificationEntity;
+import piq.piqproject.domain.verification.enums.ContentType;
+import piq.piqproject.domain.verification.enums.VerificationStatus;
+import piq.piqproject.domain.verification.repository.VerificationRepository;
 
 @Slf4j
 @Service
@@ -24,6 +28,7 @@ public class VoiceService {
     private final UserRepository userRepository;
     private final FileUploader fileUploader;
     private final FileUtil fileUtil;
+    private final VerificationRepository verificationRepository;
 
     /**
      * 음성 파일 업로드 및 교체
@@ -49,6 +54,13 @@ public class VoiceService {
 
         // S3에 파일 업로드 (네트워크 통신 발생)
         String newVoiceUrl = fileUploader.upload(voiceFile, fullPath);
+
+        // 음성 검증 준비
+        VerificationEntity verification = VerificationEntity.of(user, ContentType.VOICE, newVoiceUrl,
+                VerificationStatus.PENDING);
+        verificationRepository.save(verification);
+
+        // TODO: 관리자에게 알림 보내기
 
         try {
             // 5. DB 업데이트 (Dirty Checking)

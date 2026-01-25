@@ -97,8 +97,9 @@ public class AuthService {
                 signUpRequestDto.getMbti(),
                 0.0, // totalScore
                 0, // pqPoint (가입 시 기본 포인트, 필요하면 수정)
-                signUpRequestDto.getIntroduce(),
                 true, // isActive
+                false, // isAppAlarm
+                false, // isWebAlarm
                 signUpRequestDto.getAddress(),
                 location, // Point 객체 전달
                 signUpRequestDto.getUniversity());

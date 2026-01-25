@@ -107,7 +107,8 @@ public class UserService {
                 "MBTI",
                 0.0,
                 100000000,
-                "관리자 계정",
+                true,
+                true,
                 true,
                 "서울시청", // address (관리자용 기본 주소)
                 defaultLocation,

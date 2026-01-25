@@ -142,7 +142,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti,
-            Integer pqPoint, String introduce, Boolean isActive, Boolean isAppAlarm,
+            Integer pqPoint, Boolean isActive, Boolean isAppAlarm, Boolean isWebAlarm,
             String address, Point location, String university) {
         this.email = email;
         this.nickname = nickname;
@@ -153,9 +153,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.gender = gender;
         this.mbti = mbti;
         this.pqPoint = pqPoint;
-        this.introduce = introduce;
+        this.introduce = "";
         this.isActive = isActive;
         this.isAppAlarm = isAppAlarm != null ? isAppAlarm : false;
+        this.isWebAlarm = isWebAlarm != null ? isWebAlarm : false;
         this.address = address;
         this.location = location;
         this.university = university;
@@ -180,7 +181,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
      */
     public static UserEntity of (String email, String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
-            Integer pqPoint, String introduce, Boolean isActive,
+            Integer pqPoint, Boolean isActive, Boolean isAppAlarm, Boolean isWebAlarm,
             String address, Point location, String university ) {
         UserEntity user = UserEntity.builder()
                 .email(email)
@@ -191,11 +192,11 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 .age(age)
                 .gender(gender)
                 .mbti(mbti)
-                .introduce(introduce)
                 // ▼ 회원가입 시 서버에서 설정해주는 기본값들
                 .pqPoint(pqPoint)
-                .isActive(true) // 예시: 가입 시 바로 활성 상태
-                .isAppAlarm(false) // 기본값 true 설정
+                .isActive(true) // 기본값 false
+                .isAppAlarm(false) // 기본값 false
+                .isWebAlarm(false) // 기본값 false
                 .address(address)
                 .location(location)
                 .university(university)
@@ -255,6 +256,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     public void updateWebAlarmStatus(Boolean isWebAlarm) {
         this.isWebAlarm = isWebAlarm;
+    }
+
+    public void updateIntroduce(String introduce) {
+        this.introduce = introduce;
     }
 
     /**
