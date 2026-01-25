@@ -75,6 +75,7 @@ public class RecommendationScheduler {
             }
         }
 
+        // TODO: 알림 전송 로직 필요 (오늘의 추천 도착)
         log.info("===== [스케줄러 종료] 성공적으로 작업을 완료했습니다. =====");
     }
 }
