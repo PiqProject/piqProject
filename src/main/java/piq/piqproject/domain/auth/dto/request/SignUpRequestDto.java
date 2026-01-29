@@ -57,4 +57,16 @@ public class SignUpRequestDto {
     @NotBlank(message = "대학교는 필수 입력 값입니다.")
     private String university;
 
+    @NotNull(message = "이용약관 동의는 필수입니다.")
+    private Boolean termsAgreed;
+
+    @NotNull(message = "개인정보처리방침 동의는 필수입니다.")
+    private Boolean privacyPolicyAgreed;
+
+    @NotNull(message = "위치정보 수집 동의는 필수입니다.")
+    private Boolean locationInfoPolicyAgreed;
+
+    @NotNull(message = "만 19세 이상 확인 동의는 필수입니다.")
+    private Boolean isAdult;
+
 }
