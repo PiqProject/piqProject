@@ -44,10 +44,7 @@ public class VoiceService {
         UserEntity user = userRepository.findById(principalUser.getId())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
 
-        // 3. 기존 파일 URL 백업 (성공 시 삭제하기 위함)
-        String oldVoiceUrl = user.getVoiceUrl();
-
-        // 4. 업로드 경로 생성 및 S3 업로드
+        // 3. 업로드 경로 생성 및 S3 업로드
         String dirPath = fileUtil.createDirectoryPath("voice");
         String fileName = fileUtil.createUniqueFileName(voiceFile.getOriginalFilename());
         String fullPath = dirPath + "/" + fileName;
@@ -59,25 +56,6 @@ public class VoiceService {
         VerificationEntity verification = VerificationEntity.of(user, ContentType.VOICE, newVoiceUrl,
                 VerificationStatus.PENDING);
         verificationRepository.save(verification);
-
-        // TODO: 관리자에게 알림 보내기
-
-        try {
-            // 5. DB 업데이트 (Dirty Checking)
-            user.updateVoiceUrl(newVoiceUrl);
-
-        } catch (Exception e) {
-            // 6. [보상 트랜잭션] DB 저장 실패 시, 방금 S3에 올린 파일을 즉시 삭제해야 함
-            // (DB에는 없는데 S3에만 파일이 남는 '고아 파일' 방지)
-            log.error("DB 업데이트 실패. 업로드된 파일 롤백을 시도합니다. URL: {}", newVoiceUrl, e);
-            fileUploader.delete(newVoiceUrl);
-            throw e; // 예외를 다시 던져서 @Transactional 롤백 유도
-        }
-
-        // 7. 모든 과정이 성공했다면 기존 파일 삭제 (스토리지 낭비 방지)
-        if (oldVoiceUrl != null && !oldVoiceUrl.isEmpty()) {
-            fileUploader.delete(oldVoiceUrl);
-        }
     }
 
     /**

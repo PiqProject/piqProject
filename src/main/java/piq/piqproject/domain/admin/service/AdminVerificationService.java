@@ -22,6 +22,7 @@ import piq.piqproject.domain.users.repository.UserRepository;
 import piq.piqproject.domain.verification.entity.VerificationEntity;
 import piq.piqproject.domain.verification.enums.ContentType;
 import piq.piqproject.domain.verification.repository.VerificationRepository;
+import piq.piqproject.domain.userimages.service.UserImageService;
 
 @Slf4j
 @Service
@@ -32,6 +33,7 @@ public class AdminVerificationService {
     private final UserImageRepository userImageRepository;
     private final UserRepository userRepository;
     private final FileUploader fileUploader;
+    private final UserImageService userImageService;
 
     @Transactional(readOnly = true)
     public Page<UserVerificationResponseDto> getVerifications(Pageable pageable) {
@@ -121,7 +123,42 @@ public class AdminVerificationService {
     public void approveVerification(Long verificationId) {
         VerificationEntity verification = verificationRepository.findById(verificationId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "인증 정보를 찾을 수 없습니다."));
+
         verification.approve();
+
+        UserEntity user = verification.getUser();
+        String contentValue = verification.getContentValue();
+
+        // 검증이 완료되면 db에 이미지 저장
+        if (verification.getContentType() == ContentType.INTRO) {
+            user.updateIntroduce(contentValue);
+        }
+
+        try {
+            if (verification.getContentType() == ContentType.IMAGE) {
+                userImageService.saveImageToDb(user, contentValue);
+            }
+
+            if (verification.getContentType() == ContentType.VOICE) {
+
+                // 기존 파일 URL 백업 (성공 시 삭제하기 위함)
+                String oldVoiceUrl = user.getVoiceUrl();
+                user.updateVoiceUrl(contentValue);
+
+                // 모든 과정이 성공했다면 기존 파일 삭제
+                if (oldVoiceUrl != null && !oldVoiceUrl.isEmpty()) {
+                    fileUploader.delete(oldVoiceUrl);
+                }
+            }
+
+        } catch (Exception e) {
+            // 5. DB 저장 실패 시 방금 올린 S3 파일 삭제
+            log.error("DB 업데이트 실패. 업로드된 파일 롤백을 시도합니다. URL: {}", verification.getContentValue(), e);
+            fileUploader.delete(verification.getContentValue());
+
+            // 예외를 다시 던져서 컨트롤러에게 알림
+            throw e;
+        }
     }
 
     public void rejectVerification(Long verificationId) {

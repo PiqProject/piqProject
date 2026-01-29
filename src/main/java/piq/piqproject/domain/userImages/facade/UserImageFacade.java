@@ -49,22 +49,6 @@ public class UserImageFacade {
         VerificationEntity verification = VerificationEntity.of(user, ContentType.IMAGE, imageUrl,
                 VerificationStatus.PENDING);
         verificationRepository.save(verification);
-
-        // TODO: 관리자에게 알림 보내기
-
-        try {
-            // 4. DB 저장 위임 (여기서부터 트랜잭션 시작)
-            // 검증(개수 제한 등)도 이 안에서 수행됨
-            userImageService.saveImageToDb(user, imageUrl);
-
-        } catch (Exception e) {
-            // 5. [보상 트랜잭션] DB 저장 실패 시 방금 올린 S3 파일 삭제
-            log.error("DB 이미지 저장 실패. S3 파일 삭제 시도. URL: {}", imageUrl, e);
-            fileUploader.delete(imageUrl);
-
-            // 예외를 다시 던져서 컨트롤러에게 알림
-            throw e;
-        }
     }
 
     /**
