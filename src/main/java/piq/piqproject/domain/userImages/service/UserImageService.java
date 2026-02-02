@@ -14,6 +14,10 @@ import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.userimages.repository.UserImageRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.verification.entity.VerificationEntity;
+import piq.piqproject.domain.verification.enums.ContentType;
+import piq.piqproject.domain.verification.enums.VerificationStatus;
+import piq.piqproject.domain.verification.repository.VerificationRepository;
 
 import java.util.List;
 
@@ -25,6 +29,7 @@ public class UserImageService {
 
     private final UserImageRepository userImageRepository;
     private final FileUploader fileUploader;
+    private final VerificationRepository verificationRepository;
 
     private static final int MAX_IMAGE_COUNT = 4; // 비즈니스 규칙: 사용자당 최대 이미지 개수
 

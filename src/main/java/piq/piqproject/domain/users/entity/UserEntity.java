@@ -112,6 +112,22 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     @Column(name = "is_app_alarm", nullable = false)
     private Boolean isAppAlarm; // 앱 알림 수신 동의 여부
+
+    @Column(name = "is_web_alarm", nullable = false)
+    private Boolean isWebAlarm; // 웹 알림 수신 동의 여부
+
+    @Column(name = "terms_agreed", nullable = true)
+    private Boolean termsAgreed; // 이용약관 동의 여부 (관리자는 null 가능)
+
+    @Column(name = "privacy_policy_agreed", nullable = true)
+    private Boolean privacyPolicyAgreed; // 개인정보처리방침 동의 여부 (관리자는 null 가능)
+
+    @Column(name = "location_info_policy_agreed", nullable = true)
+    private Boolean locationInfoPolicyAgreed; // 위치정보 수집 동의 여부 (관리자는 null 가능)
+
+    @Column(name = "is_adult", nullable = true)
+    private Boolean isAdult; // 만 19세 이상 확인 동의 여부 (관리자는 null 가능)
+
     
  // --- 기존 @ElementCollection 필드를 아래 코드로 교체 ---
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -156,7 +172,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti,
-            Integer pqPoint, String introduce, Boolean isActive, Boolean isAppAlarm,
+            Integer pqPoint, String introduce, Boolean isActive, Boolean isAppAlarm, Boolean isWebAlarm,
             String address, Point location, String university, SocialType socialType, String socialId) {
         this.email = email;
         this.nickname = nickname;
@@ -167,9 +183,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.gender = gender;
         this.mbti = mbti;
         this.pqPoint = pqPoint;
-        this.introduce = introduce;
+        this.introduce = "";
         this.isActive = isActive;
         this.isAppAlarm = isAppAlarm != null ? isAppAlarm : false;
+        this.isWebAlarm = isWebAlarm != null ? isWebAlarm : false;
         this.address = address;
         this.location = location;
         this.university = university;
@@ -246,11 +263,11 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 .age(age)
                 .gender(gender)
                 .mbti(mbti)
-                .introduce(introduce)
                 // ▼ 회원가입 시 서버에서 설정해주는 기본값들
                 .pqPoint(pqPoint)
-                .isActive(true) // 예시: 가입 시 바로 활성 상태
-                .isAppAlarm(false) // 기본값 true 설정
+                .isActive(true) // 기본값 false
+                .isAppAlarm(false) // 기본값 false
+                .isWebAlarm(false) // 기본값 false
                 .address(address)
                 .location(location)
                 .university(university)
@@ -308,6 +325,14 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     public void updateAppAlarmStatus(Boolean isAppAlarm){
         this.isAppAlarm = isAppAlarm;
+    }
+
+    public void updateWebAlarmStatus(Boolean isWebAlarm) {
+        this.isWebAlarm = isWebAlarm;
+    }
+
+    public void updateIntroduce(String introduce) {
+        this.introduce = introduce;
     }
 
     /**

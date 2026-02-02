@@ -110,6 +110,9 @@ public class MatchingService {
         // 7. 오늘의 추천 기록을 조회 하여 '액션 완료' 상태로 업데이트
         dailyRecommendationService.markRecommendationAsActioned(sender, receiver);
 
+        // TODO: 알림 전송 로직 필요 (새로운 매칭 도착)
+        // receiver에게 "sender.getNickname()님으로부터 매칭이 도착했습니다!" 알림 전송
+
         // 8. DTO로 변환하여 반환
         return MatchingResponseDto.from(savedMatch, currentId);
     }
@@ -146,6 +149,7 @@ public class MatchingService {
                 : MatchingStatus.FAIL;
 
         // 5. receiver의 pqPoint 차감 or sender의 pqPoint 환급
+        // TODO: 알림 보내기
         if (newStatus == MatchingStatus.FAIL) {
             pointService.chargePoints(matching.getSender(), matching.getSenderUsedPoints(), PointType.REFUND,
                     "매칭 거절 포인트 환불");

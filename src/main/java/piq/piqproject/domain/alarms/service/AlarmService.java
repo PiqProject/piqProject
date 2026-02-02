@@ -65,4 +65,11 @@ public class AlarmService {
         deviceTokenRepository.save(newToken);
         log.info("New device token registered for user: {}", user.getEmail());
     }
+
+    public void deleteAlarm(String targetToken) {
+        DeviceTokenEntity tokenEntity = deviceTokenRepository.findByToken(targetToken)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "등록된 디바이스 토큰이 없습니다."));
+
+        deviceTokenRepository.delete(tokenEntity);
+    }
 }

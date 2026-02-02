@@ -51,6 +51,26 @@ public class AuthController {
         authService.signUp(signUpRequestDto);
         log.info("New user registered: {}", signUpRequestDto.getEmail());
 
+        if (!signUpRequestDto.getIsAdult()) {
+            log.error("User is not adult: {}", signUpRequestDto.getEmail());
+            return ResponseEntity.badRequest().body("성인만 회원가입할 수 있습니다.");
+        }
+
+        if (!signUpRequestDto.getTermsAgreed()) {
+            log.error("User termsAgreed: {}", signUpRequestDto.getEmail());
+            return ResponseEntity.badRequest().body("이용약관에 동의해야 합니다.");
+        }
+
+        if (!signUpRequestDto.getPrivacyPolicyAgreed()) {
+            log.error("User privacyPolicyAgreed: {}", signUpRequestDto.getEmail());
+            return ResponseEntity.badRequest().body("개인정보처리방침에 동의해야 합니다.");
+        }
+
+        if (!signUpRequestDto.getLocationInfoPolicyAgreed()) {
+            log.error("User locationInfoPolicyAgreed: {}", signUpRequestDto.getEmail());
+            return ResponseEntity.badRequest().body("위치정보 수집에 동의해야 합니다.");
+        }
+
         return ResponseEntity.ok("회원가입이 성공적으로 완료되었습니다.");
     }
 

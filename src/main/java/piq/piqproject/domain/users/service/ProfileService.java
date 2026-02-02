@@ -8,6 +8,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ import piq.piqproject.domain.traits.entity.TraitOptionEntity;
 import piq.piqproject.domain.traits.repository.TraitOptionRepository;
 import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.request.UserIntroduceRequestDto;
 import piq.piqproject.domain.users.dto.request.UserLocationRequestDto;
 import piq.piqproject.domain.users.dto.request.UserProfileInitRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
@@ -43,6 +45,10 @@ import piq.piqproject.domain.users.repository.UserIdealRepository;
 import piq.piqproject.domain.users.repository.UserInterestRepository;
 import piq.piqproject.domain.users.repository.UserRepository;
 import piq.piqproject.domain.users.repository.UserTraitRepository;
+import piq.piqproject.domain.verification.entity.VerificationEntity;
+import piq.piqproject.domain.verification.enums.ContentType;
+import piq.piqproject.domain.verification.enums.VerificationStatus;
+import piq.piqproject.domain.verification.repository.VerificationRepository;
 import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
 
 /**
@@ -64,6 +70,7 @@ public class ProfileService {
         private final UserTraitRepository userTraitRepository;
         private final MatchingRepository matchingRepository;
         private final KakaoGeocodingService kakaoGeocodingService; // [주입 확인]
+        private final VerificationRepository verificationRepository;
 
         @Transactional
         public ListResponseDto<UserInterestResponseDto> upsertUserInterests(UserEntity user,
@@ -270,5 +277,19 @@ public class ProfileService {
                                 requestDto.getUniversity(),
                                 locationPoint,
                                 requestDto.getAddress());
+        }
+
+        /**
+         * 사용자 자기소개 수정
+         */
+        @Transactional
+        public void updateUserIntroduce(Long userId, UserIntroduceRequestDto requestDto) {
+                UserEntity user = userRepository.findById(userId)
+                                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
+
+                VerificationEntity verification = VerificationEntity.of(user, ContentType.INTRO,
+                                requestDto.getIntroduce(),
+                                VerificationStatus.PENDING);
+                verificationRepository.save(verification);
         }
 }
