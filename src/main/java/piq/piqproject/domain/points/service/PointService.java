@@ -1,5 +1,7 @@
 package piq.piqproject.domain.points.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -57,6 +59,24 @@ public class PointService {
     }
 
     /**
+     * 포인트 강제 회수 (음수 허용)
+     * 인앱 결제 환불 등 포인트를 반드시 회수해야 하는 경우 사용합니다.
+     */
+    @Transactional
+    public void forceRevokePoints(UserEntity user, int amount, String description) {
+        if (amount <= 0)
+            throw new InvalidRequestException(ErrorCode.BAD_REQUEST, "회수 금액은 0보다 커야 합니다.");
+
+        // 잔액 체크 없이 강제 차감 (음수 허용)
+        user.deductPqPoints(amount);
+
+        // 히스토리 저장
+        saveHistory(user, PointType.USE, -amount, description);
+
+        log.info("[POINT FORCE REVOKE] User: {}, Amount: -{}, Reason: {}", user.getId(), amount, description);
+    }
+
+    /**
      * 포인트 충전/지급 (증가)
      */
     @Transactional
@@ -71,6 +91,54 @@ public class PointService {
         saveHistory(user, type, amount, description);
 
         log.info("[POINT CHARGE] User: {}, Amount: +{}, Type: {}", user.getId(), amount, type);
+    }
+
+    /**
+     * 포인트 일괄 조정
+     * - DB에는 개별 히스토리를 남기되, 쿼리 효율을 위해 Bulk 처리
+     */
+    @Transactional
+    public void adjustPointsBulk(List<UserEntity> users, int amount, String description) {
+        if (amount == 0 || users.isEmpty())
+            return;
+
+        List<PointHistoryEntity> histories = new ArrayList<>();
+        PointType type = PointType.ADMIN;
+
+        for (UserEntity user : users) {
+            int actualAmount = amount;
+
+            // 1. 사용자 잔액 변경
+            if (amount > 0) {
+                user.refundPqPoints(amount);
+            } else {
+                int absoluteAmount = Math.abs(amount);
+                // 보유량 내에서만 차감 (0원 바닥 정책)
+                int deductAmount = Math.min(user.getPqPoint(), absoluteAmount);
+                if (deductAmount <= 0)
+                    continue; // 차감할 게 없으면 히스토리도 패스
+
+                user.deductPqPoints(deductAmount);
+                actualAmount = -deductAmount; // 실제 차감액으로 기록
+            }
+
+            // 2. 히스토리 객체 생성 (저장은 나중에 한방에)
+            PointHistoryEntity history = PointHistoryEntity.builder()
+                    .user(user)
+                    .type(type)
+                    .amount(actualAmount)
+                    .balanceSnapshot(user.getPqPoint()) // 변경 후 잔액
+                    .description(description)
+                    .build();
+
+            histories.add(history);
+        }
+
+        // 3. 히스토리 일괄 저장
+        pointHistoryRepository.saveAll(histories);
+
+        // 4. 서버 로그
+        log.info("[ADMIN BULK POINT] Users: {}, Amount: {}, Reason: {}", users.size(), amount, description);
     }
 
     // 공통 저장 로직

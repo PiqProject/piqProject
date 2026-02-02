@@ -14,7 +14,7 @@ public class ContactExchangeResponseDto {
     public static ContactExchangeResponseDto from(UserEntity user) {
         return ContactExchangeResponseDto.builder()
                 .kakaoTalkId(user.getKakaoTalkId())
-                .instagramId(user.getInstagramId())
+                // .instagramId(user.getInstagramId())
                 .build();
     }
 }

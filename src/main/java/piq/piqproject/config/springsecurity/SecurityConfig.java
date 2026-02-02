@@ -23,7 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 // import piq.piqproject.security.JwtAuthenticationFilter; 
 
 @Configuration
-@EnableWebSecurity // Spring Security를 활성화하고 웹 보안 설정을 구성함을 나타냅니다.
+@EnableWebSecurity
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -33,17 +33,21 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
-    // [추가] 인증 없이 접근을 허용할 경로 목록
+    // 인증 없이 접근을 허용할 경로 목록
     private static final String[] AUTH_WHITELIST = {
+            "/home",
             "/uploads/**",
+            "/webhook/**", // 외부 결제 플랫폼 웹훅 (Google, Apple)
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/reissue",
-            "/api/v1/users/profiles",
+            "/api/v1/auth/login/social",
+            "/api/v1/faqs",
             "/api/v1/reviews",
-            "/api/v1/shops/all",
-            "/api/v1/interests/all",
-            "/api/v1/ideals/all",
+            "/api/v1/posts/**",
+            "/api/v1/products/**",
+            "/api/v1/interests/**",
+            "/api/v1/traits/**"
     };
 
     // 1. 비밀번호 암호화를 위한 PasswordEncoder Bean 등록
@@ -84,11 +88,27 @@ public class SecurityConfig {
 
         // HTTP 요청에 대한 접근 권한을 설정합니다.
         http.authorizeHttpRequests(authorize -> authorize
-                // "/api/signup", "/api/login" 엔드포인트는 인증 없이 누구나 접근할 수 있도록 허용합니다.
-                .requestMatchers(AUTH_WHITELIST)
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
-                // 그 외의 모든 요청은 반드시 인증(로그인)된 사용자만 접근할 수 있도록 설정합니다.
+                // 1. [Public] 누구나 접근 가능
+                .requestMatchers(AUTH_WHITELIST).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll() // 게시글 읽기 허용
+
+                // 2. [GUEST + USER] 신규 가입자(GUEST)도 프로필 설정은 해야 함
+                .requestMatchers("/api/v1/auth/logout").hasAnyRole("GUEST", "USER") // 유저 로그아웃
+                .requestMatchers("/api/v1/users/**").hasAnyRole("GUEST", "USER") // 유저 프로필 정보 업데이트
+                .requestMatchers("/api/v1/inquiries/**").hasAnyRole("GUEST", "USER") // 문의
+                .requestMatchers("/api/v1/payments/**").hasAnyRole("GUEST", "USER") // 결제
+
+                // 3. [USER 전용] 핵심 비즈니스 로직 (GUEST 접근 불가 -> 프로필 입력 강제)
+                .requestMatchers("/api/v1/recommendations/**").hasRole("USER") // 추천
+                .requestMatchers("/api/v1/matches/**").hasRole("USER") // 매칭
+                .requestMatchers("/api/v1/reports/**").hasRole("USER") // 신고
+                .requestMatchers("/api/v1/reviews/**").hasRole("USER") // 리뷰
+
+                // 4. [ADMIN 전용] 관리자 기능
+                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+
+                // 5. 그 외 모든 요청은 '인증'만 되어 있으면 통과 (GUEST도 접근 가능할 수 있음)
+                // 만약 GUEST를 철저히 막고 싶다면, 위에서 명시하지 않은 건 ADMIN/USER만 가능하게 설정 고려
                 .anyRequest().authenticated());
 
         // 다른 필터를 추가할 경우 여기에 추가할것

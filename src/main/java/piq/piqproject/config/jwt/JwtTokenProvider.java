@@ -67,8 +67,8 @@ public class JwtTokenProvider {
                 .setIssuer(jwtProperties.getIssuer()) // 발급자 정보
                 .setIssuedAt(now) // 발급 시간
                 .setExpiration(expiry) // 만료 시간
-                .setSubject(user.getEmail()) // 토큰 제목 (사용자 식별값)
-                .claim("id", user.getId()) // 비공개 클레임(사용자 정의 클레임) key-value 형태로 추가 정보 저장
+                .setSubject(user.getId().toString()) // 토큰 제목 (사용자 식별값)
+                .claim("email", user.getEmail()) // 비공개 클레임(사용자 정의 클레임) key-value 형태로 추가 정보 저장
                 .claim("auth", authorities)
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
@@ -91,7 +91,7 @@ public class JwtTokenProvider {
                 .setIssuer(jwtProperties.getIssuer())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .setSubject(user.getEmail()) // Access Token 재발급 시 사용자 식별을 위해 필요 - redis에서 key값으로 사용
+                .setSubject(user.getId().toString()) // Access Token 재발급 시 사용자 식별을 위해 필요 - redis에서 key값으로 사용
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -118,7 +118,7 @@ public class JwtTokenProvider {
         } catch (IllegalArgumentException e) {
             throw new InvalidRequestException(ErrorCode.JWT_TOKEN_MISSING);
         } catch (Exception e) {
-            throw new InternalServerException(ErrorCode.JWT_PROCESSING_ERROR);
+            throw new InternalServerException(ErrorCode.JWT_PROCESSING_ERROR, "jwtParsing중 에러발생");
         }
     }
 
@@ -129,12 +129,12 @@ public class JwtTokenProvider {
      * @return Spring Security가 이해하는 형태의 Authentication 객체
      */
     public Authentication getAuthentication(String token) {
-        // 2. 토큰에서 사용자의 이메일(Subject)을 추출합니다.
-        String userEmail = getClaims(token).getSubject();
+        // 2. 토큰에서 사용자의 id(Subject)를 추출합니다.
+        String userId = getClaims(token).getSubject();
 
         // 3. UserDetailsService를 통해 DB에서 실제 UserEntity(UserDetails) 객체를 조회합니다.
-        // 이 과정에서 매 요청마다 DB 조회가 발생합니다.
-        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+        // loadUserByUsername의 username은 jwt 토큰의 유저 식별자
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
 
         // 4. 조회된 UserDetails(실제로는 UserEntity 객체)를 principal로 사용하여 Authentication 객체를
         // 생성합니다.
@@ -153,15 +153,14 @@ public class JwtTokenProvider {
      * @author PJT
      */
     public Long getUserId(String token) {
-        Claims claims = getClaims(token);
-        return claims.get("id", Long.class);
+        return Long.parseLong(getClaims(token).getSubject());
     }
 
     /**
-     * 토큰에서 Subject(사용자 이메일)를 추출합니다.
+     * 토큰에서 이메일을 추출합니다.
      */
     public String getUserEmail(String token) {
-        return getClaims(token).getSubject();
+        return getClaims(token).get("email", String.class);
     }
 
     // 토큰의 클레임 정보(payload의 부분)를 추출하는 private 메소드

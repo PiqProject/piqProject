@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.file.FileUploader;
+import piq.piqproject.domain.admin.dto.request.BulkPointRequestDto;
 import piq.piqproject.domain.admin.dto.request.PointRequestDto;
 import piq.piqproject.domain.admin.dto.request.UserStatusRequestDto;
 import piq.piqproject.domain.admin.dto.response.UserAdminDetailResponseDto;
@@ -23,6 +24,7 @@ import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.points.enums.PointType;
 import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.repository.UserRepository;
 
 @Service
@@ -92,6 +94,24 @@ public class AdminUserService {
                 pointService.usePoints(user, actualDeductAmount, "관리자 수동 차감: " + reason);
             }
         }
+    }
+
+    /**
+     * 전회원 또는 특정 성별 대상 포인트 일괄 지급/회수
+     */
+    @Transactional
+    public void adjustBulkPoint(BulkPointRequestDto requestDto) {
+        List<UserEntity> targets;
+        if (requestDto.getTargetGender() == Gender.MALE || requestDto.getTargetGender() == Gender.FEMALE) {
+            targets = userRepository.findAllByGender(requestDto.getTargetGender());
+        } else {
+            targets = userRepository.findAll();
+        }
+
+        int amount = requestDto.getAmount();
+        String reason = "관리자 일괄 " + (amount > 0 ? "지급" : "차감") + ": " + requestDto.getReason();
+
+        pointService.adjustPointsBulk(targets, amount, reason);
     }
 
     /**

@@ -13,4 +13,8 @@ public class ProductRequestDto {
 
     @NotNull(message = "포인트를 입력해주세요.")
     private int point;
+
+    private String googleProductId;
+
+    private String appleProductId;
 }

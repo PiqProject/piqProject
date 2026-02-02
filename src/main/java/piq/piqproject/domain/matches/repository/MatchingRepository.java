@@ -1,5 +1,6 @@
 package piq.piqproject.domain.matches.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import piq.piqproject.domain.matches.entity.MatchingEntity;
+import piq.piqproject.domain.matches.enums.MatchingStatus;
 
 public interface MatchingRepository extends JpaRepository<MatchingEntity, Long> {
 
@@ -20,10 +22,10 @@ public interface MatchingRepository extends JpaRepository<MatchingEntity, Long> 
         // 받는 사람 ID로 매칭 정보 조회
         List<MatchingEntity> findAllByReceiverId(Long receiverId);
 
-        // [추가] 특정 유저가 '보낸' 모든 매칭 요청 목록을 페이징하여 조회
+        // 특정 유저가 '보낸' 모든 매칭 요청 목록을 페이징하여 조회
         Page<MatchingEntity> findBySenderId(Long senderId, Pageable pageable);
 
-        // [추가] 특정 유저가 '받은' 모든 매칭 요청 목록을 페이징하여 조회
+        // 특정 유저가 '받은' 모든 매칭 요청 목록을 페이징하여 조회
         Page<MatchingEntity> findByReceiverId(Long receiverId, Pageable pageable);
 
         @Query("SELECT m FROM MatchingEntity m JOIN FETCH m.sender s JOIN FETCH m.receiver r WHERE s.id = :senderId")
@@ -48,6 +50,23 @@ public interface MatchingRepository extends JpaRepository<MatchingEntity, Long> 
                         "    ELSE m.sender.id " + // (내가 receiver면) sender의 ID를 반환
                         "END " +
                         "FROM MatchingEntity m " +
-                        "WHERE m.sender.id = :userId OR m.receiver.id = :userId") // 내가 sender 이거나 receiver인 모든 튜플을 찾음
-        Set<Long> findAllMatchedUserIdsByUserId(@Param("userId") Long userId);
+                        "WHERE (m.sender.id = :userId OR m.receiver.id = :userId) " +
+                        "AND m.status = :status") // 내가 sender 이거나 receiver인 모든 튜플 중 특정 상태인 것만 찾음
+        Set<Long> findAllMatchedUserIdsByUserIdAndStatus(@Param("userId") Long userId,
+                        @Param("status") MatchingStatus status);
+
+        /**
+         * PENDING 상태이고 특정 시간 이전에 생성된 매칭 조회
+         * (만료된 매칭을 스케줄러에서 처리하기 위함)
+         *
+         * @param status        매칭 상태 (PENDING)
+         * @param expiredBefore 이 시간 이전에 생성된 매칭을 조회
+         * @return 만료된 매칭 목록 (sender와 함께 fetch)
+         */
+        @Query("SELECT m FROM MatchingEntity m " +
+                        "JOIN FETCH m.sender s " +
+                        "WHERE m.status = :status AND m.createdAt < :expiredBefore")
+        List<MatchingEntity> findByStatusAndCreatedAtBefore(
+                        @Param("status") MatchingStatus status,
+                        @Param("expiredBefore") LocalDateTime expiredBefore);
 }

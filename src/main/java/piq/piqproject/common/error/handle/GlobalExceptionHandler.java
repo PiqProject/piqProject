@@ -210,7 +210,7 @@ public class GlobalExceptionHandler {
 
                 HttpStatus status = errorCode.getStatus();
                 String code = errorCode.name();
-                String message = "서버 내부 오류가 발생했습니다. 관리자에게 문의하세요.";
+                String message = "서버 내부 오류가 발생했습니다. 관리자에게 문의하세요." + e.getMessage();
 
                 // 500 에러는 서버 문제이므로 warn 대신 error 레벨로 로깅하여 알람 등을 연동하기 좋게 합니다.
                 log.error("""

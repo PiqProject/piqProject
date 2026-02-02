@@ -1,5 +1,6 @@
 package piq.piqproject.domain.users.entity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +22,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,9 +34,14 @@ import piq.piqproject.domain.traits.entity.TraitOptionEntity;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.enums.Role;
+import piq.piqproject.domain.users.enums.SocialType;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_social_type_id", // 제약 조건 이름
+                columnNames = { "social_type", "social_id" } // 복합 유니크 설정
+        )
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 엔티티는 기본 생성자가 필요하지만, 외부에서 직접 인스턴스화하는 것을 막기 위해 protected로 설정
 public class UserEntity extends BaseEntity implements UserDetails {
@@ -44,27 +51,34 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name = "id")
     private Long id;
 
-    @Column(name="nickname", nullable = false, length = 50)
+    @Column(name="nickname", nullable = true, length = 50)
     private String nickname;
 
-    @Column(name="email", nullable = false, unique = true, length = 100) // email을 로그인 ID로 사용할 것임
+    @Column(name="email", nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(name="password", nullable = false, length = 255) // 비밀번호는 암호화되므로 길이 여유있게
+    //소셜 로그인 방식에서 password는 필요 x
+    @Column(name="password", nullable = true, length = 255) 
     private String password;
 
-    @Column(name="kakao_talk_id", nullable = false, length = 100) 
+    //가입한 소셜 타입 id와 함께 유니크 제약 조건 설정
+    @Enumerated(EnumType.STRING)
+    private SocialType socialType;
+    
+    @Column(name = "social_id", unique = false)
+    private String socialId;
+
+    @Column(name="kakao_talk_id", nullable = true, length = 100) 
     private String kakaoTalkId;
 
     @Column(name="instagram_id", nullable = true, length = 100) 
     private String instagramId;
-
     
-    @Column(name="age", nullable = false) 
+    @Column(name="age", nullable = true) 
     private Integer age;
     
     @Enumerated(EnumType.STRING) // 지금은 Enum 타입을 DB에 문자열로 저장 -> 이후 postgresql에서 string을 쓸지 Gender enum을 쓸지 고민
-    @Column(name="gender", nullable = false) 
+    @Column(name="gender", nullable = true) 
     private Gender gender;
     
     // mappedBy: UserImage 엔티티의 'user' 필드에 의해 매핑되었음을 의미
@@ -90,7 +104,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name="pq_point", nullable = false) //돈
     private Integer pqPoint;
     
-    @Column(name="introduce", nullable = false, columnDefinition = "TEXT") // 긴 텍스트를 위해 TEXT 타입 지정
+    @Column(name="introduce", nullable = true, columnDefinition = "TEXT") // 긴 텍스트를 위해 TEXT 타입 지정
     private String introduce;
     
     @Column(name="is_active", nullable = false) 
@@ -119,14 +133,17 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<UserRoleEntity> roles = new ArrayList<>();
 
-    @Column(name = "address", length = 255)
+    @Column(name = "address", length = 255, nullable = true)
     private String address; // 사용자 입력 주소 (예: 서울시 강남구)
 
-    @Column(name = "university")
+    @Column(name = "university", nullable = true)
     private String university; 
 
-    @Column(columnDefinition = "geometry(Point, 4326)")
+    @Column(columnDefinition = "geometry(Point, 4326)", nullable = true)
     private Point location;
+
+    @Column(name = "withdrawn_at", nullable = true)
+    private LocalDateTime withdrawnAt; // 탈퇴 일시
     /**
      *
      * [이유]
@@ -155,8 +172,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Builder
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti,
-            Integer pqPoint, Boolean isActive, Boolean isAppAlarm, Boolean isWebAlarm,
-            String address, Point location, String university) {
+            Integer pqPoint, String introduce, Boolean isActive, Boolean isAppAlarm, Boolean isWebAlarm,
+            String address, Point location, String university, SocialType socialType, String socialId,
+            Boolean termsAgreed, Boolean privacyPolicyAgreed, Boolean locationInfoPolicyAgreed, Boolean isAdult) {
         this.email = email;
         this.nickname = nickname;
         this.password = password;
@@ -173,6 +191,56 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.address = address;
         this.location = location;
         this.university = university;
+        this.socialType = socialType;
+        this.socialId = socialId;
+        this.termsAgreed = termsAgreed;
+        this.privacyPolicyAgreed = privacyPolicyAgreed;
+        this.locationInfoPolicyAgreed = locationInfoPolicyAgreed;
+        this.isAdult = isAdult;
+    }
+
+    /**
+     * 소셜 회원가입용 정적 팩토리 메서드 -> 첫 소셜 로그인시 생성 entity
+     */ 
+    public static UserEntity createSocialUser(String email, SocialType socialType, String socialId) {
+        UserEntity user = UserEntity.builder()
+                .email(email)
+                .socialType(socialType)
+                .socialId(socialId)
+                .pqPoint(0) // 초기 포인트
+                .isActive(true)
+                .isAppAlarm(false)
+                .isWebAlarm(false)
+                .termsAgreed(true)
+                .privacyPolicyAgreed(true)
+                .locationInfoPolicyAgreed(true)
+                .isAdult(true)
+                .build();
+        
+        // 중요: 소셜 가입 직후에는 'GUEST' 권한을 주어 프로필 입력을 강제할 수 있음.
+        // 여기서는 일단 USER로 둡니다.
+        user.addRole(Role.GUEST); 
+        return user;
+    }
+
+    /**
+     * 프로필 정보 업데이트 메서드
+     * - 프로필 입력이 완료되면 GUEST -> USER로 등급 업
+     */
+    public void updateProfileInfo(String nickname, Integer age, Gender gender, String mbti, 
+                                  String kakaoTalkId,String instagramId, String introduce, Point location, String address) {
+        this.nickname = nickname;
+        this.age = age;
+        this.gender = gender;
+        this.mbti = mbti;
+        this.kakaoTalkId = kakaoTalkId;
+        this.instagramId = instagramId;
+        this.introduce = introduce;
+        this.location = location;
+        this.address = address;
+
+        this.roles.clear();
+        this.addRole(Role.USER);
     }
 
     public Double getLatitude() {
@@ -194,8 +262,8 @@ public class UserEntity extends BaseEntity implements UserDetails {
      */
     public static UserEntity of (String email, String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
-            Integer pqPoint, Boolean isActive, Boolean isAppAlarm, Boolean isWebAlarm,
-            String address, Point location, String university ) {
+            Integer pqPoint, String introduce, Boolean isActive, Boolean isAppAlarm,Boolean isWebAlarm,
+            String address, Point location, String university, SocialType socialType, String socialId ) {
         UserEntity user = UserEntity.builder()
                 .email(email)
                 .nickname(nickname)
@@ -213,6 +281,8 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 .address(address)
                 .location(location)
                 .university(university)
+                .socialType(socialType)
+                .socialId(socialId)
                 .build();
 
                  user.addRole(Role.USER); // 기본 권한 부여
@@ -273,6 +343,21 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     public void updateIntroduce(String introduce) {
         this.introduce = introduce;
+    }
+
+    /**
+     * 회원 탈퇴 처리 (Soft Delete)
+     */
+    public void withdraw() {
+        this.isActive = false;
+        this.withdrawnAt = LocalDateTime.now();
+    }
+
+    /**
+     * 탈퇴 대기 상태인지 확인
+     */
+    public boolean isWithdrawn() {
+        return this.withdrawnAt != null;
     }
 
     /**
@@ -358,13 +443,13 @@ public class UserEntity extends BaseEntity implements UserDetails {
     }
 
     /**
-     * 계정이 활성화 상태인지 여부를 반환합니다.
-     * (true: 활성화)
+     * 계정이 활성화 상태인지 여부를 반환
+     * false를 리턴 시 로그인 불가
      * @return boolean
      */
     @Override
     public boolean isEnabled() {
-        return this.isActive; // DB의 isActive 필드와 연동
+        return withdrawnAt == null;
     }
 
     public void updateScore(int score) {

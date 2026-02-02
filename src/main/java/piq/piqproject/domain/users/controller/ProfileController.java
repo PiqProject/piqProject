@@ -16,6 +16,7 @@ import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.request.UserIntroduceRequestDto;
 import piq.piqproject.domain.users.dto.request.UserLocationRequestDto;
+import piq.piqproject.domain.users.dto.request.UserProfileInitRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
 import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
@@ -114,6 +115,21 @@ public class ProfileController {
         profileService.updateUserLocation(user, requestDto);
 
         return ResponseEntity.ok("주소 변경이 완료되었습니다.");
+    }
+
+    /**
+     * [신규 회원] 최초 프로필 정보 입력
+     * 이 API를 호출하면 GUEST 권한이 USER 권한으로 변경됩니다.
+     */
+    @PutMapping("/me/profile/init")
+    public ResponseEntity<String> initUserProfile(
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserProfileInitRequestDto request) {
+
+        log.info("Request to init profile. User: {}", user.getEmail());
+        profileService.initUserProfile(user, request);
+
+        return ResponseEntity.ok("프로필 입력이 완료되었습니다. 이제 서비스를 이용하실 수 있습니다.");
     }
 
     /**

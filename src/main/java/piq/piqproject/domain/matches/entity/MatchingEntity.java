@@ -32,11 +32,26 @@ public class MatchingEntity extends BaseEntity {
     @Column(name = "is_succeeded", nullable = false)
     private MatchingStatus status;
 
+    // 사용한 포인트 정보 저장 (환불 시 필요)
+    // 매칭 요청 시점의 비용을 기록해둬야 나중에 가격 정책이 바뀌어도 정확히 환불 가능
+    @Column(nullable = false)
+    private int senderUsedPoints;
+
+    @Column(nullable = false)
+    private int receiverUsedPoints;
+
+    @Column(length = 150)
+    private String message;
+
     @Builder
-    public MatchingEntity(UserEntity sender, UserEntity receiver, MatchingStatus status) {
+    public MatchingEntity(UserEntity sender, UserEntity receiver, MatchingStatus status, int senderUsedPoints,
+            int receiverUsedPoints, String message) {
         this.sender = sender;
         this.receiver = receiver;
         this.status = status;
+        this.senderUsedPoints = senderUsedPoints;
+        this.receiverUsedPoints = receiverUsedPoints;
+        this.message = message;
     }
 
     // 매칭 상태를 변경하는 편의 메서드

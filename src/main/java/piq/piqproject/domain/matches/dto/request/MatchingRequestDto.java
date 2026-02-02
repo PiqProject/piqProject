@@ -11,4 +11,6 @@ import lombok.Setter;
 public class MatchingRequestDto {
     @NotNull(message = "receiverId는 필수입니다.")
     private Long receiverId;
+
+    private String message;
 }

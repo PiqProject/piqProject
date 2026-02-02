@@ -1,8 +1,11 @@
 package piq.piqproject.domain.admin.controller;
 
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,8 +16,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.annotation.AuditLog;
 import piq.piqproject.domain.admin.dto.request.AdminRefundRequestDto;
+import piq.piqproject.domain.admin.dto.response.AdminPaymentHistoryResponseDto;
 import piq.piqproject.domain.admin.service.AdminPaymentService;
 import piq.piqproject.domain.users.entity.UserEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @RestController
@@ -41,5 +47,27 @@ public class AdminPaymentController {
         adminPaymentService.refundPaymentByMerchantUid(request);
 
         return ResponseEntity.ok("정상적으로 환불 및 포인트 회수 처리가 완료되었습니다.");
+    }
+
+    /**
+     * 특정 유저의 결제 내역 조회
+     */
+    @GetMapping("/users/{userId}")
+    @AuditLog(action = "유저 결제 내역 조회")
+    public ResponseEntity<Page<AdminPaymentHistoryResponseDto>> getUserPaymentHistory(
+            @PathVariable("userId") Long userId,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        return ResponseEntity.ok(adminPaymentService.getUserPaymentHistory(userId, pageable));
+    }
+
+    /**
+     * 주문번호(merchantUid)로 결제 상세 조회 (관리자용)
+     */
+    @GetMapping("/merchantUid/{merchantUid}")
+    @AuditLog(action = "주문번호로 결제 상세 조회")
+    public ResponseEntity<AdminPaymentHistoryResponseDto> getPaymentByMerchantUid(
+            @PathVariable("merchantUid") String merchantUid) {
+        return ResponseEntity.ok(adminPaymentService.getPaymentByMerchantUid(merchantUid));
     }
 }

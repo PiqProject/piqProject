@@ -25,6 +25,7 @@ import piq.piqproject.domain.recommendations.repository.DailyRecommendationRepos
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.enums.Gender; // Gender Enum import
 import piq.piqproject.domain.users.repository.UserRepository;
+import piq.piqproject.domain.matches.enums.MatchingStatus;
 
 @Slf4j
 @Service
@@ -241,7 +242,8 @@ public class DailyRecommendationService {
         private Set<Long> getPermanentlyExcludedUserIds(Long userId) {
                 Set<Long> excludedIds = new HashSet<>();
                 excludedIds.add(userId);
-                excludedIds.addAll(matchingRepository.findAllMatchedUserIdsByUserId(userId));
+                excludedIds.addAll(matchingRepository.findAllMatchedUserIdsByUserIdAndStatus(userId,
+                                MatchingStatus.SUCCESS));
                 excludedIds.add(1L);// 관리자 계정 ID 제외
                 return excludedIds;
         }

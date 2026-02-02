@@ -30,6 +30,7 @@ import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.request.UserIntroduceRequestDto;
 import piq.piqproject.domain.users.dto.request.UserLocationRequestDto;
+import piq.piqproject.domain.users.dto.request.UserProfileInitRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
 import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
@@ -242,6 +243,40 @@ public class ProfileService {
 
                 // 4. DB 업데이트
                 user.updateLocation(newAddress, locationPoint);
+        }
+
+        /**
+         * [신규 회원] 최초 프로필 정보 입력 (GUEST -> USER 승격)
+         */
+        @Transactional
+        public void initUserProfile(UserEntity principalUser, UserProfileInitRequestDto requestDto) {
+                // 1. 유저 조회
+                UserEntity user = userRepository.findById(principalUser.getId())
+                                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
+
+                // 2. 주소를 좌표(Point)로 변환
+                CoordinateDto coordinate = kakaoGeocodingService.getCoordinate(requestDto.getAddress());
+                if (coordinate == null) {
+                        throw new InvalidRequestException(ErrorCode.BAD_REQUEST, "유효하지 않은 주소입니다.");
+                }
+
+                // GeometryFactory 생성 (WGS84)
+                GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+                Point locationPoint = geometryFactory.createPoint(
+                                new Coordinate(coordinate.getLongitude(), coordinate.getLatitude()) // (경도, 위도)
+                );
+
+                // 3. 엔티티 업데이트 (권한 승격 포함)
+                user.updateProfileInfo(
+                                requestDto.getNickname(),
+                                requestDto.getAge(),
+                                requestDto.getGender(),
+                                requestDto.getMbti(),
+                                requestDto.getKakaoTalkId(),
+                                requestDto.getIntroduce(),
+                                requestDto.getUniversity(),
+                                locationPoint,
+                                requestDto.getAddress());
         }
 
         /**

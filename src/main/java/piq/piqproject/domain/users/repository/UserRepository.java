@@ -12,15 +12,15 @@ import org.springframework.data.repository.query.Param;
 
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.enums.Gender;
+import piq.piqproject.domain.users.enums.SocialType;
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
   // 이메일을 통해 사용자를 찾는 메소드
   Optional<UserEntity> findByEmail(@Param("email") String email);
 
-  // 이메일로 사용자를 찾을 때, roles 컬렉션까지 JOIN FETCH로 함께 가져온다.
-  @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.roles WHERE u.email = :email")
-  Optional<UserEntity> findByEmailWithRoles(@Param("email") String email);
+  @Query("SELECT u FROM UserEntity u LEFT JOIN FETCH u.roles WHERE u.id = :id")
+  Optional<UserEntity> findByIdWithRoles(@Param("id") Long id);
 
   // 이메일 존재 여부 확인
   boolean existsByEmail(String email);
@@ -35,6 +35,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
    */
   Page<UserEntity> findAllByGender(Gender gender, Pageable pageable);
 
+  List<UserEntity> findAllByGender(Gender gender);
+
   boolean existsByNickname(String nickname);
 
   // User를 조회할 때 연관된 images 한 번의 쿼리로 함께 가져온다.
@@ -46,6 +48,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
   // =================================================================================
   // 1. [기본/무료] 단순 거리 기반 추천
   // - 반경(radius)을 파라미터로 받아서 동적으로 필터링합니다.
+  // ※ST_DistanceSphere()는 gostgresql에서만 사용가능함
   // =================================================================================
   @Query(value = """
       SELECT * FROM users u
@@ -114,4 +117,17 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
    * 닉네임 또는 이메일에 검색어가 포함된 유저를 찾습니다.
    */
   Page<UserEntity> findByNicknameContainingOrEmailContaining(String nickname, String email, Pageable pageable);
+
+  Optional<UserEntity> findBySocialId(String socialId);
+
+  /**
+   * 특정 시점 이전에 탈퇴한 사용자 목록을 조회합니다 (스케줄러용).
+   */
+  java.util.List<UserEntity> findByWithdrawnAtBefore(java.time.LocalDateTime dateTime);
+
+  /**
+   * 소셜 타입과 ID로 사용자를 찾습니다.
+   * 소셜 타입과 ID가 유니크한 제약 조건을 가지므로, 이 메소드는 유일한 결과를 반환
+   */
+  Optional<UserEntity> findBySocialTypeAndSocialId(SocialType socialType, String socialId);
 }

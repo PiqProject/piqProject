@@ -9,7 +9,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -72,19 +71,6 @@ public class UserController {
 
         // 2. 성공 응답(200 OK)과 함께 DTO를 ResponseEntity에 담아 반환합니다.
         return ResponseEntity.ok(userProfile);
-    }
-
-    /**
-     * 현재 로그인된 사용자 계정을 삭제(탈퇴)합니다.
-     * TODO: 실제 서비스에서는 탈퇴 사유 수집, 데이터 백업 여부 및 저장기간 설정, 관련 리소스 정리 등 추가 로직이 필요
-     * 
-     * @param userEntity @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
-     * @return 성공 메시지
-     */
-    @PostMapping("/delete") // 이미지에 명시된 POST 메서드와 경로로 수정
-    public ResponseEntity<String> deleteMyAccount(@AuthenticationPrincipal UserEntity userEntity) {
-        userService.deleteUser(userEntity); // 서비스 계층에 사용자 엔티티를 직접 전달
-        return ResponseEntity.ok("회원 탈퇴가 성공적으로 처리되었습니다.");
     }
 
     /**
