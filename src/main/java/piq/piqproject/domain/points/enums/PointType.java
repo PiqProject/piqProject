@@ -10,6 +10,7 @@ public enum PointType {
     USE("사용"), // 매칭/아이템 구매 등 사용
     REFUND("환불"), // 결제 취소로 인한 환불
     EVENT("이벤트"), // 관리자가 무료로 준 포인트
+    REWARD("광고보상"), // 광고 시청 보상
     ADMIN("관리자조정"); // 관리자 수동 차감/지급
 
     private final String description;

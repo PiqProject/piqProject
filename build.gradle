@@ -64,6 +64,9 @@ dependencies {
 
     // ## Firebase Admin SDK (FCM용)
     implementation 'com.google.firebase:firebase-admin:9.4.1'
+
+    // ## Google Auth Library (AdMob SSV 검증용)
+    implementation 'com.google.auth:google-auth-library-oauth2-http:1.19.0'
 }
 
 

@@ -24,6 +24,7 @@ public enum ErrorCode {
     UNSUPPORTED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "지원되지 않는 JWT 토큰 형식입니다."),
     MALFORMED_JWT_TOKEN(HttpStatus.UNAUTHORIZED, "손상되었거나 올바르지 않은 형식의 JWT 토큰입니다."),
     INVALID_JWT_SIGNATURE(HttpStatus.UNAUTHORIZED, "유효하지 않은 JWT 서명입니다."),
+    INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "유효하지 않은 서명입니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다."),
     PASSWORD_MISMATCH(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 일치하지 않습니다. 다시 로그인해주세요."),
@@ -36,6 +37,7 @@ public enum ErrorCode {
 
     // NOT_FOUND (404) : 찾을 수 없음
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "가입되지 않은 이메일입니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     NOT_FOUND_REFRESH_TOKEN(HttpStatus.NOT_FOUND, "리프레시 토큰이 존재하지 않습니다. 다시 로그인해주세요."),
     NOT_FOUND_REVIEW(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다."),
     NOT_FOUND_POST(HttpStatus.NOT_FOUND, "게시글을 찾을 수 없습니다."),
@@ -57,6 +59,7 @@ public enum ErrorCode {
     ALREADY_EXISTS_TRAIT_CATEGORY(HttpStatus.CONFLICT, "이미 존재하는 카테고리입니다."),
     ALREADY_EXISTS_TRAIT_OPTION(HttpStatus.CONFLICT, "이미 존재하는 옵션입니다."),
     DUPLICATE_TRAIT_OPTIONS(HttpStatus.CONFLICT, "하나의 카테고리 내에 중복된 옵션을 입력할 수 없습니다."),
+    DUPLICATE_REQUEST(HttpStatus.CONFLICT, "중복된 요청입니다."),
 
     // INTERNAL_SERVER_ERROR (500) : 서버 오류
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버에 오류가 발생했습니다."),
