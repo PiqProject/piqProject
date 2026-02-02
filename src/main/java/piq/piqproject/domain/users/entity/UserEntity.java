@@ -1,5 +1,6 @@
 package piq.piqproject.domain.users.entity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -21,6 +22,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,7 +37,11 @@ import piq.piqproject.domain.users.enums.Role;
 import piq.piqproject.domain.users.enums.SocialType;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_social_type_id", // 제약 조건 이름
+                columnNames = { "social_type", "social_id" } // 복합 유니크 설정
+        )
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED) // JPA 엔티티는 기본 생성자가 필요하지만, 외부에서 직접 인스턴스화하는 것을 막기 위해 protected로 설정
 public class UserEntity extends BaseEntity implements UserDetails {
@@ -55,11 +61,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name="password", nullable = true, length = 255) 
     private String password;
 
-    //가입한 소셜 타입
+    //가입한 소셜 타입 id와 함께 유니크 제약 조건 설정
     @Enumerated(EnumType.STRING)
     private SocialType socialType;
     
-    //소셜 식별 ID (카카오 회원번호 등) TODO: unique = true로 바꿀것 개발을위해 일단 false
     @Column(name = "social_id", unique = false)
     private String socialId;
 
@@ -120,6 +125,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
 
     @Column(columnDefinition = "geometry(Point, 4326)", nullable = true)
     private Point location;
+
+    @Column(name = "withdrawn_at", nullable = true)
+    private LocalDateTime withdrawnAt; // 탈퇴 일시
     /**
      *
      * [이유]
@@ -303,6 +311,21 @@ public class UserEntity extends BaseEntity implements UserDetails {
     }
 
     /**
+     * 회원 탈퇴 처리 (Soft Delete)
+     */
+    public void withdraw() {
+        this.isActive = false;
+        this.withdrawnAt = LocalDateTime.now();
+    }
+
+    /**
+     * 탈퇴 대기 상태인지 확인
+     */
+    public boolean isWithdrawn() {
+        return this.withdrawnAt != null;
+    }
+
+    /**
      * 사용자의 실제 특성을 추가하는 연관관계 편의 메서드입니다.
      * @param traitOption 사용자가 가진 특성 (예: ENFP, 비흡연 등)
      */
@@ -391,7 +414,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
      */
     @Override
     public boolean isEnabled() {
-        return true; 
+        return withdrawnAt == null;
     }
 
     public void updateScore(int score) {

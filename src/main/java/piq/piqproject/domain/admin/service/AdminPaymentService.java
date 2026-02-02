@@ -11,9 +11,9 @@ import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.infra.external.portone.service.PortOneClientService;
 import piq.piqproject.domain.admin.dto.request.AdminRefundRequestDto;
 import piq.piqproject.domain.admin.dto.response.AdminPaymentHistoryResponseDto;
-import piq.piqproject.domain.payments.entity.PaymentEntity;
-import piq.piqproject.domain.payments.enums.PaymentStatus;
-import piq.piqproject.domain.payments.repository.PaymentRepository;
+import piq.piqproject.domain.payments.common.entity.PaymentEntity;
+import piq.piqproject.domain.payments.common.enums.PaymentStatus;
+import piq.piqproject.domain.payments.common.repository.PaymentRepository;
 import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
@@ -66,7 +66,7 @@ public class AdminPaymentService {
                 user.getId(), targetPoints, user.getPqPoint());
 
         // 4. PortOne API 호출 (PG사 결제 전액 취소)
-        portOneClientService.cancelPayment(payment.getImpUid(), cancelReason, payment.getAmount());
+        portOneClientService.cancelPayment(payment.getTransactionId(), cancelReason, payment.getAmount());
 
         // 5. DB 상태 변경 (PAID -> CANCELLED)
         payment.cancelPayment();

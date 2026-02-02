@@ -27,21 +27,33 @@ public class ProductEntity extends BaseEntity {
     @Column(nullable = false)
     private int point;
 
+    @Column(unique = true)
+    private String googleProductId;
+
+    @Column(unique = true)
+    private String appleProductId;
+
     @Builder
-    private ProductEntity(int price, int point) {
+    private ProductEntity(int price, int point, String googleProductId, String appleProductId) {
         this.price = price;
         this.point = point;
+        this.googleProductId = googleProductId;
+        this.appleProductId = appleProductId;
     }
 
-    public static ProductEntity of(int price, int point) {
+    public static ProductEntity of(int price, int point, String googleProductId, String appleProductId) {
         return ProductEntity.builder()
                 .price(price)
                 .point(point)
+                .googleProductId(googleProductId)
+                .appleProductId(appleProductId)
                 .build();
     }
 
-    public void update(int price, int point) {
+    public void update(int price, int point, String googleProductId, String appleProductId) {
         this.price = price;
         this.point = point;
+        this.googleProductId = googleProductId;
+        this.appleProductId = appleProductId;
     }
 }

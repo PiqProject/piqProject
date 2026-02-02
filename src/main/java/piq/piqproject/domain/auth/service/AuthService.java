@@ -73,7 +73,7 @@ public class AuthService {
         // 0. 이메일 및 닉네임 중복 확인 (기존 로직 유지)
         if (userRepository.existsByEmail(signUpRequestDto.getEmail())
                 || userRepository.existsByNickname(signUpRequestDto.getNickname())) {
-            throw new ConflictException(ErrorCode.ALREADY_EXISTS_USER); // ErrorCode 변수명에 맞게 수정 필요
+            throw new ConflictException(ErrorCode.ALREADY_EXISTS_USER);
         }
 
         // 1. 주소를 좌표로 변환
@@ -112,7 +112,7 @@ public class AuthService {
                 location, // Point 객체 전달
                 signUpRequestDto.getUniversity(),
                 SocialType.NONE, // 소셜 타입
-                "-1"); // 소셜 ID
+                null); // 소셜 ID
 
         // 3. 사용자 정보 저장
         userRepository.save(userEntity);
@@ -177,16 +177,34 @@ public class AuthService {
                 .build();
     }
 
-    /**
-     *
-     * @param refreshToken
-     * @return
-     */
     @Transactional
     public void logout(Long userId, HttpServletRequest request) {
         // 1. Redis에서 해당 사용자의 Refresh Token 삭제
         refreshTokenRepository.deleteById(userId);
         accessLogger.info("LOGOUT | {} | {}", userId, IpUtil.getClientIp(request));
+    }
+
+    /**
+     * 회원 탈퇴 (계정 삭제)
+     * 1. Redis에서 Refresh Token 삭제
+     * 2. DB에서 UserEntity 삭제 (연관된 데이터는 Cascade에 의해 삭제됨)
+     *
+     * @param userId  탈퇴할 사용자의 ID
+     * @param request IP 등의 로깅을 위한 HTTP 요청 객체
+     */
+    @Transactional
+    public void withdraw(Long userId, HttpServletRequest request) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
+
+        // 1. Redis에서 Refresh Token 삭제
+        refreshTokenRepository.deleteById(userId);
+
+        // 2. Soft Delete 처리
+        user.withdraw();
+
+        // 3. 로그 기록
+        accessLogger.info("WITHDRAW_PENDING | {} | {} | {}", userId, user.getEmail(), IpUtil.getClientIp(request));
     }
 
     /**
@@ -257,15 +275,25 @@ public class AuthService {
     // 유저 조회 및 생성 (핵심 로직)
     private UserEntity getOrCreateUser(SocialUserInfo socialInfo) {
         // A. 소셜 ID로 이미 가입된 유저인지 확인
-        return userRepository.findBySocialId(socialInfo.getSocialId())
+        return userRepository.findBySocialTypeAndSocialId(socialInfo.getSocialType(), socialInfo.getSocialId())
+                .map(this::checkWithdrawn)
                 .orElseGet(() -> {
                     // B. 없으면 이메일로 가입된 유저가 있는지 확인 (계정 통합)
                     if (socialInfo.getEmail() != null) {
                         return userRepository.findByEmail(socialInfo.getEmail())
+                                .map(this::checkWithdrawn)
                                 .orElseGet(() -> createUser(socialInfo)); // C. 아예 없으면 신규 가입
                     }
                     return createUser(socialInfo);
                 });
+    }
+
+    private UserEntity checkWithdrawn(UserEntity user) {
+        if (user.isWithdrawn()) {
+            throw new ForbiddenException(ErrorCode.DISABLED_ACCOUNT_USER,
+                    "탈퇴 대기 중인 계정입니다. 7일 이후에 다시 가입해주세요.");
+        }
+        return user;
     }
 
     // 신규 유저 생성

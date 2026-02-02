@@ -37,6 +37,7 @@ public class SecurityConfig {
     private static final String[] AUTH_WHITELIST = {
             "/home",
             "/uploads/**",
+            "/webhook/**", // 외부 결제 플랫폼 웹훅 (Google, Apple)
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/reissue",

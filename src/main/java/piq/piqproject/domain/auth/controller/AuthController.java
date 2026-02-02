@@ -103,17 +103,41 @@ public class AuthController {
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", null)
                 .maxAge(0) // 쿠키의 수명을 0으로 설정하여 즉시 만료시킵니다.
                 .path("/")
-                // .secure(true), .sameSite("None"), .httpOnly(true) 등 기존 쿠키와 동일한 속성을 유지해야
-                // 브라우저가 동일한 쿠키로 인식하고 삭제
-                // .secure(true)
                 .sameSite("None")
                 .httpOnly(true)
+                .secure(true)
                 .build();
 
         // 4. 응답 헤더에 쿠키 삭제 명령을 추가하고, 성공 메시지를 바디에 담아 반환
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
                 .body("로그아웃 되었습니다.");
+    }
+
+    /**
+     * 회원 탈퇴 (계정 삭제)
+     * 1. 서비스 레이어에서 유저 정보 및 리프레시 토큰 삭제
+     * 2. 클라이언트의 리프레시 토큰 쿠키 만료 처리
+     */
+    @PostMapping("/withdraw")
+    public ResponseEntity<String> withdraw(@AuthenticationPrincipal UserEntity user, HttpServletRequest request) {
+        Long userId = user.getId();
+
+        authService.withdraw(userId, request);
+        log.info("User withdrawal processed: {}", userId);
+
+        // 쿠키 삭제 (로그아웃과 동일)
+        ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", null)
+                .maxAge(0)
+                .path("/")
+                .sameSite("None")
+                .httpOnly(true)
+                .secure(true)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
+                .body("회원 탈퇴가 성공적으로 처리되었습니다.");
     }
 
     /**
@@ -175,5 +199,4 @@ public class AuthController {
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(tokens);
     }
-
 }

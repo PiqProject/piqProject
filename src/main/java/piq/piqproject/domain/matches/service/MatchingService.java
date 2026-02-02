@@ -1,8 +1,12 @@
 package piq.piqproject.domain.matches.service;
 
+import piq.piqproject.domain.dislikes.entity.DislikeEntity;
+import piq.piqproject.domain.dislikes.repository.DislikeRepository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,6 +30,7 @@ import piq.piqproject.domain.recommendations.service.DailyRecommendationService;
 import piq.piqproject.domain.points.enums.PointType;
 import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.repository.UserRepository;
 
 @Slf4j
@@ -39,9 +44,13 @@ public class MatchingService {
     private final DailyRecommendationRepository dailyRecommendationRepository;
     private final DailyRecommendationService dailyRecommendationService;
     private final PointService pointService;
-    private static final int MATCH_COST = 0;
+    private final DislikeRepository dislikeRepository;
 
-    // 매칭 비용을 상수로 정의하여 관리 용이성 증대
+    @Value("${matching.cost.women}")
+    private int matchCostForWomen;
+
+    @Value("${matching.cost.men}")
+    private int matchCostForMen;
 
     /**
      * 매칭 요청 생성
@@ -81,14 +90,19 @@ public class MatchingService {
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "'오늘' 추천된 사용자에게만 매칭을 요청할 수 있습니다.");
         }
 
-        // 4. & 5. 포인트 차감 (PointService에서 잔액 체크 포함)
-        pointService.usePoints(sender, MATCH_COST, "매칭 요청 포인트 차감");
+        // 4. & 5. 성별에 따른 포인트 차감 (PointService에서 잔액 체크 포함)
+        int matchCost = getMatchCostByGender(sender.getGender());
+        pointService.usePoints(sender, matchCost, "매칭 요청 포인트 차감");
 
         // 6. 매칭 엔티티 생성 및 저장 (초기 상태는 PENDING)
+        int receiverCost = getMatchCostByGender(receiver.getGender());
         MatchingEntity newMatch = MatchingEntity.builder()
                 .sender(sender)
                 .receiver(receiver)
                 .status(MatchingStatus.PENDING)
+                .senderUsedPoints(matchCost)
+                .receiverUsedPoints(receiverCost)
+                .message(requestDto.getMessage())
                 .build();
 
         MatchingEntity savedMatch = matchingRepository.save(newMatch);
@@ -131,16 +145,23 @@ public class MatchingService {
                 ? MatchingStatus.SUCCESS
                 : MatchingStatus.FAIL;
 
-        matching.changeStatus(newStatus);
-
-        // @Transactional에 의해 메서드 종료 시 자동으로 DB에 업데이트 (dirty checking)
-        // 따라서 matchingRepository.save(matching)을 명시적으로 호출할 필요가 없습니다.
-
-        // 5. sender의 pqPoint환급
+        // 5. receiver의 pqPoint 차감 or sender의 pqPoint 환급
         if (newStatus == MatchingStatus.FAIL) {
-            UserEntity sender = matching.getSender();
-            pointService.chargePoints(sender, MATCH_COST, PointType.REFUND, "매칭 거절 포인트 환불");
+            pointService.chargePoints(matching.getSender(), matching.getSenderUsedPoints(), PointType.REFUND,
+                    "매칭 거절 포인트 환불");
+
+            // 거절 시, 거절한 사람(Receiver)이 거절 당한 사람(Sender)을 싫어요 목록에 추가
+            if (!dislikeRepository.existsByFromUserAndToUser(matching.getReceiver(), matching.getSender())) {
+                dislikeRepository.save(DislikeEntity.builder()
+                        .fromUser(matching.getReceiver())
+                        .toUser(matching.getSender())
+                        .build());
+            }
+        } else if (newStatus == MatchingStatus.SUCCESS) {
+            pointService.usePoints(matching.getReceiver(), matching.getReceiverUsedPoints(), "매칭 성공 포인트 차감");
         }
+
+        matching.changeStatus(newStatus);
 
         return MatchingResponseDto.from(matching, currentId);
     }
@@ -204,5 +225,15 @@ public class MatchingService {
 
         // 5. 파트너의 연락처 정보를 DTO로 변환하여 반환
         return ContactExchangeResponseDto.from(partner);
+    }
+
+    /**
+     * 성별에 따른 매칭 비용을 반환합니다.
+     * 
+     * @param gender 사용자의 성별
+     * @return 해당 성별에 적용되는 매칭 비용 (포인트)
+     */
+    public int getMatchCostByGender(Gender gender) {
+        return (gender == Gender.FEMALE) ? matchCostForWomen : matchCostForMen;
     }
 }

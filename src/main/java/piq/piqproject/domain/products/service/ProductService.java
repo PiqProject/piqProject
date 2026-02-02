@@ -22,7 +22,11 @@ public class ProductService {
 
     @Transactional
     public ProductResponseDto createProduct(ProductRequestDto productRequestDto) {
-        ProductEntity product = ProductEntity.of(productRequestDto.getPrice(), productRequestDto.getPoint());
+        ProductEntity product = ProductEntity.of(
+                productRequestDto.getPrice(),
+                productRequestDto.getPoint(),
+                productRequestDto.getGoogleProductId(),
+                productRequestDto.getAppleProductId());
         productRepository.save(product);
 
         return ProductResponseDto.of(product);
@@ -44,7 +48,11 @@ public class ProductService {
         ProductEntity product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_PRODUCT));
 
-        product.update(productRequestDto.getPrice(), productRequestDto.getPoint());
+        product.update(
+                productRequestDto.getPrice(),
+                productRequestDto.getPoint(),
+                productRequestDto.getGoogleProductId(),
+                productRequestDto.getAppleProductId());
 
         return ProductResponseDto.of(product);
     }

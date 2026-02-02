@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import piq.piqproject.common.annotation.AuditLog;
+import piq.piqproject.domain.admin.dto.request.BulkPointRequestDto;
 import piq.piqproject.domain.admin.dto.request.PointRequestDto;
 import piq.piqproject.domain.admin.dto.request.UserStatusRequestDto;
 import piq.piqproject.domain.admin.dto.response.UserAdminDetailResponseDto;
@@ -86,6 +87,22 @@ public class AdminUserController {
 
         adminUserService.adjustPoint(userId, requestDto);
         return ResponseEntity.ok("포인트가 조정되었습니다.");
+    }
+
+    /**
+     * 전회원 또는 성별별 포인트 일괄 조정
+     */
+    @PostMapping("/bulk-point")
+    @AuditLog(action = "포인트 일괄 조정")
+    public ResponseEntity<String> adjustBulkPoint(
+            @Valid @RequestBody BulkPointRequestDto requestDto,
+            @AuthenticationPrincipal UserEntity admin) {
+
+        log.info("Admin {} initiated bulk point adjustment. TargetGender: {}, Amount: {}, Reason: {}",
+                admin.getEmail(), requestDto.getTargetGender(), requestDto.getAmount(), requestDto.getReason());
+
+        adminUserService.adjustBulkPoint(requestDto);
+        return ResponseEntity.ok("포인트 일괄 조정이 완료되었습니다.");
     }
 
     /**

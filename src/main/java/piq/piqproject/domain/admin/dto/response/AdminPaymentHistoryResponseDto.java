@@ -3,8 +3,8 @@ package piq.piqproject.domain.admin.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import piq.piqproject.domain.payments.entity.PaymentEntity;
-import piq.piqproject.domain.payments.enums.PaymentStatus;
+import piq.piqproject.domain.payments.common.entity.PaymentEntity;
+import piq.piqproject.domain.payments.common.enums.PaymentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,7 +25,7 @@ public class AdminPaymentHistoryResponseDto {
         return AdminPaymentHistoryResponseDto.builder()
                 .id(entity.getId())
                 .merchantUid(entity.getMerchantUid())
-                .impUid(entity.getImpUid())
+                .impUid(entity.getTransactionId())
                 .productId(entity.getProduct().getId())
                 .amount(entity.getAmount())
                 .status(entity.getStatus())

@@ -114,7 +114,7 @@ public class UserService {
                 defaultLocation,
                 "광운대학교",
                 SocialType.NONE, // 소셜 타입
-                "-1"); // 소셜 ID
+                null); // 소셜 ID
         adminUser.addRole(Role.ADMIN); // 관리자 권한 부여
 
         // 4. DB에 저장

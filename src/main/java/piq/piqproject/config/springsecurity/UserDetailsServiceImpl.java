@@ -26,8 +26,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
      * @return UserDetails UserEntity
      */
     @Override
-    public UserDetails loadUserByUsername(String id) throws CustomException {
-        return userRepository.findByIdWithRoles(Long.parseLong(id))
-                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "사용자를 찾을 수 없습니다: " + id));
+    public UserDetails loadUserByUsername(String username) throws CustomException {
+        return userRepository.findByIdWithRoles(Long.parseLong(username))
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "사용자를 찾을 수 없습니다: " + username));
     }
 }
