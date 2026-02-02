@@ -102,17 +102,17 @@ public class UserEntity extends BaseEntity implements UserDetails {
     @Column(name = "is_web_alarm", nullable = false)
     private Boolean isWebAlarm; // 웹 알림 수신 동의 여부
 
-    @Column(name = "terms_agreed", nullable = false)
-    private Boolean termsAgreed; // 이용약관 동의 여부
+    @Column(name = "terms_agreed", nullable = true)
+    private Boolean termsAgreed; // 이용약관 동의 여부 (관리자는 null 가능)
 
-    @Column(name = "privacy_policy_agreed", nullable = false)
-    private Boolean privacyPolicyAgreed; // 개인정보처리방침 동의 여부
+    @Column(name = "privacy_policy_agreed", nullable = true)
+    private Boolean privacyPolicyAgreed; // 개인정보처리방침 동의 여부 (관리자는 null 가능)
 
-    @Column(name = "location_info_policy_agreed", nullable = false)
-    private Boolean locationInfoPolicyAgreed; // 위치정보 수집 동의 여부
+    @Column(name = "location_info_policy_agreed", nullable = true)
+    private Boolean locationInfoPolicyAgreed; // 위치정보 수집 동의 여부 (관리자는 null 가능)
 
-    @Column(name = "is_adult", nullable = false)
-    private Boolean isAdult; // 만 19세 이상 확인 동의 여부
+    @Column(name = "is_adult", nullable = true)
+    private Boolean isAdult; // 만 19세 이상 확인 동의 여부 (관리자는 null 가능)
 
     
  // --- 기존 @ElementCollection 필드를 아래 코드로 교체 ---
