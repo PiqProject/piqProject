@@ -108,6 +108,7 @@ public class UserService {
                 "MBTI",
                 0.0,
                 100000000,
+                "자기소개",
                 true,
                 true,
                 true,

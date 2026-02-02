@@ -15,4 +15,16 @@ public class SocialLoginRequestDto {
 
     @NotBlank(message = "토큰은 필수입니다.")
     private String token;
+
+    @NotNull(message = "이용약관 동의는 필수입니다.")
+    private Boolean termsAgreed;
+
+    @NotNull(message = "개인정보처리방침 동의는 필수입니다.")
+    private Boolean privacyPolicyAgreed;
+
+    @NotNull(message = "위치정보 수집 동의는 필수입니다.")
+    private Boolean locationInfoPolicyAgreed;
+
+    @NotNull(message = "성인 여부는 필수입니다.")
+    private Boolean isAdult;
 }

@@ -173,7 +173,8 @@ public class UserEntity extends BaseEntity implements UserDetails {
     public UserEntity(String email,String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti,
             Integer pqPoint, String introduce, Boolean isActive, Boolean isAppAlarm, Boolean isWebAlarm,
-            String address, Point location, String university, SocialType socialType, String socialId) {
+            String address, Point location, String university, SocialType socialType, String socialId,
+            Boolean termsAgreed, Boolean privacyPolicyAgreed, Boolean locationInfoPolicyAgreed, Boolean isAdult) {
         this.email = email;
         this.nickname = nickname;
         this.password = password;
@@ -192,6 +193,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.university = university;
         this.socialType = socialType;
         this.socialId = socialId;
+        this.termsAgreed = termsAgreed;
+        this.privacyPolicyAgreed = privacyPolicyAgreed;
+        this.locationInfoPolicyAgreed = locationInfoPolicyAgreed;
+        this.isAdult = isAdult;
     }
 
     /**
@@ -205,6 +210,11 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 .pqPoint(0) // 초기 포인트
                 .isActive(true)
                 .isAppAlarm(false)
+                .isWebAlarm(false)
+                .termsAgreed(true)
+                .privacyPolicyAgreed(true)
+                .locationInfoPolicyAgreed(true)
+                .isAdult(true)
                 .build();
         
         // 중요: 소셜 가입 직후에는 'GUEST' 권한을 주어 프로필 입력을 강제할 수 있음.
@@ -252,7 +262,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
      */
     public static UserEntity of (String email, String nickname, String password, String kakaoTalkId, String instagramId,
             Integer age, Gender gender, String mbti, Double score,
-            Integer pqPoint, String introduce, Boolean isActive,
+            Integer pqPoint, String introduce, Boolean isActive, Boolean isAppAlarm,Boolean isWebAlarm,
             String address, Point location, String university, SocialType socialType, String socialId ) {
         UserEntity user = UserEntity.builder()
                 .email(email)

@@ -106,6 +106,7 @@ public class AuthService {
                 signUpRequestDto.getMbti(),
                 0.0, // totalScore
                 0, // pqPoint (가입 시 기본 포인트, 필요하면 수정)
+                "자기소개",
                 true, // isActive
                 false, // isAppAlarm
                 false, // isWebAlarm
@@ -243,6 +244,11 @@ public class AuthService {
     @Transactional
     public TokensResponseDto socialLogin(SocialLoginRequestDto request) {
 
+        // 0. 약관 동의 체크
+        if (!request.getTermsAgreed() || !request.getPrivacyPolicyAgreed() || !request.getLocationInfoPolicyAgreed()
+                || !request.getIsAdult()) {
+            throw new InvalidRequestException(ErrorCode.BAD_REQUEST, "약관 동의가 필요합니다.");
+        }
         // 1. 소셜 타입에 따라 전략 선택
         SocialLoadStrategy strategy = getStrategy(request.getSocialType());
 
