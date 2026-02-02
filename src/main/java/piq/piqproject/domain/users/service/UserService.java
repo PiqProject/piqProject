@@ -107,7 +107,8 @@ public class UserService {
                 "MBTI",
                 0.0,
                 100000000,
-                "관리자 계정",
+                true,
+                true,
                 true,
                 "서울시청", // address (관리자용 기본 주소)
                 defaultLocation,
@@ -123,6 +124,13 @@ public class UserService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "해당 ID의 사용자를 찾을 수 없습니다: " + userId));
         user.updateAppAlarmStatus(isAppAlarm);
+    }
+
+    @Transactional
+    public void updateWebAlarmStatus(Long id, Boolean isWebAlarm) {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER, "해당 ID의 사용자를 찾을 수 없습니다: " + id));
+        user.updateWebAlarmStatus(isWebAlarm);
     }
 
 }

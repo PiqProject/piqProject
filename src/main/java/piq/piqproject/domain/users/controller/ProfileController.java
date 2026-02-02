@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
+import piq.piqproject.domain.users.dto.request.UserIntroduceRequestDto;
 import piq.piqproject.domain.users.dto.request.UserLocationRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
@@ -113,5 +114,19 @@ public class ProfileController {
         profileService.updateUserLocation(user, requestDto);
 
         return ResponseEntity.ok("주소 변경이 완료되었습니다.");
+    }
+
+    /**
+     * 사용자의 자기소개를 수정합니다.
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PutMapping("/me/introduce")
+    public ResponseEntity<String> updateIntroduce(
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserIntroduceRequestDto requestDto) {
+
+        profileService.updateUserIntroduce(user.getId(), requestDto);
+
+        return ResponseEntity.ok("자기소개 변경이 완료되었습니다.");
     }
 }

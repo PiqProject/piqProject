@@ -104,49 +104,4 @@ public class AdminUserController {
         return ResponseEntity.ok("회원이 강제 탈퇴 처리되었습니다.");
     }
 
-    /**
-     * 부적절한 사진 강제 삭제
-     */
-    @PostMapping("/{userId}/images/{imageId}/force-delete")
-    @AuditLog(action = "회원 사진 강제 삭제")
-    public ResponseEntity<String> deleteUserImage(
-            @PathVariable("userId") Long userId,
-            @PathVariable("imageId") Long imageId,
-            @AuthenticationPrincipal UserEntity admin) {
-
-        log.info("Admin {} deleted image {} of user {}", admin.getEmail(), imageId, userId);
-        adminUserService.deleteUserImageForcefully(userId, imageId);
-
-        return ResponseEntity.ok("부적절한 사진이 삭제되었습니다.");
-    }
-
-    /**
-     * 프로필 소개글 초기화
-     */
-    @PutMapping("/{userId}/introduce/reset")
-    @AuditLog(action = "회원 소개글 초기화")
-    public ResponseEntity<String> resetUserIntroduce(
-            @PathVariable("userId") Long userId,
-            @AuthenticationPrincipal UserEntity admin) {
-
-        log.info("Admin {} reset introduce of user {}", admin.getEmail(), userId);
-        adminUserService.resetUserIntroduce(userId);
-
-        return ResponseEntity.ok("회원 소개글이 초기화 문구로 변경되었습니다.");
-    }
-
-    /**
-     * 회원 음성 강제 삭제
-     */
-    @PostMapping("/{userId}/voice/force-delete")
-    @AuditLog(action = "회원 음성 강제 삭제")
-    public ResponseEntity<String> deleteUserVoice(
-            @PathVariable("userId") Long userId,
-            @AuthenticationPrincipal UserEntity admin) {
-        log.warn("Admin {} deleted voice of user {}", admin.getEmail(), userId);
-        adminUserService.deleteUserVoiceForcefully(userId);
-
-        return ResponseEntity.ok("부적절한 음성 소개가 삭제되었습니다.");
-    }
-
 }

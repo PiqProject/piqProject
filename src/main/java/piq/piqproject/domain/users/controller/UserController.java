@@ -101,4 +101,19 @@ public class UserController {
         userService.updateAppAlarmStatus(userEntity.getId(), isAppAlarm);
         return ResponseEntity.ok("앱 알림 수신 여부가 성공적으로 변경되었습니다.");
     }
+
+    /**
+     * 사용자의 웹 알림 활성화 여부를 업데이트합니다.
+     * 
+     * @param userEntity @AuthenticationPrincipal을 통해 주입된 현재 인증된 사용자 엔티티
+     * @param isWebAlarm 활성화 여부 (true/false)
+     * @return 성공 응답
+     */
+    @PatchMapping("/web-alarm")
+    public ResponseEntity<String> updateWebAlarmStatus(
+            @AuthenticationPrincipal UserEntity userEntity,
+            @RequestParam("isWebAlarm") Boolean isWebAlarm) {
+        userService.updateWebAlarmStatus(userEntity.getId(), isWebAlarm);
+        return ResponseEntity.ok("웹 알림 수신 여부가 성공적으로 변경되었습니다.");
+    }
 }

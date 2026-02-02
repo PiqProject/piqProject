@@ -61,5 +61,7 @@ public class AdminInquiryService {
 
         inquiry.registerAnswer(request.getAnswer(), admin.getEmail());
 
+        // TODO: 알림 전송 로직 필요 (문의 답변 등록)
+        // inquiry.getUser()에게 "작성하신 문의에 답변이 등록되었습니다." 알림 전송
     }
 }
