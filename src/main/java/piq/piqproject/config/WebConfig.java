@@ -20,4 +20,5 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler(uploadUrlPrefix + "**") // 1. 웹 브라우저에 입력할 URL
                 .addResourceLocations("file:" + uploadDir); // 2. 서버에 저장된 실제 폴더 경로
     }
+
 }

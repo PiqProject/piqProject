@@ -1,12 +1,10 @@
 package piq.piqproject.config.springsecurity;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpMethod;
-import piq.piqproject.config.jwt.JwtExceptionFilter;
-import piq.piqproject.config.jwt.JwtFilter;
+import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -18,9 +16,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
 
-// 향후 만들 JWT 필터를 import 해야 합니다.
-// import piq.piqproject.security.JwtAuthenticationFilter; 
+import lombok.RequiredArgsConstructor;
+import piq.piqproject.config.jwt.JwtExceptionFilter;
+import piq.piqproject.config.jwt.JwtFilter;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -68,8 +70,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // CSRF(Cross-Site Request Forgery) 보호 기능을 비활성화합니다.
         // REST API는 세션을 사용하지 않고 JWT 토큰을 사용하므로, 일반적으로 CSRF 보호가 필요 없습니다.
-        http.csrf(AbstractHttpConfigurer::disable);
-
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // 이 부분 추가
+                .csrf(csrf -> csrf.disable());
         // HTTP Basic 인증 방식을 비활성화합니다.
         // 헤더에 사용자 이름과 비밀번호를 인코딩하여 보내는 방식 대신 JWT를 사용합니다.
         http.httpBasic(AbstractHttpConfigurer::disable);
@@ -116,5 +119,29 @@ public class SecurityConfig {
         http.addFilterBefore(jwtExceptionFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 1. 리액트(프론트) 주소 허용
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+
+        // 2. GET, POST, PUT, DELETE 등 허용
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+
+        // 3. 모든 헤더 허용
+        configuration.setAllowedHeaders(List.of("*"));
+
+        // 4. 인증 정보(쿠키/토큰) 포함 허용 (로그인 기능 시 필수)
+        configuration.setAllowCredentials(true);
+
+        // 5. 브라우저가 헤더에 접근할 수 있게 노출 (선택사항, JWT 쓸 때 필요할 수 있음)
+        configuration.addExposedHeader("Authorization");
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
