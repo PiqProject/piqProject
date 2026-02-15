@@ -139,9 +139,9 @@ public class AuthService {
             throw new UnauthorizedException(PASSWORD_MISMATCH);
         }
 
-        // 3. 계정 활성화 상태 확인
-        if (!(user.isEnabled() && user.isAccountNonLocked())) { // UserEntity의 isEnabled() 메서드 활용
-            throw new ForbiddenException(DISABLED_ACCOUNT_USER);
+        // 3. 계정 탈퇴 처리 중 확인
+        if ((user.isWithdrawn())) { // UserEntity의 isEnabled() 메서드 활용
+            throw new ForbiddenException(DISABLED_ACCOUNT_USER, "탈퇴된 계정입니다.");
         }
 
         // 4. 인증이 성공하면 JWT 생성
