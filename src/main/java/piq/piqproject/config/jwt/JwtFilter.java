@@ -32,25 +32,27 @@ public class JwtFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
-        // 1. HTTP 요청 헤더에서 JWT 토큰을 추출
         String token = resolveToken(request);
 
-        // 2.토큰이 존재하면 TokenProvider를 사용하여 토큰의 유효성을 검증, CustomException 발생 가능(runtime exception)         @formatter:off 
+        // 토큰이 존재할 때만 검증을 시도하되, 실패하더라도 다음 필터로 진행하게 함
         if (token != null) {
-            jwtTokenProvider.validateToken(token);
+            try {
+                // validateToken이 예외를 던지는 구조라면 여기서 try-catch로 잡습니다.
+                jwtTokenProvider.validateToken(token);
 
-            // 3. 토큰이 유효하면, 토큰에서 인증 정보를 가져옵니다.
-            Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                // 유효하다면 인증 객체 생성 및 Context 저장
+                Authentication authentication = jwtTokenProvider.getAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // 4. 가져온 인증 정보를 Spring Security의 SecurityContextHolder에 저장합니다.
-            // SecurityContextHolder는 현재 실행 중인 스레드에 대한 보안 컨텍스트를 관리합니다.
-            // 여기에 인증 정보가 저장되면, 해당 요청을 처리하는 동안 @PreAuthorize 등의 어노테이션 기반 보안 검사가 동작할 수 있습니다.
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.debug("JWT 토큰 인증 성공: {}", authentication.getName());
+            } catch (Exception e) {
+                // 예외가 발생해도 로그만 남기고 아무것도 하지 않음
+                // SecurityContext에 Authentication을 세팅하지 않는 것만으로 충분
+                log.debug("유효하지 않은 JWT 토큰입니다: {}", e.getMessage());
+            }
         }
 
-        // 5. 다음 필터로 요청을 전달합니다.
-        // JWT 검증 여부와 상관없이, 요청은 항상 다음 필터로 이어져야 합니다.
-        // 만약 여기서 체인을 멈추면, 실제 API 컨트롤러까지 요청이 도달하지 못합니다.
+        // 예외가 발생했든, 토큰이 없었든 '무조건' 다음 필터로 넘김
         filterChain.doFilter(request, response);
     }
 

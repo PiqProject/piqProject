@@ -1,5 +1,9 @@
 package piq.piqproject.infra.external.kakao.service;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -34,6 +38,9 @@ public class KakaoService {
 
     private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
+
+    @Value("${kakao.admin-key}")
+    private String adminKey;
 
     /**
      * 1단계: 인가 코드로 카카오 Access Token 발급
@@ -121,4 +128,35 @@ public class KakaoService {
                     "카카오 사용자 정보 조회 중 알 수 없는 오류가 발생했습니다.");
         }
     }
+
+    /**
+     * 카카오 연결 끊기 (Unlink)
+     * 유저의 고유번호(socialId)를 사용하여 카카오와의 연결을 강제로 끊습니다.
+     */
+    public void unlink(String socialId) {
+        // 1. 파라미터 구성
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("target_id_type", "user_id");
+        params.add("target_id", socialId);
+
+        try {
+            // 2. RestClient 요청 수행
+            restClient.post()
+                    .uri("https://kapi.kakao.com/v1/user/unlink")
+                    .header("Authorization", "KakaoAK " + adminKey)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(params) // MultiValueMap 전달
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (request, response) -> {
+                        // 에러 발생 시 로그를 상세히 남기기 위해 핸들링 가능
+                        log.error("카카오 API 에러 발생: {}", response.getStatusCode());
+                    })
+                    .toBodilessEntity(); // 응답 바디가 필요 없을 때 사용
+
+            log.info("카카오 연결 끊기 성공: socialId={}", socialId);
+        } catch (Exception e) {
+            log.error("카카오 연결 끊기 실패: socialId={}, Error: {}", socialId, e.getMessage());
+        }
+    }
+
 }
