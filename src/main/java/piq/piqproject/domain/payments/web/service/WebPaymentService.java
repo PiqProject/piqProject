@@ -23,6 +23,7 @@ import piq.piqproject.domain.payments.common.repository.PaymentRepository;
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentCancelRequestDto;
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentPrepareRequestDto;
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentVerificationRequestDto;
+import piq.piqproject.domain.payments.common.enums.PaymentType;
 import piq.piqproject.domain.points.enums.PointType;
 import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.products.entity.ProductEntity;
@@ -45,6 +46,8 @@ public class WebPaymentService {
 
     @Transactional
     public String preparePayment(UserEntity user, WebPaymentPrepareRequestDto request) {
+        log.info("결제 사전 등록 시작: user={}, amount={}", user.getId(), request.getAmount());
+
         ProductEntity product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_PRODUCT));
 
@@ -57,6 +60,7 @@ public class WebPaymentService {
                 .merchantUid(merchantUid)
                 .amount(BigDecimal.valueOf(request.getAmount()))
                 .status(PaymentStatus.READY)
+                .type(PaymentType.PORTONE)
                 .user(user)
                 .product(product)
                 .build();
@@ -69,6 +73,8 @@ public class WebPaymentService {
 
     @Transactional
     public void verifyPayment(WebPaymentVerificationRequestDto request) {
+        log.info("결제 검증 시작: merchantUid={}, impUid={}", request.getMerchantUid(), request.getImpUid());
+
         PaymentEntity paymentEntity = paymentRepository.findByMerchantUidWithLock(request.getMerchantUid())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
 
