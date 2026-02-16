@@ -43,7 +43,7 @@ public class SecurityConfig {
             "/api/v1/auth/signup",
             "/api/v1/auth/login",
             "/api/v1/auth/reissue",
-            "/api/v1/auth/login/social",
+            "/api/v1/auth/login/kakao",
             "/api/v1/faqs",
             "/api/v1/reviews",
             "/api/v1/posts/**",

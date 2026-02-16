@@ -17,10 +17,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.NotFoundException;
+import piq.piqproject.domain.auth.dto.request.KakaoLoginRequest;
 import piq.piqproject.domain.auth.dto.request.LoginRequestDto;
 import piq.piqproject.domain.auth.dto.request.ReissueRequestDto;
 import piq.piqproject.domain.auth.dto.request.SignUpRequestDto;
-import piq.piqproject.domain.auth.dto.request.SocialLoginRequestDto;
 import piq.piqproject.domain.auth.dto.response.AccessTokenResponseDto;
 import piq.piqproject.domain.auth.dto.response.TokensResponseDto;
 import piq.piqproject.domain.auth.service.AuthService;
@@ -195,19 +195,20 @@ public class AuthController {
     }
 
     /**
-     * [소셜 로그인]
-     * 1. 웹을 위해 HttpOnly 쿠키 설정
-     * 2. 앱을 위해 JSON Body에도 Refresh Token 포함
+     * [카카오 인가 코드 로그인]
+     * 프론트엔드에서 카카오 인가 코드(Authorization Code)를 받아
+     * 백엔드에서 카카오 토큰 발급 → 사용자 정보 조회 → JWT 발급까지 처리합니다.
      */
-    @PostMapping("/login/social")
-    public ResponseEntity<TokensResponseDto> socialLogin(@RequestBody @Valid SocialLoginRequestDto request) {
+    @PostMapping("/login/kakao")
+    public ResponseEntity<TokensResponseDto> kakaoLogin(@RequestBody @Valid KakaoLoginRequest request) {
 
-        // 1. 서비스 로직 수행 (토큰 발급)
-        TokensResponseDto tokens = authService.socialLogin(request);
+        // 1. 서비스 로직 수행 (인가 코드 → 카카오 토큰 → 사용자 정보 → 우리 JWT)
+        TokensResponseDto tokens = authService.kakaoLogin(request.code());
+        log.info("Kakao Authorization Code login completed");
 
         // 2. 쿠키 생성 (웹용)
         ResponseCookie cookie = ResponseCookie.from("refreshToken", tokens.getRefreshToken())
-                .maxAge(COOKIEMAXAGE) // 14일
+                .maxAge(COOKIEMAXAGE)
                 .path("/")
                 .sameSite("None")
                 .httpOnly(true)
