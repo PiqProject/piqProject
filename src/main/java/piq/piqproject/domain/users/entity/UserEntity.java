@@ -211,9 +211,9 @@ public class UserEntity extends BaseEntity implements UserDetails {
                 .isActive(true)
                 .isAppAlarm(false)
                 .isWebAlarm(false)
-                .termsAgreed(true)
-                .privacyPolicyAgreed(true)
-                .locationInfoPolicyAgreed(true)
+                .termsAgreed(false)
+                .privacyPolicyAgreed(false)
+                .locationInfoPolicyAgreed(false)
                 .isAdult(true)
                 .build();
         

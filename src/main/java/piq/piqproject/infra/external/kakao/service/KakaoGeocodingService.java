@@ -13,7 +13,7 @@ import piq.piqproject.infra.external.kakao.dto.KakaoGeoResponse;
 @RequiredArgsConstructor
 public class KakaoGeocodingService {
 
-    @Value("${kakao.api.key}")
+    @Value("${kakao.client-id}")
     private String kakaoApiKey;
 
     private static final String KAKAO_API_URL = "https://dapi.kakao.com/v2/local/search/address.json";

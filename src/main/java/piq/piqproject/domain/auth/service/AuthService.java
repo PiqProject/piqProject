@@ -18,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.dto.CoordinateDto;
 import piq.piqproject.common.error.exception.ConflictException;
-import piq.piqproject.common.error.exception.CustomException;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.ForbiddenException;
 import piq.piqproject.common.error.exception.InvalidRequestException;
@@ -31,19 +30,19 @@ import piq.piqproject.domain.admin.log.repository.AdminAccessLogRepository;
 import piq.piqproject.domain.auth.dto.SocialUserInfo;
 import piq.piqproject.domain.auth.dto.request.LoginRequestDto;
 import piq.piqproject.domain.auth.dto.request.SignUpRequestDto;
-import piq.piqproject.domain.auth.dto.request.SocialLoginRequestDto;
 import piq.piqproject.domain.auth.dto.response.SignUpResponseDto;
 import piq.piqproject.domain.auth.dto.response.TokensResponseDto;
 import piq.piqproject.domain.auth.entity.RefreshTokenEntity;
 import piq.piqproject.domain.auth.repository.RefreshTokenRepository;
-import piq.piqproject.domain.auth.service.social.AppleLoadStrategy;
-import piq.piqproject.domain.auth.service.social.KakaoLoadStrategy;
-import piq.piqproject.domain.auth.service.social.SocialLoadStrategy;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.enums.Role;
 import piq.piqproject.domain.users.enums.SocialType;
 import piq.piqproject.domain.users.repository.UserRepository;
+import piq.piqproject.infra.external.kakao.dto.KakaoTokenResponse;
+import piq.piqproject.infra.external.kakao.dto.KakaoUserInfoResponse;
 import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
+import piq.piqproject.infra.external.kakao.service.KakaoService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +58,7 @@ public class AuthService {
     private final KakaoGeocodingService kakaoGeocodingService;
     private final AdminAccessLogRepository adminAccessLogRepository;
     private static final Logger accessLogger = LoggerFactory.getLogger("UserAccessLogger");
-    private final KakaoLoadStrategy kakaoLoadStrategy;
-    private final AppleLoadStrategy appleLoadStrategy;
+    private final KakaoService kakaoService;
 
     /**
      * 회원가입 비즈니스 로직을 처리하는 메소드
@@ -241,44 +239,6 @@ public class AuthService {
         return jwtTokenProvider.createAccessToken(user);
     }
 
-    @Transactional
-    public TokensResponseDto socialLogin(SocialLoginRequestDto request) {
-
-        // 0. 약관 동의 체크
-        if (!request.getTermsAgreed() || !request.getPrivacyPolicyAgreed() || !request.getLocationInfoPolicyAgreed()
-                || !request.getIsAdult()) {
-            throw new InvalidRequestException(ErrorCode.BAD_REQUEST, "약관 동의가 필요합니다.");
-        }
-        // 1. 소셜 타입에 따라 전략 선택
-        SocialLoadStrategy strategy = getStrategy(request.getSocialType());
-
-        // 2. 소셜 서버(또는 토큰)로부터 유저 정보 가져오기
-        SocialUserInfo socialInfo = strategy.getUserInfo(request.getToken());
-
-        // 3. 회원가입 또는 로그인 처리
-        UserEntity user = getOrCreateUser(socialInfo);
-
-        // 4. 우리 앱의 JWT 토큰 발급
-        String accessToken = jwtTokenProvider.createAccessToken(user);
-        String refreshToken = jwtTokenProvider.createRefreshToken(user);
-
-        // 5. 생성된 Refresh Token을 Redis에 저장 -> 덮어쓰기 방식으로 동작함
-        refreshTokenRepository.save(new RefreshTokenEntity(user.getId(), refreshToken));
-
-        // 6. 로그인 로그 남기기
-        accessLogger.info("SOCIAL_LOGIN({}) | {} | {}", user.getId(), request.getSocialType(), user.getEmail());
-        return new TokensResponseDto(accessToken, refreshToken);
-    }
-
-    // 소셜 타입별 전략 반환
-    private SocialLoadStrategy getStrategy(SocialType socialType) {
-        return switch (socialType) {
-            case KAKAO -> kakaoLoadStrategy;
-            case APPLE -> appleLoadStrategy;
-            default -> throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "지원하지 않는 소셜 로그인입니다.");
-        };
-    }
-
     // 유저 조회 및 생성 (핵심 로직)
     private UserEntity getOrCreateUser(SocialUserInfo socialInfo) {
         // A. 소셜 ID로 이미 가입된 유저인지 확인
@@ -303,12 +263,57 @@ public class AuthService {
         return user;
     }
 
-    // 신규 유저 생성
+    // 신규 유저 생성(getOrCreateUser에서 호출)
     private UserEntity createUser(SocialUserInfo socialInfo) {
         return userRepository.save(UserEntity.createSocialUser(
                 socialInfo.getEmail(),
                 socialInfo.getSocialType(),
                 socialInfo.getSocialId()));
+    }
+
+    /**
+     * [카카오 인가 코드 로그인]
+     * 프론트엔드에서 받은 인가 코드(Authorization Code)를 사용하여
+     * 백엔드에서 직접 카카오 토큰 발급 → 사용자 정보 조회 → 로그인/회원가입 처리
+     *
+     * @param code 카카오 인가 코드
+     * @return TokensResponseDto (우리 서비스 JWT Access/Refresh Token)
+     */
+    @Transactional
+    public TokensResponseDto kakaoLogin(String code) {
+
+        // 1. 인가 코드로 카카오 Access Token 발급
+        KakaoTokenResponse kakaoToken = kakaoService.getToken(code);
+
+        // 2. 카카오 Access Token으로 사용자 정보 조회
+        KakaoUserInfoResponse kakaoUser = kakaoService.getUserInfo(kakaoToken.accessToken());
+
+        // 3. SocialUserInfo로 변환
+        String email = null;
+        if (kakaoUser.kakaoAccount() != null && kakaoUser.kakaoAccount().email() != null) {
+            email = kakaoUser.kakaoAccount().email();
+        }
+
+        SocialUserInfo socialInfo = SocialUserInfo.builder()
+                .socialId(String.valueOf(kakaoUser.id()))
+                .email(email)
+                .socialType(SocialType.KAKAO)
+                .build();
+
+        // 4. 회원 조회 또는 자동 회원가입
+        UserEntity user = getOrCreateUser(socialInfo);
+
+        // 5. 우리 서비스 전용 JWT 토큰 발급
+        String accessToken = jwtTokenProvider.createAccessToken(user);
+        String refreshToken = jwtTokenProvider.createRefreshToken(user);
+
+        // 6. Refresh Token을 Redis에 저장 (덮어쓰기)
+        refreshTokenRepository.save(new RefreshTokenEntity(user.getId(), refreshToken));
+
+        // 7. 로그인 로그
+        accessLogger.info("KAKAO_AUTH_CODE_LOGIN | {} | {}", user.getId(), user.getEmail());
+
+        return new TokensResponseDto(accessToken, refreshToken);
     }
 
 }
