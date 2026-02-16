@@ -20,7 +20,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
-import piq.piqproject.config.jwt.JwtExceptionFilter;
 import piq.piqproject.config.jwt.JwtFilter;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
@@ -31,7 +30,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
     // JWT 토큰 제공자 및 필터를 주입받습니다.
     private final JwtFilter jwtFilter;
-    private final JwtExceptionFilter jwtExceptionFilter;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
@@ -116,7 +114,6 @@ public class SecurityConfig {
 
         // 다른 필터를 추가할 경우 여기에 추가할것
         // JWT Filter(custom Filter)를 Spring Security 이전에 추가
-        http.addFilterBefore(jwtExceptionFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

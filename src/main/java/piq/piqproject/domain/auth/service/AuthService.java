@@ -194,17 +194,30 @@ public class AuthService {
      */
     @Transactional
     public void withdraw(Long userId, HttpServletRequest request) {
+        // 1. 유저 엔티티 조회 (영속성 컨텍스트 로드)
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException(NOT_FOUND_USER));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
 
-        // 1. Redis에서 Refresh Token 삭제
+        // 2-1. 외부 서비스 연동 해제 (카카오 가입자인 경우)
+        if (user.getSocialType() == SocialType.KAKAO) {
+            kakaoService.unlink(user.getSocialId());
+        }
+
+        // 2-2. Apple 서비스 연동 해제 (애플 가입자인 경우)
+
+        // 3. 상태 관리 (Refresh Token 무효화)
+        // Redis에 저장된 Refresh Token을 삭제하여 즉시 Access Token 재발급을 차단함
         refreshTokenRepository.deleteById(userId);
 
-        // 2. Soft Delete 처리
+        // 4. Soft Delete 실행
         user.withdraw();
 
-        // 3. 로그 기록
-        accessLogger.info("WITHDRAW_PENDING | {} | {} | {}", userId, user.getEmail(), IpUtil.getClientIp(request));
+        // 5. 감사 로그(Audit Log) 기록
+        String clientIp = IpUtil.getClientIp(request);
+        accessLogger.info("WITHDRAW_REQUEST | userId: {} | email: {} | ip: {}",
+                userId, user.getEmail(), clientIp);
+
+        log.info("사용자 탈퇴 처리 완료 (Soft Delete): userId={}", userId);
     }
 
     /**
