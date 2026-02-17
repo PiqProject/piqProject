@@ -75,21 +75,47 @@ public class WebPaymentService {
     public void verifyPayment(WebPaymentVerificationRequestDto request) {
         log.info("결제 검증 시작: merchantUid={}, impUid={}", request.getMerchantUid(), request.getImpUid());
 
+        // 1. 우리 DB에서 결제 내역 조회 (비관적 락으로 중복 처리 방지)
         PaymentEntity paymentEntity = paymentRepository.findByMerchantUidWithLock(request.getMerchantUid())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
 
-        IamportResponse<Payment> iamportResponse = portOneClientService.getPaymentInfo(request.getImpUid());
+        // 가맹점 식별코드 불일치 또는 imp_uid 오류 등으로 조회가 안 될 경우를 대비해 try-catch
+        IamportResponse<Payment> iamportResponse;
+        try {
+            iamportResponse = portOneClientService.getPaymentInfo(request.getImpUid());
+        } catch (Exception e) {
+            log.error("PortOne API 호출 중 예외 발생: {}", e.getMessage());
+            // 시스템 오류 시에도 일단 취소 시도
+            portOneClientService.cancelPayment(request.getImpUid(), "검증 과정 중 시스템 오류", paymentEntity.getAmount());
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "포트원 결제 조회 중 오류가 발생했습니다.");
+        }
 
+        // 2. 포트원 응답 결과 확인
+        if (iamportResponse == null || iamportResponse.getResponse() == null) {
+            log.error("PortOne에서 결제 정보를 찾을 수 없음: impUid={}, code={}, msg={}",
+                    request.getImpUid(),
+                    iamportResponse != null ? iamportResponse.getCode() : "null",
+                    iamportResponse != null ? iamportResponse.getMessage() : "null");
+
+            // 정보가 없는데 왜 취소하나 싶지만, 사용자가 "완료"라고 한다면 API 키 불일치 등의 이유로 못 찾는 것일 수 있으므로 취소 시도
+            portOneClientService.cancelPayment(request.getImpUid(), "결제 정보 조회 불가로 인한 자동 취소", paymentEntity.getAmount());
+
+            throw new NotFoundException(ErrorCode.NOT_FOUND, "포트원에서 결제 정보를 찾을 수 없습니다. 관리자에게 문의하세요.");
+        }
+
+        // 3. 결제 금액 검증
         BigDecimal expectedAmount = paymentEntity.getAmount();
         BigDecimal actualAmount = iamportResponse.getResponse().getAmount();
 
-        if (!expectedAmount.equals(actualAmount)) {
+        if (actualAmount == null || expectedAmount.compareTo(actualAmount) != 0) {
+            log.error("결제 금액 불일치: merchantUid={}, 기대금액={}, 실제금액={}",
+                    request.getMerchantUid(), expectedAmount, actualAmount);
             paymentEntity.failPayment();
-            portOneClientService.cancelPayment(iamportResponse.getResponse().getImpUid(), "결제 금액 불일치",
-                    paymentEntity.getAmount());
-            throw new InternalServerException(ErrorCode.INVALID_PAYMENT_AMOUNT, "금액 불일치");
+            portOneClientService.cancelPayment(request.getImpUid(), "결제 금액 불일치", paymentEntity.getAmount());
+            throw new InternalServerException(ErrorCode.INVALID_PAYMENT_AMOUNT, "결제 금액이 일치하지 않습니다.");
         }
 
+        // 4. 결제 상태 검증
         if ("paid".equals(iamportResponse.getResponse().getStatus())) {
             paymentEntity.completePayment(request.getImpUid());
             pointService.chargePoints(
@@ -97,10 +123,13 @@ public class WebPaymentService {
                     paymentEntity.getProduct().getPoint(),
                     PointType.CHARGE,
                     "포인트 충전 (상품ID: " + paymentEntity.getProduct().getId() + ")");
+            log.info("결제 및 포인트 충전 완료: merchantUid={}", request.getMerchantUid());
         } else {
+            log.warn("결제 상태가 'paid'가 아님: status={}", iamportResponse.getResponse().getStatus());
             paymentEntity.failPayment();
-            portOneClientService.cancelPayment(request.getImpUid(), "결제 상태 불일치", paymentEntity.getAmount());
-            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "유효하지 않은 결제 상태");
+            portOneClientService.cancelPayment(request.getImpUid(),
+                    "결제 미완료 상태 (" + iamportResponse.getResponse().getStatus() + ")", paymentEntity.getAmount());
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "결제가 완료되지 않은 상태입니다.");
         }
     }
 
