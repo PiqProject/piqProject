@@ -83,11 +83,11 @@ public class AuthController {
     public ResponseEntity<TokensResponseDto> login(@Valid @RequestBody LoginRequestDto loginRequestDto,
             HttpServletRequest request) {
 
-        TokensResponseDto tokenResponseDto = authService.login(loginRequestDto, request);
+        TokensResponseDto tokens = authService.login(loginRequestDto, request);
         log.info("Admin/User login attempt: {}", loginRequestDto.getEmail());
 
         // 1. Refresh Token을 위한 HttpOnly 쿠키 생성 (Web용)
-        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokenResponseDto.getRefreshToken())
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokens.getRefreshToken())
                 .maxAge(COOKIEMAXAGE)
                 .path("/")
                 .sameSite("None")
@@ -95,10 +95,19 @@ public class AuthController {
                 .secure(true) // HTTPS 필수
                 .build();
 
-        // 2. 최종 응답: 헤더(쿠키) + 바디(Access/Refresh 둘 다)
+        // 2. 클라이언트 타입 확인 (X-Client-Type: APP 인 경우만 바디에 리프레시 토큰 포함)
+        String clientType = request.getHeader("X-Client-Type");
+        boolean isApp = "APP".equalsIgnoreCase(clientType);
+
+        TokensResponseDto responseBody = TokensResponseDto.builder()
+                .accessToken(tokens.getAccessToken())
+                .refreshToken(isApp ? tokens.getRefreshToken() : null)
+                .build();
+
+        // 3. 최종 응답: 헤더(쿠키) + 바디
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(tokenResponseDto); // TokensResponseDto에는 둘 다 들어있음
+                .body(responseBody);
     }
 
     /**
@@ -200,10 +209,11 @@ public class AuthController {
      * 백엔드에서 카카오 토큰 발급 → 사용자 정보 조회 → JWT 발급까지 처리합니다.
      */
     @PostMapping("/login/kakao")
-    public ResponseEntity<TokensResponseDto> kakaoLogin(@RequestBody @Valid KakaoLoginRequest request) {
+    public ResponseEntity<TokensResponseDto> kakaoLogin(@RequestBody @Valid KakaoLoginRequest kakaoLoginRequest,
+            HttpServletRequest request) {
 
-        // 1. 서비스 로직 수행 (인가 코드 → 카카오 토큰 → 사용자 정보 → 우리 JWT)
-        TokensResponseDto tokens = authService.kakaoLogin(request.code());
+        // 1. 서비스 로직 수행
+        TokensResponseDto tokens = authService.kakaoLogin(kakaoLoginRequest.code());
         log.info("Kakao Authorization Code login completed");
 
         // 2. 쿠키 생성 (웹용)
@@ -215,9 +225,18 @@ public class AuthController {
                 .secure(true)
                 .build();
 
-        // 3. 헤더(쿠키) + 바디(토큰 2개 모두) 반환
+        // 3. 클라이언트 타입 확인 및 바디 구성
+        String clientType = request.getHeader("X-Client-Type");
+        boolean isApp = "APP".equalsIgnoreCase(clientType);
+
+        TokensResponseDto responseBody = TokensResponseDto.builder()
+                .accessToken(tokens.getAccessToken())
+                .refreshToken(isApp ? tokens.getRefreshToken() : null)
+                .build();
+
+        // 4. 헤더(쿠키) + 바디 반환
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(tokens);
+                .body(responseBody);
     }
 }
