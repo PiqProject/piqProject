@@ -1,11 +1,14 @@
 package piq.piqproject.domain.userimages.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.error.exception.NotFoundException;
@@ -14,12 +17,6 @@ import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.userimages.repository.UserImageRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
-import piq.piqproject.domain.verification.entity.VerificationEntity;
-import piq.piqproject.domain.verification.enums.ContentType;
-import piq.piqproject.domain.verification.enums.VerificationStatus;
-import piq.piqproject.domain.verification.repository.VerificationRepository;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +26,6 @@ public class UserImageService {
 
     private final UserImageRepository userImageRepository;
     private final FileUploader fileUploader;
-    private final VerificationRepository verificationRepository;
 
     private static final int MAX_IMAGE_COUNT = 4; // 비즈니스 규칙: 사용자당 최대 이미지 개수
 

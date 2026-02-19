@@ -2,15 +2,18 @@ package piq.piqproject.domain.payments.web.service;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.siot.IamportRestClient.response.IamportResponse;
-import com.siot.IamportRestClient.response.Payment;
-
+import io.portone.sdk.server.payment.CancelledPayment;
+import io.portone.sdk.server.payment.FailedPayment;
+import io.portone.sdk.server.payment.PaidPayment;
+// V2 SDK Import 확인 필수
+import io.portone.sdk.server.payment.Payment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.error.exception.ErrorCode;
@@ -18,13 +21,11 @@ import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.payments.common.dto.response.PaymentHistoryResponseDto;
 import piq.piqproject.domain.payments.common.entity.PaymentEntity;
-import piq.piqproject.domain.payments.common.enums.PaymentStatus;
+import piq.piqproject.domain.payments.common.enums.PaymentType;
 import piq.piqproject.domain.payments.common.repository.PaymentRepository;
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentCancelRequestDto;
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentPrepareRequestDto;
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentVerificationRequestDto;
-import piq.piqproject.domain.payments.common.enums.PaymentType;
-import piq.piqproject.domain.points.enums.PointType;
 import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.products.entity.ProductEntity;
 import piq.piqproject.domain.products.repository.ProductRepository;
@@ -38,7 +39,7 @@ public class WebPaymentService {
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final PointService pointService;
-
+    private final PaymentUpdateService paymentUpdateService;
     private final PortOneClientService portOneClientService;
 
     @Value("${payment.refund.limit-days:7}")
@@ -56,80 +57,64 @@ public class WebPaymentService {
         }
 
         String merchantUid = String.valueOf(UUID.randomUUID());
+
         PaymentEntity payment = PaymentEntity.builder()
                 .merchantUid(merchantUid)
                 .amount(BigDecimal.valueOf(request.getAmount()))
-                .status(PaymentStatus.READY)
+                .status(piq.piqproject.domain.payments.common.enums.PaymentStatus.READY)
                 .type(PaymentType.PORTONE)
                 .user(user)
                 .product(product)
                 .build();
         paymentRepository.save(payment);
 
-        portOneClientService.preparePayment(merchantUid, BigDecimal.valueOf(request.getAmount()));
-
         return merchantUid;
     }
 
-    @Transactional
     public void verifyPayment(WebPaymentVerificationRequestDto request) {
-        log.info("결제 검증 시작: merchantUid={}, impUid={}", request.getMerchantUid(), request.getImpUid());
+        log.info("결제 검증 시작: merchantUid={}, paymentId={}", request.getMerchantUid(), request.getPaymentId());
 
-        // 1. 우리 DB에서 결제 내역 조회 (비관적 락으로 중복 처리 방지)
-        PaymentEntity paymentEntity = paymentRepository.findByMerchantUidWithLock(request.getMerchantUid())
-                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
-
-        // 가맹점 식별코드 불일치 또는 imp_uid 오류 등으로 조회가 안 될 경우를 대비해 try-catch
-        IamportResponse<Payment> iamportResponse;
+        // 1. 포트원 조회 (V2)
+        Payment portOnePayment;
         try {
-            iamportResponse = portOneClientService.getPaymentInfo(request.getImpUid());
+            portOnePayment = portOneClientService.getPaymentInfo(request.getPaymentId());
         } catch (Exception e) {
-            log.error("PortOne API 호출 중 예외 발생: {}", e.getMessage());
-            // 시스템 오류 시에도 일단 취소 시도
-            portOneClientService.cancelPayment(request.getImpUid(), "검증 과정 중 시스템 오류", paymentEntity.getAmount());
-            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "포트원 결제 조회 중 오류가 발생했습니다.");
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "조회 실패");
         }
 
-        // 2. 포트원 응답 결과 확인
-        if (iamportResponse == null || iamportResponse.getResponse() == null) {
-            log.error("PortOne에서 결제 정보를 찾을 수 없음: impUid={}, code={}, msg={}",
-                    request.getImpUid(),
-                    iamportResponse != null ? iamportResponse.getCode() : "null",
-                    iamportResponse != null ? iamportResponse.getMessage() : "null");
+        // 2. Payment 타입에 따른 분기 처리 (Casting)
+        if (portOnePayment instanceof PaidPayment paid) {
+            // [1] 결제 완료상태
+            BigDecimal actualAmount = BigDecimal.valueOf(paid.getAmount().getTotal());
+            try {
+                // DB 업데이트 실행
+                paymentUpdateService.updateSuccess(request.getMerchantUid(), request.getPaymentId(), actualAmount);
+                log.info("검증 성공: PAID");
+            } catch (InternalServerException e) {
+                // 중요: DB 업데이트 중 예외(금액 불일치 등)가 발생하면 포트원 결제 강제 취소
+                log.error("DB 업데이트 중 오류 발생 - 포트원 결제 강제 취소 시도: {}", e.getMessage());
+                portOneClientService.cancelPayment(request.getPaymentId(), "DB 업데이트 실패로 인한 자동취소: " + e.getMessage());
+                throw e; // 예외를 다시 던져서 컨트롤러에서 처리하게 함
+            }
+        } else if (portOnePayment instanceof CancelledPayment cancelled) {
+            // [2] 이미 취소된 결제
+            log.warn("이미 취소된 결제입니다:{}", cancelled.getMerchantId());
+            paymentUpdateService.updateFailure(request.getMerchantUid());
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 취소된 결제입니다.");
 
-            // 정보가 없는데 왜 취소하나 싶지만, 사용자가 "완료"라고 한다면 API 키 불일치 등의 이유로 못 찾는 것일 수 있으므로 취소 시도
-            portOneClientService.cancelPayment(request.getImpUid(), "결제 정보 조회 불가로 인한 자동 취소", paymentEntity.getAmount());
+        } else if (portOnePayment instanceof FailedPayment failed) {
+            // [3] 결제 실패상태
+            log.warn("결제 실패 상태입니다: {}", failed.getMerchantId());
+            paymentUpdateService.updateFailure(request.getMerchantUid());
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "결제 실패 상태입니다.");
 
-            throw new NotFoundException(ErrorCode.NOT_FOUND, "포트원에서 결제 정보를 찾을 수 없습니다. 관리자에게 문의하세요.");
-        }
-
-        // 3. 결제 금액 검증
-        BigDecimal expectedAmount = paymentEntity.getAmount();
-        BigDecimal actualAmount = iamportResponse.getResponse().getAmount();
-
-        if (actualAmount == null || expectedAmount.compareTo(actualAmount) != 0) {
-            log.error("결제 금액 불일치: merchantUid={}, 기대금액={}, 실제금액={}",
-                    request.getMerchantUid(), expectedAmount, actualAmount);
-            paymentEntity.failPayment();
-            portOneClientService.cancelPayment(request.getImpUid(), "결제 금액 불일치", paymentEntity.getAmount());
-            throw new InternalServerException(ErrorCode.INVALID_PAYMENT_AMOUNT, "결제 금액이 일치하지 않습니다.");
-        }
-
-        // 4. 결제 상태 검증
-        if ("paid".equals(iamportResponse.getResponse().getStatus())) {
-            paymentEntity.completePayment(request.getImpUid());
-            pointService.chargePoints(
-                    paymentEntity.getUser(),
-                    paymentEntity.getProduct().getPoint(),
-                    PointType.CHARGE,
-                    "포인트 충전 (상품ID: " + paymentEntity.getProduct().getId() + ")");
-            log.info("결제 및 포인트 충전 완료: merchantUid={}", request.getMerchantUid());
         } else {
-            log.warn("결제 상태가 'paid'가 아님: status={}", iamportResponse.getResponse().getStatus());
-            paymentEntity.failPayment();
-            portOneClientService.cancelPayment(request.getImpUid(),
-                    "결제 미완료 상태 (" + iamportResponse.getResponse().getStatus() + ")", paymentEntity.getAmount());
-            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "결제가 완료되지 않은 상태입니다.");
+            // [4] READY(대기), VIRTUAL_ACCOUNT_ISSUED(가상계좌 발급) 등
+            // 즉시 결제 완료가 아닌 상태
+            log.warn("결제 완료 상태가 아닙니다. 현재 타입: {}", portOnePayment.getClass().getSimpleName());
+            paymentUpdateService.updateFailure(request.getMerchantUid());
+            portOneClientService.cancelPayment(request.getPaymentId(), "결제 미완료");
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "결제가 완료되지 않았습니다.");
         }
     }
 
@@ -141,7 +126,7 @@ public class WebPaymentService {
         if (!payment.getUser().getId().equals(user.getId())) {
             throw new InternalServerException(ErrorCode.NOT_OWNER, "권한 없음");
         }
-        if (payment.getStatus() != PaymentStatus.PAID) {
+        if (payment.getStatus() != piq.piqproject.domain.payments.common.enums.PaymentStatus.PAID) {
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "취소 불가능 상태");
         }
         payment.validateRefundableDate(refundLimitDays);
@@ -150,7 +135,7 @@ public class WebPaymentService {
         pointService.usePoints(user, payment.getProduct().getPoint(),
                 "결제 취소 (주문번호: " + payment.getMerchantUid() + ")");
 
-        portOneClientService.cancelPayment(payment.getTransactionId(), request.getReason(), payment.getAmount());
+        portOneClientService.cancelPayment(payment.getTransactionId(), request.getReason());
 
         payment.cancelPayment();
     }

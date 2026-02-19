@@ -66,7 +66,7 @@ public class AdminPaymentService {
                 user.getId(), targetPoints, user.getPqPoint());
 
         // 4. PortOne API 호출 (PG사 결제 전액 취소)
-        portOneClientService.cancelPayment(payment.getTransactionId(), cancelReason, payment.getAmount());
+        portOneClientService.cancelPayment(payment.getTransactionId(), cancelReason);
 
         // 5. DB 상태 변경 (PAID -> CANCELLED)
         payment.cancelPayment();

@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class WebPaymentVerificationRequestDto {
-    private String impUid; // 포트원 거래 고유번호
+    private String paymentId; // 포트원 거래 고유번호
     private String merchantUid; // 우리 시스템의 주문번호
 }
