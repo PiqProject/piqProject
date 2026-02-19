@@ -228,7 +228,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
      * - 프로필 입력이 완료되면 GUEST -> USER로 등급 업
      */
     public void updateProfileInfo(String nickname, Integer age, Gender gender, String mbti, 
-                                  String kakaoTalkId,String instagramId, String introduce, Point location, String address) {
+                                  String kakaoTalkId,String instagramId, String introduce, String university, Point location, String address) {
         this.nickname = nickname;
         this.age = age;
         this.gender = gender;
@@ -236,6 +236,7 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.kakaoTalkId = kakaoTalkId;
         this.instagramId = instagramId;
         this.introduce = introduce;
+        this.university = university;
         this.location = location;
         this.address = address;
 

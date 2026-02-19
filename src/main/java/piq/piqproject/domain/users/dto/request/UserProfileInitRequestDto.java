@@ -33,7 +33,6 @@ public class UserProfileInitRequestDto {
     // 인스타그램 ID는 선택사항
     private String instagramId;
 
-    @NotBlank(message = "자기소개는 필수입니다.")
     private String introduce;
 
     @NotBlank(message = "대학교(직장)는 필수입니다.")
