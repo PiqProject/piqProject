@@ -2,12 +2,10 @@ package piq.piqproject.domain.matches.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;
+import piq.piqproject.common.util.MessageFilterUtil;
 import piq.piqproject.domain.matches.entity.MatchingEntity;
 import piq.piqproject.domain.matches.enums.MatchingStatus;
 import piq.piqproject.domain.users.entity.UserEntity;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import piq.piqproject.common.util.MessageFilterUtil;
 
 @Getter
 public class MatchingResponseDto {

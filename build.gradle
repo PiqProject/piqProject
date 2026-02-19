@@ -74,6 +74,11 @@ dependencies {
 
     // ## JSON Web Signature (Apple JWS verification)
     implementation 'com.auth0:java-jwt:4.4.0'
+
+    // ## portone sdk
+    implementation 'io.portone:server-sdk:0.23.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okio:okio:3.6.0'
 }
 
 
