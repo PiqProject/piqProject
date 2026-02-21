@@ -30,6 +30,8 @@ public class MyProfileResponseDto {
         private ListResponseDto<UserInterestResponseDto> userInterests;
         private ListResponseDto<UserTraitResponseDto> userTraits;
         private ListResponseDto<UserIdealResponseDto> userIdeals;
+        private String university;
+        private String address;
 
         // 생성자
         @Builder
@@ -41,7 +43,7 @@ public class MyProfileResponseDto {
                         ListResponseDto<UserImageResponseDto> userImages, String voiceUrl,
                         ListResponseDto<UserInterestResponseDto> userInterests,
                         ListResponseDto<UserTraitResponseDto> userTraits,
-                        ListResponseDto<UserIdealResponseDto> userIdeals) {
+                        ListResponseDto<UserIdealResponseDto> userIdeals, String university, String address) {
                 this.id = id;
                 this.nickname = nickname;
                 this.email = email;
@@ -60,6 +62,8 @@ public class MyProfileResponseDto {
                 this.userInterests = userInterests;
                 this.userTraits = userTraits;
                 this.userIdeals = userIdeals;
+                this.university = university;
+                this.address = address;
         }
 
         public static MyProfileResponseDto from(UserEntity userEntity) {
@@ -109,6 +113,8 @@ public class MyProfileResponseDto {
                                 .userInterests(interestListResponse)
                                 .userIdeals(idealListResponse)
                                 .userTraits(traitListResponse)
+                                .university(userEntity.getUniversity())
+                                .address(userEntity.getAddress())
                                 .build();
         }
 }

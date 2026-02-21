@@ -272,6 +272,7 @@ public class ProfileService {
                                 requestDto.getGender(),
                                 requestDto.getMbti(),
                                 requestDto.getKakaoTalkId(),
+                                requestDto.getInstagramId(),
                                 requestDto.getIntroduce(),
                                 requestDto.getUniversity(),
                                 locationPoint,

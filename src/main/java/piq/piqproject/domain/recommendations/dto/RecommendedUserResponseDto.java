@@ -1,7 +1,11 @@
 package piq.piqproject.domain.recommendations.dto;
 
+import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.common.list.Listable;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.users.dto.response.UserInterestResponseDto;
+import piq.piqproject.domain.users.dto.response.UserTraitResponseDto;
+import piq.piqproject.domain.users.dto.response.UserIdealResponseDto;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +18,14 @@ public class RecommendedUserResponseDto implements Listable {
     private String profileImageUrl;
     private String voiceUrl;
     private String mbti;
+    private String university;
+    private String address;
+    private String score;
+    private Integer age;
+    private String introduce;
+    private ListResponseDto<UserInterestResponseDto> userInterests;
+    private ListResponseDto<UserTraitResponseDto> userTraits;
+    private ListResponseDto<UserIdealResponseDto> userIdeals;
 
     public RecommendedUserResponseDto(UserEntity user) {
         this.id = user.getId();
