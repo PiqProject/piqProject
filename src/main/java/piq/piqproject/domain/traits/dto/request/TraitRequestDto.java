@@ -16,5 +16,5 @@ public class TraitRequestDto {
     private String categoryName;
 
     @NotEmpty(message = "옵션 목록은 비어있을 수 없습니다.")
-    private List<@NotBlank(message = "옵션 항목은 비어있을 수 없습니다.") String> options;
+    private List<@NotBlank(message = "옵션 항목은 비어있을 수 없습니다.") String> optionNames;
 }

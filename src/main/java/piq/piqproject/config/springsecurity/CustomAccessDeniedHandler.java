@@ -36,7 +36,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         Map<String, Object> errorDetails = new HashMap<>();
         errorDetails.put("status", HttpStatus.FORBIDDEN.value());
         errorDetails.put("error", "Forbidden");
-        errorDetails.put("message", "접근 권한이 없습니다.");
+        errorDetails.put("message", "Forbidden, You do not have permission to access this resource.");
         errorDetails.put("path", request.getRequestURI());
 
         // ObjectMapper를 사용하여 Map을 JSON 문자열로 변환하고, 응답 바디에 씁니다.

@@ -1,7 +1,5 @@
 package piq.piqproject.domain.admin.controller;
 
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,7 +13,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.annotation.AuditLog;
-import piq.piqproject.common.list.ListResponseDto;
 import piq.piqproject.domain.traits.dto.request.CreateTraitOptionRequestDto;
 import piq.piqproject.domain.traits.dto.request.DeleteTraitOptionRequestDto;
 import piq.piqproject.domain.traits.dto.request.TraitRequestDto;
@@ -36,20 +33,20 @@ public class AdminTraitController {
     private final TraitService traitService;
 
     /**
-     * 이상형 카테고리와 하위 옵션들을 생성하는 API입니다.
+     * 하나의 이상형 카테고리와 하위 옵션들을 생성하는 API입니다.
      * 
      * @body 생성할 카테고리와 하위 옵션을 리스트 형태로 받아옵니다.
      * @return 생성된 카테고리 및 옵션 리스트
      */
     @PostMapping
-    @AuditLog(action = "이상형 카테고리 생성")
-    public ResponseEntity<ListResponseDto<TraitResponseDto>> createCategoriesWithOptions(
+    @AuditLog(action = "이상형 카테고리 하나와 옵션들 생성")
+    public ResponseEntity<TraitResponseDto> createCategorieWithOptions(
             @AuthenticationPrincipal UserEntity user,
-            @Valid @RequestBody List<TraitRequestDto> traitRequestDtos) {
+            @Valid @RequestBody TraitRequestDto traitRequestDtos) {
         log.info("Request to create trait categories and options. User: {}", user.getEmail());
 
         return ResponseEntity.status(201)
-                .body(traitService.createCategoriesWithOptions(traitRequestDtos));
+                .body(traitService.createCategorieWithOptions(traitRequestDtos));
     }
 
     /**
@@ -78,12 +75,12 @@ public class AdminTraitController {
      * @return 성공 메시지
      */
     @PostMapping("/options/delete")
-    @AuditLog(action = "이상형 카테고리 옵션 삭제")
-    public ResponseEntity<String> deleteOptions(
+    @AuditLog(action = "이상형 카테고리의 옵션 삭제")
+    public ResponseEntity<String> deleteOption(
             @AuthenticationPrincipal UserEntity user,
             @Valid @RequestBody DeleteTraitOptionRequestDto deleteTraitOptionRequestDto) {
-        log.info("Request to delete options for trait User: {}", user.getEmail());
-        traitService.deleteOptions(deleteTraitOptionRequestDto);
+        log.info("Request to delete option for trait User: {}", user.getEmail());
+        traitService.deleteOption(deleteTraitOptionRequestDto);
 
         return ResponseEntity.ok("카테고리 내 옵션이 삭제되었습니다.");
     }

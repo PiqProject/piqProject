@@ -15,6 +15,5 @@ public class ProductRequestDto {
     private int point;
 
     private String googleProductId;
-
     private String appleProductId;
 }
