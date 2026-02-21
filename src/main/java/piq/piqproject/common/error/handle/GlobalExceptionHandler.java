@@ -35,35 +35,35 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 public class GlobalExceptionHandler {
 
         /**
-         * CustomException 하위 클래스에서 발생하는 모든 예외를 가로채 처리합니다.
-         *
-         * @ExceptionHandler 어노테이션을 사용하면 CustomException가 발생했을 때 이 메서드가 실행됩니다.
+         * [1] 비즈니스 로직 에러 (CustomException)
          */
         @ExceptionHandler(CustomException.class)
-        public ResponseEntity<ErrorResponseDto> handleCustomExceptionHandler(CustomException e) {
+        public ResponseEntity<ErrorResponseDto> handleCustomExceptionHandler(CustomException e,
+                        HttpServletRequest request) {
 
                 HttpStatus status = e.getErrorCode().getStatus();
                 String code = e.getErrorCode().name();
                 String message = e.getMessage();
 
-                // logger에 e를 추가하면 스택 트레이스를 로깅함
-                log.warn(
-                                """
-                                                CustomException occurred
-                                                ------------------------
-                                                status= {} ({})
-                                                code= {}
-                                                message= {}
-                                                """,
-                                status.getReasonPhrase(), status.value(), code, message, e);
+                log.warn("""
+                                [CustomException] Business logic exception occurred
+                                >> Request: [{}] {}
+                                >> Status : {} ({})
+                                >> Code   : {}
+                                >> Message: {}
+                                """,
+                                request.getMethod(), request.getRequestURI(),
+                                status.value(), status.getReasonPhrase(), code, message);
 
                 return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
         }
 
-        // 유효성 검사에 대한 에러 처리
+        /**
+         * [2] 데이터 유효성 검사 에러 (@Valid, @Validated)
+         */
         @ExceptionHandler(MethodArgumentNotValidException.class)
         public ResponseEntity<ValidErrorResponseDto> handleMethodArgumentNotValidExceptionHandler(
-                        MethodArgumentNotValidException e) {
+                        MethodArgumentNotValidException e, HttpServletRequest request) {
 
                 HttpStatus status = HttpStatus.BAD_REQUEST; // HTTP 상태 코드 값 (예: BadRequest)
 
@@ -85,15 +85,12 @@ public class GlobalExceptionHandler {
                                                 detail.getMessage()))
                                 .collect(Collectors.joining("\n")); // 각 항목을 줄바꿈 문자로 연결
 
-                log.warn(
-                                """
-                                                Validation error occurred (MethodArgumentNotValidException)
-                                                -----------------------------------------------------------
-                                                status= {} ({})
-                                                Errors=
-                                                {}
-                                                """,
-                                status.getReasonPhrase(), status.value(), formattedErrorDetails, e);
+                log.warn("""
+                                [ValidationException] Input value validation failed (@Valid, @Validated)
+                                >> Request: [{}] {}
+                                >> Fields : {}
+                                """,
+                                request.getMethod(), request.getRequestURI(), formattedErrorDetails);
 
                 return ResponseEntity.status(status)
                                 .body(ValidErrorResponseDto.of(status, errorDetails));
@@ -109,16 +106,12 @@ public class GlobalExceptionHandler {
 
                 ErrorCode errorCode = ErrorCode.METHOD_NOT_ALLOWED;
 
-                log.warn(
-                                """
-                                                MethodNotSupportedException occurred
-                                                ------------------------------------
-                                                status= {} ({})
-                                                message= {}
-                                                requestMethod= {}
-                                                """,
-                                errorCode.getStatus().getReasonPhrase(), errorCode.getStatus().value(),
-                                errorCode.getMessage(), request.getMethod(), e);
+                log.warn("""
+                                [MethodNotSupported] Invalid HTTP method request
+                                >> Request: [{}] {}
+                                >> Message: Unsupported HTTP method
+                                """,
+                                request.getMethod(), request.getRequestURI());
 
                 // ErrorResponseDto 생성 및 반환
                 return ResponseEntity.status(errorCode.getStatus())
@@ -134,7 +127,8 @@ public class GlobalExceptionHandler {
          * @return ErrorResponseDto 형식의 에러 응답
          */
         @ExceptionHandler(MaxUploadSizeExceededException.class)
-        public ResponseEntity<ErrorResponseDto> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        public ResponseEntity<ErrorResponseDto> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e,
+                        HttpServletRequest request) {
 
                 // ErrorCode Enum에 PAYLOAD_TOO_LARGE 같은 코드를 정의해두면 더 좋습니다.
                 // 여기서는 직접 상태와 메시지를 생성하겠습니다.
@@ -144,15 +138,12 @@ public class GlobalExceptionHandler {
                 String code = errorCode.name();
                 String message = errorCode.getMessage();
 
-                log.warn(
-                                """
-                                                MaxUploadSizeExceededException occurred
-                                                ---------------------------------------
-                                                status= {} ({})
-                                                code= {}
-                                                message= {}
-                                                """,
-                                status.getReasonPhrase(), status.value(), code, message, e);
+                log.warn("""
+                                [FileSizeExceeded] File upload size exceeded
+                                >> Request: [{}] {}
+                                >> Message: {}
+                                """,
+                                request.getMethod(), request.getRequestURI(), errorCode.getMessage());
 
                 return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
         }
@@ -164,7 +155,7 @@ public class GlobalExceptionHandler {
          */
         @ExceptionHandler(HttpMessageNotReadableException.class)
         public ResponseEntity<ErrorResponseDto> handleHttpMessageNotReadableException(
-                        HttpMessageNotReadableException e) {
+                        HttpMessageNotReadableException e, HttpServletRequest request) {
                 ErrorCode errorCode = ErrorCode.BAD_REQUEST;
 
                 HttpStatus status = errorCode.getStatus();
@@ -172,58 +163,58 @@ public class GlobalExceptionHandler {
                 String message = errorCode.getMessage();
 
                 log.warn("""
-                                HttpMessageNotReadableException occurred
-                                ----------------------------------------
-                                status= {} ({})
-                                message= {}
-                                """, status.getReasonPhrase(), status.value(), e.getMessage(), e);
+                                [NotReadableException] JSON parsing failed / Invalid request body
+                                >> Request: [{}] {}
+                                >> Cause  : {}
+                                """,
+                                request.getMethod(), request.getRequestURI(), e.getMostSpecificCause().getMessage());
 
                 return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
         }
 
         /**
-         * 잘못된 URL 요청 시 (404 Not Found)
-         * Spring Boot 3.2+부터 NoResourceFoundException이 발생합니다.
+         * [6] 존재하지 않는 API 경로 요청 (404)
          */
         @ExceptionHandler(NoResourceFoundException.class)
-        public ResponseEntity<ErrorResponseDto> handleNoResourceFoundException(NoResourceFoundException e) {
-                // ErrorCode에 NOT_FOUND_RESOURCE 같은 게 있다면 사용, 없다면 직접 작성
+        public ResponseEntity<ErrorResponseDto> handleNoResourceFoundException(NoResourceFoundException e,
+                        HttpServletRequest request) {
+
                 HttpStatus status = HttpStatus.NOT_FOUND;
                 String code = "NOT_FOUND";
-                String message = "요청한 리소스를 찾을 수 없습니다. URL을 확인해주세요.";
+                String message = "The requested resource was not found. Please check the URL.";
 
-                log.warn("No resource found: {} {}", e.getHttpMethod(), e.getResourcePath());
+                log.warn("""
+                                [NoResourceFound] Non-existent URL request
+                                >> Request: [{}] {}
+                                """,
+                                request.getMethod(), request.getRequestURI());
 
                 return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
         }
 
         /**
-         * [최상위 예외 핸들러]
-         * 위에서 처리되지 않은 모든 예외(NullPointerException, IllegalArgumentException 등)를 처리합니다.
-         * 보통 500 Internal Server Error로 처리합니다.
+         * [7] 최상위 예외 핸들러 (500 Internal Server Error)
+         * 위에서 잡지 못한 모든 에러 (NPE, 로직 버그 등)
          */
         @ExceptionHandler(Exception.class)
-        public ResponseEntity<ErrorResponseDto> handleAllException(Exception e) {
+        public ResponseEntity<ErrorResponseDto> handleAllException(Exception e, HttpServletRequest request) {
 
-                // ErrorCode에 INTERNAL_SERVER_ERROR가 정의되어 있다고 가정
                 ErrorCode errorCode = ErrorCode.INTERNAL_SERVER_ERROR;
 
-                HttpStatus status = errorCode.getStatus();
-                String code = errorCode.name();
-                String message = "서버 내부 오류가 발생했습니다. 관리자에게 문의하세요." + e.getMessage();
-
-                // 500 에러는 서버 문제이므로 warn 대신 error 레벨로 로깅하여 알람 등을 연동하기 좋게 합니다.
+                // 500 에러는 개발자가 즉각 인지해야 하므로 log.error 를 사용하고 StackTrace 전체를 로깅합니다.
                 log.error("""
-                                Unhandled Exception occurred (Internal Server Error)
+                                [InternalServerError] Default Exception Handler
+                                >> Request: [{}] {}
+                                >> Exception: {}
+                                >> Message: {}
                                 ----------------------------------------------------
-                                status= {} ({})
-                                code= {}
-                                message= {}
-                                exception= {}
-                                """, status.getReasonPhrase(), status.value(), code, e.getMessage(),
-                                e.getClass().getName(), e);
+                                """,
+                                request.getMethod(), request.getRequestURI(),
+                                e.getClass().getSimpleName(), e.getMessage(), e); // 마지막 e는 StackTrace 출력을 위함
 
-                return ResponseEntity.status(status).body(ErrorResponseDto.of(status, code, message));
+                return ResponseEntity.status(errorCode.getStatus())
+                                .body(ErrorResponseDto.of(errorCode.getStatus(), errorCode.name(),
+                                                "Server internal error occurred. Please contact the administrator."));
         }
 
 }

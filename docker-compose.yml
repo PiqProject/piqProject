@@ -7,10 +7,10 @@ services:
     container_name: postgres
     environment:
       POSTGRES_DB: piqdb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ttkakrnl33
+      POSTGRES_PASSWORD: wjdxkr24
     ports:
-      - "5432:5432" # 포트 연결
+      - "5433:5432" # 포트 연결
     volumes:
       - postgres_data:/var/lib/postgresql/data # 데이터 영구 저장
     networks:

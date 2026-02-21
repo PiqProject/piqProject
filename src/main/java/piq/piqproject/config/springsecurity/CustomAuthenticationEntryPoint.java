@@ -36,7 +36,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         Map<String, Object> errorDetails = new HashMap<>();
         errorDetails.put("status", HttpStatus.UNAUTHORIZED.value());
         errorDetails.put("error", "Unauthorized");
-        errorDetails.put("message", "인증이 필요합니다. 로그인을 해주세요.");
+        errorDetails.put("message", "Unauthorized, Please login.");
         errorDetails.put("path", request.getRequestURI());
 
         // ObjectMapper를 사용하여 Map을 JSON 문자열로 변환하고, 응답 바디에 씁니다.

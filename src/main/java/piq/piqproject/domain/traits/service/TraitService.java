@@ -30,43 +30,37 @@ public class TraitService {
     private final TraitOptionRepository traitOptionRepository;
 
     @Transactional
-    public ListResponseDto<TraitResponseDto> createCategoriesWithOptions(List<TraitRequestDto> TraitRequestDtos) {
+    public TraitResponseDto createCategorieWithOptions(TraitRequestDto TraitRequestDtos) {
 
-        List<TraitResponseDto> TraitResponseDtoList = new ArrayList<>();
+        String category = TraitRequestDtos.getCategoryName();
+        List<String> options = TraitRequestDtos.getOptionNames();
 
-        for (TraitRequestDto Trait : TraitRequestDtos) {
-
-            String category = Trait.getCategoryName();
-            List<String> options = Trait.getOptions();
-
-            // 1. 카테고리가 이미 존재하는지 확인
-            if (traitCategoryRepository.existsByName(category)) {
-                throw new ConflictException(ErrorCode.ALREADY_EXISTS_TRAIT_CATEGORY);
-            }
-
-            // 2. 입력된 옵션들이 모두 다른지 확인
-            validateOptionsAreUnique(options);
-
-            // 3. 카테고리 엔티티 생성 및 저장
-            TraitCategoryEntity categoryEntity = TraitCategoryEntity.of(category);
-            traitCategoryRepository.save(categoryEntity);
-
-            // 4. 옵션 엔티티들 생성 및 저장
-            List<TraitOptionEntity> optionEntityList = options.stream()
-                    .map(optionName -> TraitOptionEntity.of(categoryEntity, optionName))
-                    .toList();
-            traitOptionRepository.saveAll(optionEntityList);
-
-            // 5. 생성된 엔티티를 응답 DTO로 변환하여 리스트에 추가
-            List<TraitOptionResponseDto> TraitOptions = optionEntityList.stream()
-                    .map(TraitOptionResponseDto::of)
-                    .toList();
-
-            TraitResponseDto TraitResponse = TraitResponseDto.of(categoryEntity, TraitOptions);
-            TraitResponseDtoList.add(TraitResponse);
+        // 1. 카테고리가 이미 존재하는지 확인
+        if (traitCategoryRepository.existsByName(category)) {
+            throw new ConflictException(ErrorCode.ALREADY_EXISTS_TRAIT_CATEGORY);
         }
 
-        return ListResponseDto.from(TraitResponseDtoList);
+        // 2. 입력된 옵션들이 모두 다른지 확인
+        validateOptionsAreUnique(options);
+
+        // 3. 카테고리 엔티티 생성 및 저장
+        TraitCategoryEntity categoryEntity = TraitCategoryEntity.of(category);
+        traitCategoryRepository.save(categoryEntity);
+
+        // 4. 옵션 엔티티들 생성 및 저장
+        List<TraitOptionEntity> optionEntityList = options.stream()
+                .map(optionName -> TraitOptionEntity.of(categoryEntity, optionName))
+                .toList();
+        traitOptionRepository.saveAll(optionEntityList);
+
+        // 5. 생성된 엔티티를 응답 DTO로 변환하여 리스트에 추가
+        List<TraitOptionResponseDto> TraitOptions = optionEntityList.stream()
+                .map(TraitOptionResponseDto::of)
+                .toList();
+
+        TraitResponseDto TraitResponse = TraitResponseDto.of(categoryEntity, TraitOptions);
+
+        return TraitResponse;
     }
 
     @Transactional
@@ -117,16 +111,13 @@ public class TraitService {
     }
 
     @Transactional
-    public void deleteOptions(DeleteTraitOptionRequestDto deleteTraitOptionResponseDto) {
+    public void deleteOption(DeleteTraitOptionRequestDto deleteTraitOptionResponseDto) {
 
-        List<Long> optionIds = deleteTraitOptionResponseDto.getOptions();
-        List<TraitOptionEntity> traitOptionList = traitOptionRepository.findAllById(optionIds);
+        Long optionId = deleteTraitOptionResponseDto.getOption();
+        TraitOptionEntity traitOption = traitOptionRepository.findById(optionId)
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_TRAIT_OPTION, "there is no trait option"));
 
-        if (traitOptionList.size() != deleteTraitOptionResponseDto.getOptions().size()) {
-            throw new NotFoundException(ErrorCode.NOT_FOUND_TRAIT_OPTION);
-        }
-
-        traitOptionRepository.deleteAll(traitOptionList);
+        traitOptionRepository.delete(traitOption);
     }
 
     @Transactional
