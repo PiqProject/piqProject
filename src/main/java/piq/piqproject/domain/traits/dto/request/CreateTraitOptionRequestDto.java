@@ -8,6 +8,6 @@ import lombok.Getter;
 
 @Getter
 public class CreateTraitOptionRequestDto {
-    @NotEmpty(message = "옵션 목록을 입력해주세요.")
-    private List<@NotBlank(message = "옵션 항목은 비어있을 수 없습니다.") String> options;
+    @NotEmpty(message = "Please enter options.")
+    private List<@NotBlank(message = "Option cannot be blank.") String> options;
 }
