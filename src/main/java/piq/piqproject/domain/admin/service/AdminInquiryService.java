@@ -14,6 +14,8 @@ import piq.piqproject.domain.inquiries.entity.InquiryEntity;
 import piq.piqproject.domain.inquiries.enums.InquiryStatus;
 import piq.piqproject.domain.inquiries.repository.InquiryRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @Service
 @RequiredArgsConstructor
@@ -27,16 +29,17 @@ public class AdminInquiryService {
      * - status가 있으면: 해당 상태만 조회 (PENDING일 경우 오래된 순 ASC)
      * - status가 없으면: 전체 조회 (최신순 DESC)
      */
-    public Page<AdminInquiryListResponseDto> getInquiries(InquiryStatus status, Pageable pageable) {
-        Page<InquiryEntity> page;
+    public Page<AdminInquiryListResponseDto> getInquiries(InquiryStatus status, Long searchId, Pageable pageable) {
+        // 1. 상태(status) 유무에 따라 정렬 방향(ASC/DESC) 결정
+        Sort sort = (status == InquiryStatus.PENDING)
+                ? Sort.by(Sort.Direction.ASC, "createdAt") // PENDING 등 특정 상태는 오래된 순
+                : Sort.by(Sort.Direction.DESC, "createdAt"); // 전체 조회,Answered 상태는 최신 순
 
-        if (status != null) {
-            // 특정 상태 조회 (PENDING은 들어온 순서대로 처리해야 하므로 ASC 권장)
-            page = inquiryRepository.findByStatusOrderByCreatedAtAsc(status, pageable);
-        } else {
-            // 전체 조회 (이력 확인용이므로 최신순 DESC)
-            page = inquiryRepository.findAllByOrderByCreatedAtDesc(pageable);
-        }
+        // 2. 컨트롤러에서 넘어온 pageable의 '페이지 번호'와 '크기'는 유지하되, 정렬만 우리가 정한 걸로 교체
+        Pageable customPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+
+        // 3. 상태와 키워드를 모두 처리하는 단일 Repository 메서드 호출
+        Page<InquiryEntity> page = inquiryRepository.searchAdminInquiries(status, searchId, customPageable);
 
         return page.map(AdminInquiryListResponseDto::from);
     }
