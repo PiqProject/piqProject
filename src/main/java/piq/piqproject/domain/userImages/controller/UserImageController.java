@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,14 +38,15 @@ public class UserImageController {
             MediaType.APPLICATION_JSON_VALUE,
             MediaType.MULTIPART_FORM_DATA_VALUE })
     public ResponseEntity<String> uploadImage(@AuthenticationPrincipal UserEntity user,
-            @RequestPart(value = "imageFile") MultipartFile imageFile) {
+            @RequestPart(value = "imageFile") MultipartFile imageFile,
+            @RequestParam(value = "isMainImage", defaultValue = "false") boolean isMainImage) {
 
         // 1. 받은 파일이 비어있는지 확인 (기본적인 유효성 검사)
         if (imageFile.isEmpty())
             throw new InvalidRequestException(ErrorCode.FILE_UPLOAD_ERROR, "업로드할 이미지 파일이 없습니다.");
 
         // 2. 비즈니스 로직 처리를 위해 서비스 계층으로 파일과 사용자 정보를 전달
-        userImageFacade.uploadImage(user, imageFile);
+        userImageFacade.uploadImage(user, imageFile, isMainImage);
 
         // 3. 성공 응답 반환
         return ResponseEntity.ok("이미지가 성공적으로 업로드되었습니다.");

@@ -47,6 +47,8 @@ import piq.piqproject.domain.users.repository.UserTraitRepository;
 import piq.piqproject.domain.verification.entity.VerificationEntity;
 import piq.piqproject.domain.verification.enums.ContentType;
 import piq.piqproject.domain.verification.enums.VerificationStatus;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 import piq.piqproject.domain.verification.repository.VerificationRepository;
 import piq.piqproject.infra.external.kakao.service.KakaoGeocodingService;
 
@@ -70,6 +72,7 @@ public class ProfileService {
         private final MatchingRepository matchingRepository;
         private final KakaoGeocodingService kakaoGeocodingService; // [주입 확인]
         private final VerificationRepository verificationRepository;
+        private final NotificationService notificationService;
 
         @Transactional
         public ListResponseDto<UserInterestResponseDto> upsertUserInterests(UserEntity user,
@@ -291,5 +294,10 @@ public class ProfileService {
                                 requestDto.getIntroduce(),
                                 VerificationStatus.PENDING);
                 verificationRepository.save(verification);
+
+                // 알림 전송
+                notificationService.notify(user, NotificationType.CONTENT_SUBMITTED,
+                                "자기소개 수정 완료", "자기소개가 수정되었습니다. 검수 후 프로필에 반영됩니다.",
+                                "/profile");
         }
 }

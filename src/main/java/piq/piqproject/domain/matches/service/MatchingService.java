@@ -32,6 +32,8 @@ import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.repository.UserRepository;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 
 @Slf4j
 @Service
@@ -45,6 +47,7 @@ public class MatchingService {
     private final DailyRecommendationService dailyRecommendationService;
     private final PointService pointService;
     private final DislikeRepository dislikeRepository;
+    private final NotificationService notificationService;
 
     @Value("${matching.cost.women}")
     private int matchCostForWomen;
@@ -110,8 +113,10 @@ public class MatchingService {
         // 7. 오늘의 추천 기록을 조회 하여 '액션 완료' 상태로 업데이트
         dailyRecommendationService.markRecommendationAsActioned(sender, receiver);
 
-        // TODO: 알림 전송 로직 필요 (새로운 매칭 도착)
-        // receiver에게 "sender.getNickname()님으로부터 매칭이 도착했습니다!" 알림 전송
+        // 알림 전송 (새로운 매칭 도착)
+        notificationService.notify(receiver, NotificationType.MATCH_RECEIVED,
+                "새로운 매칭 도착", sender.getNickname() + "님으로부터 매칭 요청이 도착했습니다!",
+                "/matches/received");
 
         // 8. DTO로 변환하여 반환
         return MatchingResponseDto.from(savedMatch, currentId);
@@ -149,7 +154,6 @@ public class MatchingService {
                 : MatchingStatus.FAIL;
 
         // 5. receiver의 pqPoint 차감 or sender의 pqPoint 환급
-        // TODO: 알림 보내기
         if (newStatus == MatchingStatus.FAIL) {
             pointService.chargePoints(matching.getSender(), matching.getSenderUsedPoints(), PointType.REFUND,
                     "매칭 거절 포인트 환불");
@@ -166,6 +170,20 @@ public class MatchingService {
         }
 
         matching.changeStatus(newStatus);
+
+        // 알림 전송
+        if (newStatus == MatchingStatus.SUCCESS) {
+            notificationService.notify(matching.getSender(), NotificationType.MATCH_SUCCESS,
+                    "매칭 성공!", matching.getReceiver().getNickname() + "님이 매칭을 수락했습니다! 연락처를 확인해보세요.",
+                    "/matches/sent");
+            notificationService.notify(matching.getReceiver(), NotificationType.MATCH_SUCCESS,
+                    "매칭 성공!", matching.getSender().getNickname() + "님과 매칭되었습니다!",
+                    "/matches/received");
+        } else if (newStatus == MatchingStatus.FAIL) {
+            notificationService.notify(matching.getSender(), NotificationType.MATCH_FAIL,
+                    "매칭 거절", matching.getReceiver().getNickname() + "님이 매칭 요청을 거절했습니다. 포인트가 환불되었습니다.",
+                    "/matches/sent");
+        }
 
         return MatchingResponseDto.from(matching, currentId);
     }
