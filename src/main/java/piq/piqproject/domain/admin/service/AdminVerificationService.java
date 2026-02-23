@@ -134,7 +134,7 @@ public class AdminVerificationService {
 
         try {
             if (verification.getContentType() == ContentType.IMAGE) {
-                userImageService.saveImageToDb(user, contentValue);
+                userImageService.saveImageToDb(user, contentValue, verification.getIsMainImage());
             }
 
             if (verification.getContentType() == ContentType.VOICE) {

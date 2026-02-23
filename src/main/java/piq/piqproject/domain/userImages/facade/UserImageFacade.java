@@ -32,7 +32,7 @@ public class UserImageFacade {
      * 3. DB 저장 (트랜잭션 내 수행)
      * 4. 실패 시 S3 파일 삭제 (보상 트랜잭션)
      */
-    public void uploadImage(UserEntity user, MultipartFile imageFile) {
+    public void uploadImage(UserEntity user, MultipartFile imageFile, boolean isMainImage) {
         // 1. 파일 유효성 검증 (확장자, 크기 등)
         if (!fileUtil.isImageFile(imageFile)) {
             throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "이미지 파일만 업로드할 수 있습니다.");
@@ -45,9 +45,12 @@ public class UserImageFacade {
         // 3. S3 업로드 수행 (네트워크 I/O 발생 - 트랜잭션 밖에서 수행)
         String imageUrl = fileUploader.upload(imageFile, s3Path);
 
-        // 이미지 검증 준비
+        // 4. 비즈니스 규칙 검증 (이미지 개수 제한)
+        userImageService.validateImageCount(user);
+
+        // 이미지 검증 준비 (대표 이미지 여부도 함께 기록)
         VerificationEntity verification = VerificationEntity.of(user, ContentType.IMAGE, imageUrl,
-                VerificationStatus.PENDING);
+                VerificationStatus.PENDING, isMainImage);
         verificationRepository.save(verification);
     }
 

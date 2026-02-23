@@ -33,27 +33,40 @@ public class UserImageService {
      * [DB 저장 전용 메서드]
      * Facade에서 호출되며, 이 메서드가 실행될 때 비로소 트랜잭션이 시작됩니다.
      * S3 업로드는 이미 끝난 상태입니다.
+     *
+     * @param user        이미지 소유자
+     * @param imageUrl    S3에 업로드된 이미지 URL
+     * @param isMainImage 사용자가 업로드 시 지정한 대표 이미지 여부
      */
     @Transactional
-    public void saveImageToDb(UserEntity user, String imageUrl) {
+    public void saveImageToDb(UserEntity user, String imageUrl, boolean isMainImage) {
         // 1. 비즈니스 규칙 검증 (이미지 개수 제한)
-        // DB 락이 필요하다면 여기서 수행되므로 안전함
         validateImageCount(user);
 
-        // 2. 첫 이미지인지 확인 (대표 이미지 자동 설정용)
-        boolean isMain = !userImageRepository.existsByUserAndIsMainImage(user, true);
+        // 2. 대표 이미지 처리
+        // - 사용자가 대표로 지정한 경우: 기존 대표 이미지 해제 후 새 이미지를 대표로 설정
+        // - 대표로 지정하지 않았지만 대표 이미지가 없는 경우: 자동으로 대표 설정 (폴백)
+        boolean shouldBeMain = isMainImage;
+        if (isMainImage) {
+            // 기존 대표 이미지가 있으면 해제
+            userImageRepository.findByUserAndIsMainImage(user, true)
+                    .ifPresent(oldMain -> oldMain.setMainImage(false));
+        } else if (!userImageRepository.existsByUserAndIsMainImage(user, true)) {
+            // 대표 이미지가 하나도 없으면 자동으로 대표 설정
+            shouldBeMain = true;
+        }
 
         // 3. 엔티티 생성 및 저장
         UserImageEntity newImage = UserImageEntity.builder()
                 .user(user)
                 .imageUrl(imageUrl)
-                .isMainImage(isMain)
+                .isMainImage(shouldBeMain)
                 .build();
 
         userImageRepository.save(newImage);
     }
 
-    private void validateImageCount(UserEntity user) {
+    public void validateImageCount(UserEntity user) {
         long currentImageCount = userImageRepository.countByUser(user);
         if (currentImageCount >= MAX_IMAGE_COUNT) {
             throw new InternalServerException(ErrorCode.FILE_NUMBER_EXCEEDED);
