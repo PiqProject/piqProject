@@ -8,6 +8,8 @@ import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 import piq.piqproject.domain.userimages.service.UserImageService;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.verification.entity.VerificationEntity;
@@ -24,6 +26,7 @@ public class UserImageFacade {
     private final FileUtil fileUtil;
     private final FileUploader fileUploader;
     private final VerificationRepository verificationRepository;
+    private final NotificationService notificationService;
 
     /**
      * [이미지 업로드 오케스트레이션]
@@ -32,7 +35,7 @@ public class UserImageFacade {
      * 3. DB 저장 (트랜잭션 내 수행)
      * 4. 실패 시 S3 파일 삭제 (보상 트랜잭션)
      */
-    public void uploadImage(UserEntity user, MultipartFile imageFile) {
+    public void uploadImage(UserEntity user, MultipartFile imageFile, boolean isMainImage) {
         // 1. 파일 유효성 검증 (확장자, 크기 등)
         if (!fileUtil.isImageFile(imageFile)) {
             throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "이미지 파일만 업로드할 수 있습니다.");
@@ -45,10 +48,18 @@ public class UserImageFacade {
         // 3. S3 업로드 수행 (네트워크 I/O 발생 - 트랜잭션 밖에서 수행)
         String imageUrl = fileUploader.upload(imageFile, s3Path);
 
-        // 이미지 검증 준비
+        // 4. 비즈니스 규칙 검증 (이미지 개수 제한)
+        userImageService.validateImageCount(user);
+
+        // 이미지 검증 준비 (대표 이미지 여부도 함께 기록)
         VerificationEntity verification = VerificationEntity.of(user, ContentType.IMAGE, imageUrl,
-                VerificationStatus.PENDING);
+                VerificationStatus.PENDING, isMainImage);
         verificationRepository.save(verification);
+
+        // 알림: 사진이 검증 대기 중임을 사용자에게 알림
+        notificationService.notify(user, NotificationType.CONTENT_SUBMITTED,
+                "사진 업로드 완료", "사진이 업로드되었습니다. 검수 후 프로필에 반영됩니다.",
+                "/profile/images");
     }
 
     /**

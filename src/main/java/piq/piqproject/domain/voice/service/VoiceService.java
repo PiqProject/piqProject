@@ -18,6 +18,8 @@ import piq.piqproject.domain.users.repository.UserRepository;
 import piq.piqproject.domain.verification.entity.VerificationEntity;
 import piq.piqproject.domain.verification.enums.ContentType;
 import piq.piqproject.domain.verification.enums.VerificationStatus;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 import piq.piqproject.domain.verification.repository.VerificationRepository;
 
 @Slf4j
@@ -29,6 +31,7 @@ public class VoiceService {
     private final FileUploader fileUploader;
     private final FileUtil fileUtil;
     private final VerificationRepository verificationRepository;
+    private final NotificationService notificationService;
 
     /**
      * 음성 파일 업로드 및 교체
@@ -56,6 +59,11 @@ public class VoiceService {
         VerificationEntity verification = VerificationEntity.of(user, ContentType.VOICE, newVoiceUrl,
                 VerificationStatus.PENDING);
         verificationRepository.save(verification);
+
+        // 알림 전송
+        notificationService.notify(user, NotificationType.CONTENT_SUBMITTED,
+                "음성 업로드 완료", "음성 파일이 업로드되었습니다. 검수 후 프로필에 반영됩니다.",
+                "/profile");
     }
 
     /**

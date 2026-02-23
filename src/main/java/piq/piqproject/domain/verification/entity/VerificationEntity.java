@@ -30,22 +30,33 @@ public class VerificationEntity extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private VerificationStatus status;
 
+    // 이미지 업로드 시 대표 이미지 여부를 검증 전에 기록
+    @Column(nullable = false)
+    private Boolean isMainImage;
+
     @Builder
     private VerificationEntity(UserEntity user, ContentType contentType, String contentValue,
-            VerificationStatus status) {
+            VerificationStatus status, Boolean isMainImage) {
         this.user = user;
         this.contentType = contentType;
         this.contentValue = contentValue;
         this.status = status;
+        this.isMainImage = isMainImage != null ? isMainImage : false;
     }
 
     public static VerificationEntity of(UserEntity user, ContentType contentType, String contentValue,
             VerificationStatus status) {
+        return of(user, contentType, contentValue, status, false);
+    }
+
+    public static VerificationEntity of(UserEntity user, ContentType contentType, String contentValue,
+            VerificationStatus status, Boolean isMainImage) {
         return VerificationEntity.builder()
                 .user(user)
                 .contentType(contentType)
                 .contentValue(contentValue)
                 .status(status)
+                .isMainImage(isMainImage != null ? isMainImage : false)
                 .build();
     }
 

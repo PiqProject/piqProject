@@ -15,6 +15,8 @@ import piq.piqproject.domain.posts.entity.PostType;
 import piq.piqproject.domain.posts.repository.PostRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.repository.UserRepository;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 
 import static piq.piqproject.common.error.exception.ErrorCode.*;
 
@@ -24,6 +26,7 @@ public class PostService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public PostResponseDto createAnnouncement(Long userId, AnnouncementRequestDto announcementRequestDto) {
@@ -38,10 +41,15 @@ public class PostService {
         PostEntity post = PostEntity.createAnnouncement(
                 user,
                 announcementRequestDto.getTitle(),
-                announcementRequestDto.getContent()
-        );
+                announcementRequestDto.getContent());
 
         postRepository.save(post);
+
+        // 전체 알림 추가
+        notificationService.notifyGlobal(NotificationType.ANNOUNCEMENT,
+                "[공지] " + post.getTitle(),
+                post.getContent().length() > 50 ? post.getContent().substring(0, 50) + "..." : post.getContent(),
+                "/posts/" + post.getId());
 
         // [Response 처리: Entity → DTO]
         // 표현 계층(DTO)이 도메인 계층(Entity)을 아는 것은 올바른 의존성 방향입니다.
@@ -73,17 +81,22 @@ public class PostService {
                 eventRequestDto.getTitle(),
                 eventRequestDto.getContent(),
                 eventRequestDto.getStartDate(),
-                eventRequestDto.getEndDate()
-        );
+                eventRequestDto.getEndDate());
 
         postRepository.save(post);
+
+        // 전체 알림 추가
+        notificationService.notifyGlobal(NotificationType.EVENT,
+                "[이벤트] " + post.getTitle(),
+                post.getContent().length() > 50 ? post.getContent().substring(0, 50) + "..." : post.getContent(),
+                "/posts/" + post.getId());
         return PostResponseDto.of(post);
     }
 
     @Transactional
     public PostResponseDto updateAnnouncement(Long postId, AnnouncementRequestDto announcementRequestDto) {
 
-        //TODO: 공지사항 에러 메세지와 이벤트 에러메세지 다르게 설정하기
+        // TODO: 공지사항 에러 메세지와 이벤트 에러메세지 다르게 설정하기
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_POST));
 
@@ -99,7 +112,7 @@ public class PostService {
 
     @Transactional
     public PostResponseDto updateEvent(Long postId, EventRequestDto eventRequestDto) {
-        //TODO: 공지사항 에러 메세지와 이벤트 에러메세지 다르게 설정하기
+        // TODO: 공지사항 에러 메세지와 이벤트 에러메세지 다르게 설정하기
         PostEntity post = postRepository.findById(postId)
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_POST));
 
@@ -112,8 +125,7 @@ public class PostService {
                 eventRequestDto.getTitle(),
                 eventRequestDto.getContent(),
                 eventRequestDto.getStartDate(),
-                eventRequestDto.getEndDate()
-        );
+                eventRequestDto.getEndDate());
 
         return PostResponseDto.of(post);
     }
