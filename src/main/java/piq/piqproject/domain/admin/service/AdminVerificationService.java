@@ -21,6 +21,8 @@ import piq.piqproject.domain.verification.entity.VerificationEntity;
 import piq.piqproject.domain.verification.enums.ContentType;
 import piq.piqproject.domain.verification.repository.VerificationRepository;
 import piq.piqproject.domain.userimages.service.UserImageService;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 
 @Slf4j
 @Service
@@ -32,6 +34,7 @@ public class AdminVerificationService {
     private final UserRepository userRepository;
     private final FileUploader fileUploader;
     private final UserImageService userImageService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public Page<UserVerificationResponseDto> getVerifications(Pageable pageable) {
@@ -149,6 +152,12 @@ public class AdminVerificationService {
                 }
             }
 
+            // 승인 알림 전송
+            String contentTypeStr = getContentTypeString(verification.getContentType());
+            notificationService.notify(user, NotificationType.CONTENT_APPROVED,
+                    contentTypeStr + " 승인 완료", "요청하신 " + contentTypeStr + "이(가) 승인되어 프로필에 반영되었습니다.",
+                    "/profile");
+
         } catch (Exception e) {
             // 5. DB 저장 실패 시 방금 올린 S3 파일 삭제
             log.error("DB 업데이트 실패. 업로드된 파일 롤백을 시도합니다. URL: {}", verification.getContentValue(), e);
@@ -164,6 +173,21 @@ public class AdminVerificationService {
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "인증 정보를 찾을 수 없습니다."));
 
         verification.reject();
+
+        // 거절 알림 전송
+        String contentTypeStr = getContentTypeString(verification.getContentType());
+        notificationService.notify(verification.getUser(), NotificationType.CONTENT_REJECTED,
+                contentTypeStr + " 승인 거절", "요청하신 " + contentTypeStr + "이(가) 가이드라인에 부합하지 않아 거절되었습니다.",
+                "/profile");
+    }
+
+    private String getContentTypeString(ContentType type) {
+        return switch (type) {
+            case IMAGE -> "사진";
+            case VOICE -> "음성";
+            case INTRO -> "자기소개";
+            default -> "콘텐츠";
+        };
     }
 
 }

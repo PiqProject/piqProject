@@ -8,6 +8,8 @@ import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 import piq.piqproject.domain.userimages.service.UserImageService;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.verification.entity.VerificationEntity;
@@ -24,6 +26,7 @@ public class UserImageFacade {
     private final FileUtil fileUtil;
     private final FileUploader fileUploader;
     private final VerificationRepository verificationRepository;
+    private final NotificationService notificationService;
 
     /**
      * [이미지 업로드 오케스트레이션]
@@ -52,6 +55,11 @@ public class UserImageFacade {
         VerificationEntity verification = VerificationEntity.of(user, ContentType.IMAGE, imageUrl,
                 VerificationStatus.PENDING, isMainImage);
         verificationRepository.save(verification);
+
+        // 알림: 사진이 검증 대기 중임을 사용자에게 알림
+        notificationService.notify(user, NotificationType.CONTENT_SUBMITTED,
+                "사진 업로드 완료", "사진이 업로드되었습니다. 검수 후 프로필에 반영됩니다.",
+                "/profile/images");
     }
 
     /**

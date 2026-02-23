@@ -88,4 +88,25 @@ public class FcmService {
             log.error("Unexpected error sending FCM message to token: {}", targetToken, e);
         }
     }
+
+    /**
+     * 특정 토픽을 구독한 모든 디바이스로 푸시 알림을 보냅니다. (전체 공지용)
+     */
+    public void sendTopicMessage(String deviceToken, String title, String body, Map<String, String> data) {
+        try {
+            Message message = Message.builder()
+                    .setToken(deviceToken)
+                    .putAllData(data)
+                    .setNotification(Notification.builder()
+                            .setTitle(title)
+                            .setBody(body)
+                            .build())
+                    .build();
+
+            String response = FirebaseMessaging.getInstance().send(message);
+            log.info("Successfully sent topic message: {}", response);
+        } catch (Exception e) {
+            log.error("Error sending FCM topic message to {}: {}", e.getMessage());
+        }
+    }
 }
