@@ -210,7 +210,7 @@ public class GlobalExceptionHandler {
                                 ----------------------------------------------------
                                 """,
                                 request.getMethod(), request.getRequestURI(),
-                                e.getClass().getSimpleName(), e.getMessage(), e); // 마지막 e는 StackTrace 출력을 위함
+                                e.getClass().getSimpleName(), e.getMessage()); // 마지막 e는 StackTrace 출력을 위함
 
                 return ResponseEntity.status(errorCode.getStatus())
                                 .body(ErrorResponseDto.of(errorCode.getStatus(), errorCode.name(),

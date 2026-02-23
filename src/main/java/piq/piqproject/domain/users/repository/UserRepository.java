@@ -112,12 +112,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
       @Param("excludedIds") Set<Long> excludedIds,
       @Param("limit") int limit);
 
-  /**
-   * [관리자용] 회원 검색 및 페이징
-   * 닉네임 또는 이메일에 검색어가 포함된 유저를 찾습니다.
-   */
-  Page<UserEntity> findByNicknameContainingOrEmailContaining(String nickname, String email, Pageable pageable);
-
   Optional<UserEntity> findBySocialId(String socialId);
 
   /**
@@ -130,4 +124,9 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
    * 소셜 타입과 ID가 유니크한 제약 조건을 가지므로, 이 메소드는 유일한 결과를 반환
    */
   Optional<UserEntity> findBySocialTypeAndSocialId(SocialType socialType, String socialId);
+
+  // searchId가 없으면 전체 조회, 있으면 정확히 일치하는 ID만 조회
+  @Query("SELECT u FROM UserEntity u " +
+      "WHERE (:searchId IS NULL OR u.id = :searchId)")
+  Page<UserEntity> searchAdminUsers(@Param("searchId") Long searchId, Pageable pageable);
 }

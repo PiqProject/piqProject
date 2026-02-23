@@ -1,6 +1,7 @@
 package piq.piqproject.domain.admin.service;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -40,11 +41,11 @@ public class AdminUserService {
     /**
      * 회원 목록 조회 (검색 지원)
      */
-    public Page<UserAdminResponseDto> getUsers(String keyword, Pageable pageable) {
+    public Page<UserAdminResponseDto> getUsers(Long id, Pageable pageable) {
         Page<UserEntity> userPage;
 
-        if (keyword != null && !keyword.isBlank()) {
-            userPage = userRepository.findByNicknameContainingOrEmailContaining(keyword, keyword, pageable);
+        if (id != null) {
+            userPage = userRepository.searchAdminUsers(id, pageable);
         } else {
             userPage = userRepository.findAll(pageable);
         }
@@ -116,8 +117,8 @@ public class AdminUserService {
 
     /**
      * 회원 강제 탈퇴
-     * - DB 데이터 삭제 (Cascade 설정에 의해 연관 데이터 삭제)
-     * - S3에 저장된 프로필 이미지 및 음성 파일 삭제
+     * - DB 데이터 논리적 삭제 (FK 에러 방지 및 개인정보 파기)
+     * - S3에 저장된 프로필 이미지 및 음성 파일 비동기 삭제 (성능 개선)
      */
     @Transactional
     public void deleteUserForcefully(Long userId) {
@@ -133,22 +134,25 @@ public class AdminUserService {
             filesToDelete.add(user.getVoiceUrl());
         }
 
-        // 2. DB 삭제 (CascadeType.ALL에 의해 연관 엔티티들도 삭제됨)
-        userRepository.delete(user);
+        // [개인정보 즉시 파기 및 상태 변경] 로직을 호출합니다.
+        user.executePermanentWithdrawal();
 
-        // 3. 트랜잭션 커밋 후 S3 파일 삭제 (안전장치)
+        // 3. 트랜잭션 커밋 후 S3 파일 삭제 (성능 안 좋은 문제 해결!)
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                log.info("관리자에 의한 회원 삭제 완료. S3 파일 정리 시작. 대상 {}개", filesToDelete.size());
-                for (String url : filesToDelete) {
-                    try {
-                        fileUploader.delete(url);
-                    } catch (Exception e) {
-                        // TODO: S3 파일 삭제 실패 저장하고 나중에 다시 시도하는 로직 필요
-                        log.error("[S3_DELETE_FAIL] 관리자 강제 탈퇴 중 파일 삭제 실패. URL: {}", url, e);
+                // CompletableFuture.runAsync()로 별도의 스레드(백그라운드)에 던져버립니다.
+                CompletableFuture.runAsync(() -> {
+                    log.info("user s3 File delete try: {} files", filesToDelete.size());
+                    for (String url : filesToDelete) {
+                        try {
+                            fileUploader.delete(url);
+                        } catch (Exception e) {
+                            // TODO: S3 파일 삭제 실패 저장하고 나중에 다시 시도하는 로직 필요
+                            log.error("[S3_DELETE_FAIL] admin force user delete: s3 file error URL: {}", url, e);
+                        }
                     }
-                }
+                });
             }
         });
     }

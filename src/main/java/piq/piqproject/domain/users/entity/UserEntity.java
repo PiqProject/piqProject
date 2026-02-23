@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Point;
@@ -360,6 +361,39 @@ public class UserEntity extends BaseEntity implements UserDetails {
     public boolean isWithdrawn() {
         return this.withdrawnAt != null;
     }
+
+    /**
+     * [스케줄러 전용] 7일 경과 후 개인정보 완전 파기 및 재가입 허용 처리
+     */
+    public void executePermanentWithdrawal() {
+        // 1. 개인정보 파기 (법적 의무)
+        this.nickname = "탈퇴한 사용자";
+        this.introduce = null;
+        this.kakaoTalkId = null;
+        this.instagramId = null;
+        this.address = null;
+        this.location = null;
+        this.mbti = null;
+        this.voiceUrl = null;
+        this.pqPoint = 0;
+
+        // 2. 연관된 자식 엔티티 리스트 초기화 (JPA orphanRemoval=true에 의해 DB에서도 삭제됨)
+        this.images.clear();
+        this.userInterests.clear();
+        this.userIdeals.clear();
+        this.userTraits.clear();
+        this.deviceTokens.clear();
+        // 주의: 리뷰(reviews)나 신고 내역, 추천 내역 등 남겨둬야 할 것은 초기화하지 않습니다!
+
+        // 3. 핵심: 재가입 방지를 위한 Unique 필드 고의 훼손 (Scrambling)
+        String deletedPrefix = "deleted_" + UUID.randomUUID().toString().substring(0, 8) + "_";
+        
+        this.email = deletedPrefix + this.email;
+        if (this.socialId != null) {
+            this.socialId = deletedPrefix + this.socialId;
+        }
+    }
+
 
     /**
      * 사용자의 실제 특성을 추가하는 연관관계 편의 메서드입니다.

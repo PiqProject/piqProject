@@ -36,12 +36,12 @@ public class AdminUserController {
     @GetMapping
     @AuditLog(action = "회원 목록 조회")
     public ResponseEntity<Page<UserAdminResponseDto>> getUsers(
-            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long searchId,
             @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal UserEntity admin) {
 
-        log.info("Admin {} accessed user list. Keyword: {}", admin.getEmail(), keyword);
-        return ResponseEntity.ok(adminUserService.getUsers(keyword, pageable));
+        log.info("Admin {} accessed user list. Keyword: {}", admin.getEmail(), searchId);
+        return ResponseEntity.ok(adminUserService.getUsers(searchId, pageable));
     }
 
     /**

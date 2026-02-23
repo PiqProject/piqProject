@@ -49,8 +49,8 @@ public class UserCleanupScheduler {
                     filesToDelete.add(user.getVoiceUrl());
                 }
 
-                // 2. DB 삭제 (Cascade에 의해 연관 데이터 일괄 삭제)
-                userRepository.delete(user);
+                // 2. DB에서 개인정보 파기
+                user.executePermanentWithdrawal();
 
                 // 3. S3 파일 삭제 실행
                 for (String url : filesToDelete) {
@@ -60,11 +60,11 @@ public class UserCleanupScheduler {
                         log.error("[S3_CLEANUP_FAIL] Failed to delete file during user cleanup. URL: {}", url, e);
                     }
                 }
-
                 log.info("Permanently deleted user: {}", user.getId());
             } catch (Exception e) {
                 log.error("[USER_CLEANUP_FAIL] Failed to permanently delete user: {}", user.getId(), e);
             }
+
         }
 
         log.info("Cleanup process completed.");
