@@ -30,8 +30,14 @@ public class PostController {
                 return ResponseEntity.ok(postService.findPost(postId));
         }
 
+        /**
+         * PostEntity의 Type(EVENT,ANNOUNCEMENT)에 상관없이 모든 게시글을 반환함
+         * 
+         * @param pageable
+         * @return
+         */
         @GetMapping("/all")
-        public ResponseEntity<Page<PostResponseDto>> getPost(
+        public ResponseEntity<Page<PostResponseDto>> getPosts(
                         @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
                 log.info("""
                                 Request to get all posts.

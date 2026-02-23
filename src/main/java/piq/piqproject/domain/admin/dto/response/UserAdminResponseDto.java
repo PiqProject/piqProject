@@ -27,7 +27,7 @@ public class UserAdminResponseDto { // 목록 조회용 (간략 정보)
                 .gender(user.getGender())
                 .age(user.getAge())
                 .pqPoint(user.getPqPoint())
-                .isActive(user.isEnabled())
+                .isActive(user.getIsActive())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

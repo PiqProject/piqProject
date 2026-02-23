@@ -2,6 +2,7 @@ package piq.piqproject.domain.admin.controller;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,9 +36,10 @@ public class AdminInquiryController {
     @GetMapping
     public ResponseEntity<Page<AdminInquiryListResponseDto>> getInquiries(
             @RequestParam(required = false) InquiryStatus status,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @RequestParam(required = false) Long searchId,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Direction.DESC) Pageable pageable) {
 
-        Page<AdminInquiryListResponseDto> page = adminInquiryService.getInquiries(status, pageable);
+        Page<AdminInquiryListResponseDto> page = adminInquiryService.getInquiries(status, searchId, pageable);
         return ResponseEntity.ok(page);
     }
 

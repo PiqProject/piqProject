@@ -18,6 +18,7 @@ public class AdminInquiryDetailResponseDto {
     // 작성자 정보 (CS 처리를 위해 필요)
     private Long userId;
     private String userEmail;
+    private String userNickname;
 
     private InquiryCategory category;
     private String title;
@@ -35,6 +36,7 @@ public class AdminInquiryDetailResponseDto {
                 .id(entity.getId())
                 .userId(entity.getUser().getId())
                 .userEmail(entity.getUser().getEmail())
+                .userNickname(entity.getUser().getNickname())
                 .category(entity.getCategory())
                 .title(entity.getTitle())
                 .content(entity.getContent())
