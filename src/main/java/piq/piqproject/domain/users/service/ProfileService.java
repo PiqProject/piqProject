@@ -130,6 +130,8 @@ public class ProfileService {
                                 .map(option -> UserIdealEntity.of(user, option))
                                 .toList();
 
+                userIdealRepository.saveAll(userIdealList);
+
                 List<UserIdealResponseDto> userIdealResponse = userIdealList.stream()
                                 .map(UserIdealResponseDto::of)
                                 .toList();
@@ -289,6 +291,8 @@ public class ProfileService {
         public void updateUserIntroduce(Long userId, UserIntroduceRequestDto requestDto) {
                 UserEntity user = userRepository.findById(userId)
                                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
+
+                user.updateIntroduce(requestDto.getIntroduce());
 
                 VerificationEntity verification = VerificationEntity.of(user, ContentType.INTRO,
                                 requestDto.getIntroduce(),

@@ -10,7 +10,6 @@ public enum InquiryCategory {
     ACCOUNT("계정/로그인"),
     REPORT("신고/제재"),
     BUG("버그/오류 제보"),
-    SUGGESTION("건의사항"),
     ETC("기타");
 
     private final String description;
