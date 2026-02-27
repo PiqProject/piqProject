@@ -25,6 +25,7 @@ public class MyProfileResponseDto {
         private Double score;
         private Boolean isActive;
         private Boolean isAppAlarm;
+        private Boolean isWebAlarm;
         private ListResponseDto<UserImageResponseDto> userImages;
         private String voiceUrl;
         private ListResponseDto<UserInterestResponseDto> userInterests;
@@ -39,7 +40,7 @@ public class MyProfileResponseDto {
                         Integer age,
                         Gender gender,
                         String mbti, String introduce, Integer pqPoint, Boolean isActive, Boolean isAppAlarm,
-                        Double score,
+                        Boolean isWebAlarm, Double score,
                         ListResponseDto<UserImageResponseDto> userImages, String voiceUrl,
                         ListResponseDto<UserInterestResponseDto> userInterests,
                         ListResponseDto<UserTraitResponseDto> userTraits,
@@ -56,6 +57,7 @@ public class MyProfileResponseDto {
                 this.pqPoint = pqPoint;
                 this.isActive = isActive;
                 this.isAppAlarm = isAppAlarm;
+                this.isWebAlarm = isWebAlarm;
                 this.score = score;
                 this.userImages = userImages;
                 this.voiceUrl = voiceUrl;
@@ -107,6 +109,7 @@ public class MyProfileResponseDto {
                                 .pqPoint(userEntity.getPqPoint())
                                 .isActive(userEntity.getIsActive())
                                 .isAppAlarm(userEntity.getIsAppAlarm())
+                                .isWebAlarm(userEntity.getIsWebAlarm())
                                 .score(userEntity.getAverageScore())
                                 .userImages(imageListResponse)
                                 .voiceUrl(userEntity.getVoiceUrl())

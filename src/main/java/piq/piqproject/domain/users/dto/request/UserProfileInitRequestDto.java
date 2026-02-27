@@ -12,32 +12,33 @@ import piq.piqproject.domain.users.enums.Gender;
 @NoArgsConstructor
 public class UserProfileInitRequestDto {
 
-    @NotBlank(message = "닉네임은 필수입니다.")
-    @Size(min = 2, max = 10, message = "닉네임은 2~10자 이내여야 합니다.")
+    @NotBlank(message = "plz write your nickname")
+    @Size(min = 2, max = 10, message = "nickname must be 2~10 characters")
     private String nickname;
 
-    @NotNull(message = "나이는 필수입니다.")
-    @Min(value = 18, message = "18세 이상만 가입 가능합니다.")
+    @NotNull(message = "plz write your age")
+    @Min(value = 18, message = "age must be 18 or older")
     private Integer age;
 
-    @NotNull(message = "성별은 필수입니다.")
+    @NotNull(message = "plz write your gender")
     private Gender gender; // MALE, FEMALE
 
-    @NotBlank(message = "MBTI는 필수입니다.")
-    @Size(min = 4, max = 4, message = "MBTI는 4글자여야 합니다.")
+    @NotBlank(message = "plz write your mbti")
+    @Size(min = 4, max = 4, message = "MBTI must be 4 characters")
     private String mbti;
 
-    @NotBlank(message = "카카오톡 ID는 필수입니다.")
+    @NotBlank(message = "plz write your kakaoTalkId")
     private String kakaoTalkId;
 
     // 인스타그램 ID는 선택사항
     private String instagramId;
 
+    @NotBlank(message = "plz write your introduce")
     private String introduce;
 
-    @NotBlank(message = "대학교(직장)는 필수입니다.")
+    @NotBlank(message = "plz write your university")
     private String university;
 
-    @NotBlank(message = "주소는 필수입니다.")
+    @NotBlank(message = "plz write your address")
     private String address; // 도로명 주소 (좌표 변환용)
 }
