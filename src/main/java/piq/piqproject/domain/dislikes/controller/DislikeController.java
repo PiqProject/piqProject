@@ -49,4 +49,15 @@ public class DislikeController {
         // .build()는 내용 없는 응답을 생성합니다.
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * 내가 싫어요 한 사용자 ID 목록을 조회합니다.
+     */
+    @org.springframework.web.bind.annotation.GetMapping("/ids")
+    @RequireActiveUser
+    public ResponseEntity<java.util.List<Long>> getDislikedUserIds(@AuthenticationPrincipal UserEntity user) {
+        java.util.Set<Long> ids = dislikeService.getDislikedUserIds(user.getId());
+        log.info("Returning {} disliked user IDs for user {}", ids.size(), user.getId());
+        return ResponseEntity.ok(new java.util.ArrayList<>(ids));
+    }
 }

@@ -53,4 +53,9 @@ public class DislikeService {
         dailyRecommendationService.markRecommendationAsActioned(fromUser, toUser);
     }
 
+    @Transactional(readOnly = true)
+    public java.util.Set<Long> getDislikedUserIds(Long userId) {
+        return dislikeRepository.findToUserIdsByFromUserId(userId);
+    }
+
 }
