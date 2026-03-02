@@ -55,7 +55,7 @@ public class GooglePaymentStrategy implements InAppPaymentStrategy {
 
         // 3. 구매 상태 확인 (0: purchased, 1: canceled, 2: pending)
         if (purchase.getPurchaseState() != 0) {
-            log.error("Google 결제 상태가 유효하지 않습니다: purchaseState={}", purchase.getPurchaseState());
+            log.error("Invalid Google payment state: purchaseState={}", purchase.getPurchaseState());
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "유효하지 않은 결제 상태입니다.");
         }
 
@@ -63,7 +63,7 @@ public class GooglePaymentStrategy implements InAppPaymentStrategy {
 
         // 4. 중복 결제 확인 (transactionId가 Google orderId)
         if (paymentRepository.findByTransactionId(orderId).isPresent()) {
-            log.warn("이미 처리된 Google 결제입니다: orderId={}", orderId);
+            log.warn("Google payment already processed: orderId={}", orderId);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 처리된 결제건입니다.");
         }
 

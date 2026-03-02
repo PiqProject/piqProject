@@ -35,7 +35,7 @@ public class LogCleanupScheduler {
         try {
             adminAccessLogRepository.deleteLogsOlderThan(cutoffDate);
         } catch (Exception e) {
-            log.error("[DB Cleanup] 로그 삭제 중 오류 발생", e);
+            log.error("[DB Cleanup] Error occurred while deleting logs", e);
         }
     }
 }

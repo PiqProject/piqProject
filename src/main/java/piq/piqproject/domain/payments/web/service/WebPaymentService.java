@@ -47,7 +47,7 @@ public class WebPaymentService {
 
     @Transactional
     public String preparePayment(UserEntity user, WebPaymentPrepareRequestDto request) {
-        log.info("결제 사전 등록 시작: user={}, amount={}", user.getId(), request.getAmount());
+        log.info("Starting payment pre-registration: user={}, amount={}", user.getId(), request.getAmount());
 
         ProductEntity product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_PRODUCT));
@@ -72,7 +72,8 @@ public class WebPaymentService {
     }
 
     public void verifyPayment(WebPaymentVerificationRequestDto request) {
-        log.info("결제 검증 시작: merchantUid={}, paymentId={}", request.getMerchantUid(), request.getPaymentId());
+        log.info("Starting payment verification: merchantUid={}, paymentId={}", request.getMerchantUid(),
+                request.getPaymentId());
 
         // 1. 포트원 조회 (V2)
         Payment portOnePayment;
@@ -89,29 +90,29 @@ public class WebPaymentService {
             try {
                 // DB 업데이트 실행
                 paymentUpdateService.updateSuccess(request.getMerchantUid(), request.getPaymentId(), actualAmount);
-                log.info("검증 성공: PAID");
+                log.info("Verification successful: PAID");
             } catch (InternalServerException e) {
                 // 중요: DB 업데이트 중 예외(금액 불일치 등)가 발생하면 포트원 결제 강제 취소
-                log.error("DB 업데이트 중 오류 발생 - 포트원 결제 강제 취소 시도: {}", e.getMessage());
+                log.error("DB update error - attempting forced PortOne payment cancellation: {}", e.getMessage());
                 portOneClientService.cancelPayment(request.getPaymentId(), "DB 업데이트 실패로 인한 자동취소: " + e.getMessage());
                 throw e; // 예외를 다시 던져서 컨트롤러에서 처리하게 함
             }
         } else if (portOnePayment instanceof CancelledPayment cancelled) {
             // [2] 이미 취소된 결제
-            log.warn("이미 취소된 결제입니다:{}", cancelled.getMerchantId());
+            log.warn("Payment is already cancelled: {}", cancelled.getMerchantId());
             paymentUpdateService.updateFailure(request.getMerchantUid());
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 취소된 결제입니다.");
 
         } else if (portOnePayment instanceof FailedPayment failed) {
             // [3] 결제 실패상태
-            log.warn("결제 실패 상태입니다: {}", failed.getMerchantId());
+            log.warn("Payment status is FAILED: {}", failed.getMerchantId());
             paymentUpdateService.updateFailure(request.getMerchantUid());
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "결제 실패 상태입니다.");
 
         } else {
             // [4] READY(대기), VIRTUAL_ACCOUNT_ISSUED(가상계좌 발급) 등
             // 즉시 결제 완료가 아닌 상태
-            log.warn("결제 완료 상태가 아닙니다. 현재 타입: {}", portOnePayment.getClass().getSimpleName());
+            log.warn("Payment is not in PAID state. Current type: {}", portOnePayment.getClass().getSimpleName());
             paymentUpdateService.updateFailure(request.getMerchantUid());
             portOneClientService.cancelPayment(request.getPaymentId(), "결제 미완료");
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "결제가 완료되지 않았습니다.");

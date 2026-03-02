@@ -37,7 +37,7 @@ public class GoogleWebhookService {
             String decodedData = new String(
                     Base64.getDecoder().decode(pubSubMessage.getMessage().getData()),
                     StandardCharsets.UTF_8);
-            log.info("Google RTDN 수신: {}", decodedData);
+            log.info("Google RTDN received: {}", decodedData);
 
             // 2. JSON 파싱
             GoogleDeveloperNotification notification = objectMapper.readValue(
@@ -45,7 +45,7 @@ public class GoogleWebhookService {
 
             // 3. 일회성 구매 알림인 경우에만 처리
             if (notification.getOneTimePurchaseNotification() == null) {
-                log.info("일회성 구매 알림이 아님, 무시");
+                log.info("Not a one-time purchase notification, ignoring");
                 return;
             }
 
@@ -53,7 +53,7 @@ public class GoogleWebhookService {
                     .getOneTimePurchaseNotification();
 
             int notificationType = purchaseNotification.getNotificationType();
-            log.info("Google 알림 타입: {}", notificationType);
+            log.info("Google notification type: {}", notificationType);
 
             // 4. 환불(취소) 알림인 경우 처리
             if (notificationType == NOTIFICATION_TYPE_CANCELED) {
@@ -61,7 +61,7 @@ public class GoogleWebhookService {
             }
 
         } catch (Exception e) {
-            log.error("Google RTDN 처리 중 오류", e);
+            log.error("Error processing Google RTDN", e);
             throw new RuntimeException("Google 웹훅 처리 실패", e);
         }
     }
@@ -73,20 +73,20 @@ public class GoogleWebhookService {
         String purchaseToken = notification.getPurchaseToken();
         String sku = notification.getSku();
 
-        log.info("Google 환불 처리 시작: sku={}", sku);
+        log.info("Starting Google refund process: sku={}", sku);
 
         try {
             // Google API로 상세 정보 조회하여 orderId 획득
             var purchase = googlePlayClientService.getProductPurchase(sku, purchaseToken);
             String orderId = purchase.getOrderId();
 
-            log.info("Google 환불 - orderId: {}", orderId);
+            log.info("Google refund - orderId: {}", orderId);
 
             // RefundService로 환불 처리 위임
             refundService.processRefund(orderId, PaymentType.GOOGLE);
 
         } catch (Exception e) {
-            log.error("Google 환불 처리 실패: sku={}", sku, e);
+            log.error("Google refund process failed: sku={}", sku, e);
             throw e;
         }
     }

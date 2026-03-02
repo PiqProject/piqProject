@@ -65,7 +65,7 @@ public class GooglePlayClientService {
             log.info("Google Play Developer API initialized for package: {}", packageName);
 
         } catch (IOException e) {
-            log.error("구글 서비스 계정 키 로드 실패", e);
+            log.error("Failed to load Google service account key", e);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "구글 API 초기화 실패");
         }
     }
@@ -77,7 +77,7 @@ public class GooglePlayClientService {
         try {
             return androidPublisher.purchases().products().get(packageName, productId, token).execute();
         } catch (IOException e) {
-            log.error("Google Play API 조회 실패: productId={}, token={}", productId, token, e);
+            log.error("Google Play API lookup failed: productId={}, token={}", productId, token, e);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "Google Play API 연동 오류");
         }
     }
@@ -88,9 +88,9 @@ public class GooglePlayClientService {
     public void acknowledgePurchase(String productId, String token) {
         try {
             androidPublisher.purchases().products().acknowledge(packageName, productId, token, null).execute();
-            log.info("Google Play 구매 승인 완료: productId={}, token={}", productId, token);
+            log.info("Google Play purchase acknowledgement completed: productId={}, token={}", productId, token);
         } catch (IOException e) {
-            log.error("Google Play API 승인 실패: productId={}, token={}", productId, token, e);
+            log.error("Google Play API acknowledgement failed: productId={}, token={}", productId, token, e);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "Google Play API 승인 오류");
         }
     }

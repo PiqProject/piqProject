@@ -18,7 +18,7 @@ public class LogBackupScheduler {
     @Scheduled(cron = "0 30 4 * * *")
     public void scheduleLogBackup() {
         // 어제 로그파일을 history에 등록하고 오늘의 로그를 찍도록 강제하기 위해 필수적
-        log.info("[LogBackup] 어제 날짜의 로그 백업을 시작합니다.");
+        log.info("[LogBackup] Starting backup of yesterday's logs.");
         logBackupService.backupYesterdayLogs();
     }
 }

@@ -8,10 +8,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InvalidRequestException;
+import piq.piqproject.domain.points.dto.response.PointHistoryResponseDto;
 import piq.piqproject.domain.points.entity.PointHistoryEntity;
 import piq.piqproject.domain.points.enums.PointType;
 import piq.piqproject.domain.points.repository.PointHistoryRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.common.list.ListResponseDto;
 
 @Slf4j
 @Service
@@ -139,6 +141,17 @@ public class PointService {
 
         // 4. 서버 로그
         log.info("[ADMIN BULK POINT] Users: {}, Amount: {}, Reason: {}", users.size(), amount, description);
+    }
+
+    @Transactional(readOnly = true)
+    public ListResponseDto<PointHistoryResponseDto> getPointHistories(UserEntity user) {
+        List<PointHistoryEntity> histories = pointHistoryRepository.findByUserOrderByCreatedAtDesc(user);
+
+        List<PointHistoryResponseDto> responseDtos = histories.stream()
+                .map(PointHistoryResponseDto::of)
+                .toList();
+
+        return ListResponseDto.from(responseDtos);
     }
 
     // 공통 저장 로직

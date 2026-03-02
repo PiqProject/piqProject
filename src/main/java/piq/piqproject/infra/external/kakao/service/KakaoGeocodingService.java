@@ -48,14 +48,14 @@ public class KakaoGeocodingService {
             return convertToCoordinate(response, address);
 
         } catch (Exception e) {
-            log.error("Kakao Geocoding API 호출 실패. 주소: {}", address, e);
+            log.error("Kakao Geocoding API call failed for address: {}", address, e);
             return null;
         }
     }
 
     private CoordinateDto convertToCoordinate(KakaoGeoResponse response, String address) {
         if (response == null || response.getDocuments() == null || response.getDocuments().isEmpty()) {
-            log.warn("주소에 대한 검색 결과가 없습니다: {}", address);
+            log.warn("No geocoding results found for address: {}", address);
             return null;
         }
 
@@ -67,7 +67,8 @@ public class KakaoGeocodingService {
             double lon = Double.parseDouble(document.getLongitude()); // x
             return new CoordinateDto(lat, lon);
         } catch (NumberFormatException e) {
-            log.error("좌표 변환 오류 (숫자 형식이 아님). Lat: {}, Lon: {}", document.getLatitude(), document.getLongitude());
+            log.error("Coordinate conversion error (invalid number format). Lat: {}, Lon: {}", document.getLatitude(),
+                    document.getLongitude());
             return null;
         }
     }

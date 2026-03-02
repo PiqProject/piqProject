@@ -103,7 +103,6 @@ public class MatchingController {
      * 매칭 성공 후 연락처 교환 API
      */
     @GetMapping("/{matchId}/exchange-contact")
-    @RequireActiveUser
     public ResponseEntity<ContactExchangeResponseDto> exchangeContact(
             @PathVariable("matchId") Long matchId,
             @AuthenticationPrincipal UserEntity userEntity) {

@@ -217,7 +217,7 @@ public class AuthService {
         accessLogger.info("WITHDRAW_REQUEST | userId: {} | email: {} | ip: {}",
                 userId, user.getEmail(), clientIp);
 
-        log.info("사용자 탈퇴 처리 완료 (Soft Delete): userId={}", userId);
+        log.info("User withdrawal processed (Soft Delete): userId={}", userId);
     }
 
     /**

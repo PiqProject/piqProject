@@ -29,7 +29,7 @@ public class MatchExpiredScheduler {
     @Scheduled(cron = "${matching.expired.scheduler.cron:0 0/15 * * * *}")
     @Transactional
     public void processExpiredMatches() {
-        log.info("[BATCH_JOB_START] 미응답 매칭(24시간 경과) 자동 만료 및 환불 작업을 시작합니다.");
+        log.info("[BATCH_JOB_START] Starting automatic expiration and refund for unanswered matches (24h elapsed).");
 
         // 1. 24시간 전 시점 계산
         LocalDateTime expiredThreshold = LocalDateTime.now().minusDays(1);
@@ -39,11 +39,11 @@ public class MatchExpiredScheduler {
                 MatchingStatus.PENDING, expiredThreshold);
 
         if (expiredMatches.isEmpty()) {
-            log.info("[BATCH_JOB_END] 만료 대상 매칭이 없습니다.");
+            log.info("[BATCH_JOB_END] No matches eligible for expiration.");
             return;
         }
 
-        log.info("[BATCH_JOB_PROCESSING] 총 {}건의 만료 대상 매칭을 처리합니다.", expiredMatches.size());
+        log.info("[BATCH_JOB_PROCESSING] Processing a total of {} matches for expiration.", expiredMatches.size());
 
         int successCount = 0;
         for (MatchingEntity match : expiredMatches) {
@@ -61,10 +61,10 @@ public class MatchExpiredScheduler {
                 }
                 successCount++;
             } catch (Exception e) {
-                log.error("[BATCH_JOB_ERROR] 매칭 ID: {} 처리 중 오류 발생", match.getMatchId(), e);
+                log.error("[BATCH_JOB_ERROR] Error occurred while processing match ID: {}", match.getMatchId(), e);
             }
         }
 
-        log.info("[BATCH_JOB_END] 총 {}건의 매칭을 EXPIRED 상태로 변경 및 환불 처리 완료하였습니다.", successCount);
+        log.info("[BATCH_JOB_END] Successfully marked {} matches as EXPIRED and completed refunds.", successCount);
     }
 }

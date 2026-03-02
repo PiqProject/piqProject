@@ -1,6 +1,7 @@
 package piq.piqproject.domain.points.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -10,6 +11,9 @@ import org.springframework.data.repository.query.Param;
 import piq.piqproject.domain.points.entity.PointHistoryEntity;
 
 public interface PointHistoryRepository extends JpaRepository<PointHistoryEntity, Long> {
+
+    List<PointHistoryEntity> findByUserOrderByCreatedAtDesc(piq.piqproject.domain.users.entity.UserEntity user);
+
     /**
      * [스케줄러용] 보관 기간(5년)이 지난 포인트 이력을 DB에서 완전히 삭제합니다.
      * JPA의 delete()를 쓰면 한 건씩 조회해서 지우느라 느리지만,

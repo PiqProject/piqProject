@@ -29,6 +29,7 @@ import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.request.UserIntroduceRequestDto;
 import piq.piqproject.domain.users.dto.request.UserLocationRequestDto;
+import piq.piqproject.domain.users.dto.request.UserMbtiRequestDto;
 import piq.piqproject.domain.users.dto.request.UserProfileInitRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
@@ -294,7 +295,7 @@ public class ProfileService {
 
                 user.updateIntroduce(requestDto.getIntroduce());
 
-                VerificationEntity verification = VerificationEntity.of(user, ContentType.INTRO,
+                VerificationEntity verification = VerificationEntity.of(user, ContentType.INTRODUCE,
                                 requestDto.getIntroduce(),
                                 VerificationStatus.PENDING);
                 verificationRepository.save(verification);
@@ -303,5 +304,16 @@ public class ProfileService {
                 notificationService.notify(user, NotificationType.CONTENT_SUBMITTED,
                                 "자기소개 수정 완료", "자기소개가 수정되었습니다. 검수 후 프로필에 반영됩니다.",
                                 "/profile");
+        }
+
+        /**
+         * 사용자 MBTI 수정
+         */
+        @Transactional
+        public void updateUserMbti(Long userId, UserMbtiRequestDto requestDto) {
+                UserEntity user = userRepository.findById(userId)
+                                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
+
+                user.updateMbti(requestDto.getMbti());
         }
 }

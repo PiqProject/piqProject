@@ -42,8 +42,9 @@ public class AlarmController {
      */
     @PostMapping("/tokens/delete")
     public ResponseEntity<String> deleteDeviceToken(
-            @AuthenticationPrincipal UserEntity userEntity) {
-        alarmService.deleteToken(userEntity.getId());
+            @AuthenticationPrincipal UserEntity userEntity,
+            @Valid @RequestBody DeviceTokenRequestDto requestDto) {
+        alarmService.deleteToken(userEntity.getId(), requestDto.getToken());
         return ResponseEntity.ok("디바이스 토큰이 성공적으로 제거되었습니다.");
     }
 }

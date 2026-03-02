@@ -67,18 +67,18 @@ public class ApplePaymentStrategy implements InAppPaymentStrategy {
 
         // 4. 검증 (상품 ID 일치 여부 및 환불 여부)
         if (!productId.equals(appleRequest.getAppleProductId())) {
-            log.error("Apple 상품 ID 불일치: expected={}, actual={}", appleRequest.getAppleProductId(), productId);
+            log.error("Apple product ID mismatch: expected={}, actual={}", appleRequest.getAppleProductId(), productId);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "상품 정보가 일치하지 않습니다.");
         }
 
         if (revocationDate != null) {
-            log.error("Apple 결제가 취소(환불)된 건입니다: transactionId={}", transactionId);
+            log.error("Apple payment is cancelled (refunded): transactionId={}", transactionId);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "취소된 결전건입니다.");
         }
 
         // 5. 중복 결제 확인 (originalTransactionId 기준)
         if (paymentRepository.findByTransactionId(originalTransactionId).isPresent()) {
-            log.warn("이미 처리된 Apple 결제입니다: originalTransactionId={}", originalTransactionId);
+            log.warn("Apple payment already processed: originalTransactionId={}", originalTransactionId);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 처리된 결제건입니다.");
         }
 

@@ -35,7 +35,7 @@ public class InAppPaymentService {
     public InAppPaymentResult processPayment(PaymentType type, Object request, UserEntity user) {
         InAppPaymentStrategy strategy = strategies.get(type);
         if (strategy == null) {
-            log.error("지원하지 않는 결제 타입입니다: {}", type);
+            log.error("Unsupported payment type: {}", type);
             throw new NotFoundException(ErrorCode.NOT_FOUND, "Unsupported payment type: " + type);
         }
         return strategy.verifyAndProcessPayment(request, user);

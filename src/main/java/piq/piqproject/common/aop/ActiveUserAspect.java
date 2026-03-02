@@ -6,8 +6,8 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import piq.piqproject.common.error.exception.CustomException;
 import piq.piqproject.common.error.exception.ErrorCode;
+import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 @Aspect
@@ -22,7 +22,7 @@ public class ActiveUserAspect {
 
         // 1. 인증 객체 자체가 없는 경우 (방어 코드)
         if (authentication == null) {
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "인증 정보를 찾을 수 없습니다.");
+            throw new InternalServerException(ErrorCode.MALFORMED_JWT_TOKEN, "Authentication not found");
         }
 
         Object principal = authentication.getPrincipal();
@@ -31,11 +31,11 @@ public class ActiveUserAspect {
         // 로그인 안 했으면 principal은 "anonymousUser"(String)이므로 이 if문을 통과 못 함 -> else로 감
         if (principal instanceof UserEntity user) {
             if (!user.getIsActive()) {
-                throw new CustomException(ErrorCode.DISABLED_ACCOUNT_USER, "계정이 비활성화되어 이용할 수 없습니다.");
+                throw new InternalServerException(ErrorCode.DISABLED_ACCOUNT_USER, "Account is not actived");
             }
         } else {
             // UserEntity가 아니라는 뜻은 -> 로그인 안 했거나(String(anonymousUser)), 이상한 객체라는 뜻
-            throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR, "로그인이 필요합니다.");
+            throw new InternalServerException(ErrorCode.MALFORMED_JWT_TOKEN, "Login is required");
         }
     }
 }
