@@ -347,6 +347,10 @@ public class UserEntity extends BaseEntity implements UserDetails {
         this.introduce = introduce;
     }
 
+    public void updateMbti(String mbti) {
+        this.mbti = mbti;
+    }
+
     /**
      * 회원 탈퇴 처리 (Soft Delete)
      */

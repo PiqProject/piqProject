@@ -1,14 +1,19 @@
 package piq.piqproject.domain.notifications.service;
 
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.domain.alarms.entity.DeviceTokenEntity;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.alarms.repository.DeviceTokenRepository;
@@ -21,12 +26,23 @@ import piq.piqproject.infra.external.fcm.service.FcmService;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final DeviceTokenRepository deviceTokenRepository;
     private final FcmService fcmService;
+    private final Executor taskExecutor;
+
+    public NotificationService(
+            NotificationRepository notificationRepository,
+            DeviceTokenRepository deviceTokenRepository,
+            FcmService fcmService,
+            @Qualifier("taskExecutor") Executor taskExecutor) {
+        this.notificationRepository = notificationRepository;
+        this.deviceTokenRepository = deviceTokenRepository;
+        this.fcmService = fcmService;
+        this.taskExecutor = taskExecutor;
+    }
 
     // ============================================================
     // 1. 알림 생성 + FCM 전송 (핵심 메서드)
@@ -49,17 +65,8 @@ public class NotificationService {
         NotificationEntity notification = NotificationEntity.of(user, type, title, body, targetUrl);
         notificationRepository.save(notification);
 
-        deviceTokenRepository.findByUserId(user.getId())
-                .ifPresent(token -> {
-                    String deviceType = token.getDeviceType();
-                    if ("WEB".equalsIgnoreCase(deviceType)) {
-                        fcmService.sendWebMessageToWeb(token.getToken(), title, body,
-                                targetUrl != null ? targetUrl : "/");
-                    } else {
-                        fcmService.sendMessageToApp(token.getToken(), title, body,
-                                Map.of("targetUrl", targetUrl != null ? targetUrl : "/"));
-                    }
-                });
+        // 2. FCM 전송 (실패해도 알림 저장은 유지되도록 헬퍼 메서드에서 try-catch 처리)
+        sendPushToUser(user, title, body, targetUrl);
     }
 
     /**
@@ -72,17 +79,38 @@ public class NotificationService {
         NotificationEntity notification = NotificationEntity.ofGlobal(type, title, body, targetUrl);
         notificationRepository.save(notification);
 
-        deviceTokenRepository.findAll()
-                .forEach(token -> {
-                    String deviceType = token.getDeviceType();
-                    if ("WEB".equalsIgnoreCase(deviceType)) {
-                        fcmService.sendWebMessageToWeb(token.getToken(), title, body,
-                                targetUrl != null ? targetUrl : "/");
-                    } else {
-                        fcmService.sendMessageToApp(token.getToken(), title, body,
-                                Map.of("targetUrl", targetUrl != null ? targetUrl : "/"));
+        // 트랜잭션 내에서 토큰 목록을 미리 조회
+        List<DeviceTokenEntity> tokens = deviceTokenRepository.findAll();
+
+        if (tokens.isEmpty()) {
+            return;
+        }
+
+        // 트랜잭션 커밋 후 비동기로 FCM 전송 (응답 지연 방지)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                taskExecutor.execute(() -> {
+                    log.info("[FCM-GLOBAL] 전체 알림 비동기 전송 시작. tokens={}", tokens.size());
+                    for (DeviceTokenEntity token : tokens) {
+                        try {
+                            String deviceType = token.getDeviceType();
+                            if ("WEB".equalsIgnoreCase(deviceType)) {
+                                fcmService.sendWebMessageToWeb(token.getToken(), title, body,
+                                        targetUrl != null ? targetUrl : "/");
+                            } else {
+                                fcmService.sendMessageToApp(token.getToken(), title, body,
+                                        Map.of("targetUrl", targetUrl != null ? targetUrl : "/"));
+                            }
+                        } catch (Exception e) {
+                            log.warn("FCM global push failed. token={}, error={}",
+                                    token.getToken(), e.getMessage());
+                        }
                     }
+                    log.info("[FCM-GLOBAL] 전체 알림 비동기 전송 완료.");
                 });
+            }
+        });
     }
 
     // ============================================================
@@ -141,21 +169,37 @@ public class NotificationService {
     // ============================================================
 
     private void sendPushToUser(UserEntity user, String title, String body, String targetUrl) {
-        try {
-            deviceTokenRepository.findByUserId(user.getId())
-                    .ifPresent(token -> {
-                        String deviceType = token.getDeviceType();
-                        if ("WEB".equalsIgnoreCase(deviceType)) {
-                            fcmService.sendWebMessageToWeb(token.getToken(), title, body,
-                                    targetUrl != null ? targetUrl : "/");
-                        } else {
-                            fcmService.sendMessageToApp(token.getToken(), title, body,
-                                    Map.of("targetUrl", targetUrl != null ? targetUrl : "/"));
-                        }
-                    });
-        } catch (Exception e) {
-            // FCM 실패는 알림 저장에 영향을 주지 않도록 로그만 남김
-            log.warn("FCM 푸시 전송 실패. userId={}, error={}", user.getId(), e.getMessage());
+        // 트랜잭션 내에서 토큰 목록을 미리 조회 (DB 쿼리는 빠름)
+        List<DeviceTokenEntity> tokens = deviceTokenRepository.findByUserId(user.getId());
+
+        if (tokens.isEmpty()) {
+            return;
         }
+
+        // 트랜잭션 커밋 후 비동기로 FCM 전송 (응답 지연 방지)
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                taskExecutor.execute(() -> {
+                    log.info("[FCM-USER] 개인 알림 비동기 전송 시작. userId={}, tokens={}", user.getId(), tokens.size());
+                    for (DeviceTokenEntity token : tokens) {
+                        try {
+                            String deviceType = token.getDeviceType();
+                            if ("WEB".equalsIgnoreCase(deviceType)) {
+                                fcmService.sendWebMessageToWeb(token.getToken(), title, body,
+                                        targetUrl != null ? targetUrl : "/");
+                            } else {
+                                fcmService.sendMessageToApp(token.getToken(), title, body,
+                                        Map.of("targetUrl", targetUrl != null ? targetUrl : "/"));
+                            }
+                        } catch (Exception e) {
+                            log.warn("FCM push delivery failed. userId={}, token={}, error={}",
+                                    user.getId(), token.getToken(), e.getMessage());
+                        }
+                    }
+                    log.info("[FCM-USER] fcm push delivery completed. userId={}", user.getId());
+                });
+            }
+        });
     }
 }

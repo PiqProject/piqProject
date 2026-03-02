@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import piq.piqproject.common.annotation.RequireActiveUser;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.dislikes.repository.DislikeRepository;
@@ -69,8 +70,7 @@ public class DailyRecommendationService {
                                                 endOfRecommendationDay);
 
                 if (!existingRecommendations.isEmpty()) {
-                        log.info("사용자 ID {} 에게 기존 추천 목록을 반환합니다.", user.getId());
-
+                        log.info("Returning existing recommendation list for user ID {}.", user.getId());
                         // 현재 사용자의 매칭/거절 상태 정보를 가져옴
                         Set<Long> sentIds = matchingRepository.findReceiverIdsBySenderId(user.getId());
                         Set<Long> passedIds = dislikeRepository.findToUserIdsByFromUserId(user.getId());
@@ -81,7 +81,7 @@ public class DailyRecommendationService {
                 }
 
                 // [1단계 실패 시] 새로운 추천 생성 로직 실행 (Slow Path)
-                log.info("사용자 ID {} 에게 새로운 추천 목록을 생성합니다.", user.getId());
+                log.info("Generating new recommendation list for user ID {}.", user.getId());
                 List<UserEntity> finalRecommendations = generateAndSaveNewRecommendations(user, isPremiumRequest);
 
                 // 새로 생성된 경우는 상태가 모두 NONE임
@@ -123,7 +123,7 @@ public class DailyRecommendationService {
                                                 endOfRecommendationDay)
                                 .ifPresent(recommendation -> {
                                         recommendation.markAsActioned();
-                                        log.info("추천 기록 ID {} 가 사용자의 액션으로 인해 actioned 상태로 변경되었습니다.",
+                                        log.info("Recommendation record ID {} changed to 'actioned' status due to user action.",
                                                         recommendation.getId());
                                 });
         }
@@ -174,7 +174,7 @@ public class DailyRecommendationService {
                 // ▼▼▼ [핵심 로직] 반경을 넓혀가며 재시도 ▼▼▼
                 for (double radius : SEARCH_RADIUS_STEPS) {
 
-                        log.info("추천 후보 조회 시도: UserID={}, Radius={}km, Premium={}",
+                        log.info("Attempting to find recommendation candidates: UserID={}, Radius={}km, Premium={}",
                                         user.getId(), radius / 1000, isPremiumRequest);
 
                         if (isPremiumRequest) {
@@ -198,7 +198,8 @@ public class DailyRecommendationService {
                                         : DAILY_RECOMMENDATION_COUNT_FOR_MENS;
 
                         if (candidates.size() >= minRequired) {
-                                log.info("후보군 확보 성공: {}명 (Radius: {}km)", candidates.size(), radius / 1000);
+                                log.info("Successfully identified candidates: {} (Radius: {}km)", candidates.size(),
+                                                radius / 1000);
                                 break; // 루프 탈출
                         }
                 }
@@ -211,7 +212,7 @@ public class DailyRecommendationService {
                                 : DAILY_RECOMMENDATION_COUNT_FOR_MENS;
 
                 if (candidates.size() < requiredCount) {
-                        log.warn(" 범위 조회 실패. '싫어요' 목록 초기화 후 재시도합니다. UserID={}", user.getId());
+                        log.warn("Range query failed. Retrying after clearing 'dislike' list. UserID={}", user.getId());
 
                         dislikeRepository.deleteAllByFromUser(user);
                         Set<Long> permanentExcludedIds = getPermanentlyExcludedUserIds(user.getId()); // 싫어요 제외된 목록

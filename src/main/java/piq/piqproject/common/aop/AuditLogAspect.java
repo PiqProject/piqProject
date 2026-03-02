@@ -83,7 +83,7 @@ public class AuditLogAspect {
         } catch (Exception e) {
             // 로그 저장이 실패했다고 해서 비즈니스 로직(회원 탈퇴 등)까지 롤백되면 안 됨.
             // 에러 로그만 남기고 넘어가야 함.
-            log.error("감사 로그 저장 중 오류 발생", e);
+            log.error("Error occurred while saving audit log", e);
         }
     }
 }

@@ -15,11 +15,13 @@ import java.time.LocalDateTime;
 @Builder
 public class PaymentHistoryResponseDto {
     private Long id;
+    private String name;
     private String merchantUid;
     private String transactionId;
     private PaymentType type;
     private long productId;
     private BigDecimal amount;
+    private int point;
     private PaymentStatus status;
     private LocalDateTime paidAt; // 결제일시 또는 생성일시
 
@@ -27,10 +29,12 @@ public class PaymentHistoryResponseDto {
     public static PaymentHistoryResponseDto from(PaymentEntity entity) {
         return PaymentHistoryResponseDto.builder()
                 .id(entity.getId())
+                .name(entity.getProduct().getName())
                 .merchantUid(entity.getMerchantUid())
                 .transactionId(entity.getTransactionId())
                 .type(entity.getType()) // 결제 수단 정보
                 .productId(entity.getProduct().getId())
+                .point(entity.getProduct().getPoint())
                 .amount(entity.getAmount())
                 .status(entity.getStatus())
                 .paidAt(entity.getCreatedAt())

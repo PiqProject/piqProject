@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import piq.piqproject.common.annotation.AuditLog;
 import piq.piqproject.domain.admin.dto.response.UserVerificationResponseDto;
+import piq.piqproject.domain.admin.dto.request.VerificationSearchRequestDto;
 import piq.piqproject.domain.admin.service.AdminVerificationService;
 import piq.piqproject.domain.users.entity.UserEntity;
 
@@ -26,16 +27,18 @@ public class AdminVerificationController {
     private final AdminVerificationService adminVerificationService;
 
     /**
-     * 회원 이미지, 음성 검증 목록 조회
+     * 회원 이미지, 음성, 소개글 검증 목록 조회
      */
     @GetMapping("")
-    @AuditLog(action = "회원 이미지, 음성 검증 목록 조회")
+    @AuditLog(action = "회원 이미지, 음성, 소개글 검증 목록 조회")
     public ResponseEntity<Page<UserVerificationResponseDto>> getUsers(
+            VerificationSearchRequestDto requestDto,
             @PageableDefault(sort = "id", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal UserEntity admin) {
 
-        log.info("Admin {} accessed user verification list.", admin.getEmail());
-        return ResponseEntity.ok(adminVerificationService.getVerifications(pageable));
+        log.info("Admin {} accessed user verification list. Filter [Type: {}, Status: {}]",
+                admin.getEmail(), requestDto.getContentType(), requestDto.getStatus());
+        return ResponseEntity.ok(adminVerificationService.getVerifications(requestDto, pageable));
     }
 
     /**

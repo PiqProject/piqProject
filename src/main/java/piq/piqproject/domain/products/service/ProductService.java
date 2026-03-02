@@ -23,6 +23,7 @@ public class ProductService {
     @Transactional
     public ProductResponseDto createProduct(ProductRequestDto productRequestDto) {
         ProductEntity product = ProductEntity.of(
+                productRequestDto.getName(),
                 productRequestDto.getPrice(),
                 productRequestDto.getPoint(),
                 productRequestDto.getGoogleProductId(),
@@ -49,6 +50,7 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException(NOT_FOUND_PRODUCT));
 
         product.update(
+                productRequestDto.getName(),
                 productRequestDto.getPrice(),
                 productRequestDto.getPoint(),
                 productRequestDto.getGoogleProductId(),

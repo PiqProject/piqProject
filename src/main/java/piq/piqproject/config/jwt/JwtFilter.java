@@ -44,11 +44,11 @@ public class JwtFilter extends OncePerRequestFilter {
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                log.debug("JWT 토큰 인증 성공: {}", authentication.getName());
+                log.debug("JWT token authentication successful: {}", authentication.getName());
             } catch (Exception e) {
                 // 예외가 발생해도 로그만 남기고 아무것도 하지 않음
                 // SecurityContext에 Authentication을 세팅하지 않는 것만으로 충분
-                log.debug("유효하지 않은 JWT 토큰입니다: {}", e.getMessage());
+                log.debug("Invalid JWT token: {}", e.getMessage());
             }
         }
 

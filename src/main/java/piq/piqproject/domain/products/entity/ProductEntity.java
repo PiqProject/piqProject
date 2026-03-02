@@ -22,6 +22,9 @@ public class ProductEntity extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
     private int price;
 
     @Column(nullable = false)
@@ -34,15 +37,17 @@ public class ProductEntity extends BaseEntity {
     private String appleProductId;
 
     @Builder
-    private ProductEntity(int price, int point, String googleProductId, String appleProductId) {
+    private ProductEntity(String name, int price, int point, String googleProductId, String appleProductId) {
+        this.name = name;
         this.price = price;
         this.point = point;
         this.googleProductId = googleProductId;
         this.appleProductId = appleProductId;
     }
 
-    public static ProductEntity of(int price, int point, String googleProductId, String appleProductId) {
+    public static ProductEntity of(String name, int price, int point, String googleProductId, String appleProductId) {
         return ProductEntity.builder()
+                .name(name)
                 .price(price)
                 .point(point)
                 .googleProductId(googleProductId)
@@ -50,7 +55,8 @@ public class ProductEntity extends BaseEntity {
                 .build();
     }
 
-    public void update(int price, int point, String googleProductId, String appleProductId) {
+    public void update(String name, int price, int point, String googleProductId, String appleProductId) {
+        this.name = name;
         this.price = price;
         this.point = point;
         this.googleProductId = googleProductId;

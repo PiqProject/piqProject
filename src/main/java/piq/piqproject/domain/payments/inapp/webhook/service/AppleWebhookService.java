@@ -45,7 +45,7 @@ public class AppleWebhookService {
 
             // 2. 페이로드에서 알림 타입 추출
             String notificationType = decodedPayload.getClaim("notificationType").asString();
-            log.info("Apple 알림 수신 및 검증 완료: notificationType={}", notificationType);
+            log.info("Apple notification received and verified: notificationType={}", notificationType);
 
             // 3. 환불 알림인 경우만 처리
             if (NOTIFICATION_TYPE_REFUND.equals(notificationType)) {
@@ -53,7 +53,7 @@ public class AppleWebhookService {
             }
 
         } catch (Exception e) {
-            log.error("Apple 웹훅 처리 중 오류", e);
+            log.error("Error processing Apple webhook", e);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "Apple 웹훅 검증 또는 처리 실패");
         }
     }
@@ -96,7 +96,7 @@ public class AppleWebhookService {
         DecodedJWT transactionInfo = verifyAndDecodeJws(signedTransactionInfo);
         String originalTransactionId = transactionInfo.getClaim("originalTransactionId").asString();
 
-        log.info("Apple 환불 처리 진행: originalTransactionId={}", originalTransactionId);
+        log.info("Processing Apple refund: originalTransactionId={}", originalTransactionId);
 
         // RefundService로 환불 처리 위임
         refundService.processRefund(originalTransactionId, PaymentType.APPLE);

@@ -16,6 +16,7 @@ import piq.piqproject.domain.users.dto.request.UserIdealRequestDto;
 import piq.piqproject.domain.users.dto.request.UserInterestRequestDto;
 import piq.piqproject.domain.users.dto.request.UserIntroduceRequestDto;
 import piq.piqproject.domain.users.dto.request.UserLocationRequestDto;
+import piq.piqproject.domain.users.dto.request.UserMbtiRequestDto;
 import piq.piqproject.domain.users.dto.request.UserProfileInitRequestDto;
 import piq.piqproject.domain.users.dto.request.UserScoreRequestDto;
 import piq.piqproject.domain.users.dto.request.UserTraitRequestDto;
@@ -126,7 +127,7 @@ public class ProfileController {
             @AuthenticationPrincipal UserEntity user,
             @Valid @RequestBody UserProfileInitRequestDto request) {
 
-        log.info("Request to init profile. User: {}", user.getEmail());
+        log.info("Request to initialize profile for user: {}", user.getEmail());
         profileService.initUserProfile(user, request);
 
         return ResponseEntity.ok("프로필 입력이 완료되었습니다. 이제 서비스를 이용하실 수 있습니다.");
@@ -144,5 +145,19 @@ public class ProfileController {
         profileService.updateUserIntroduce(user.getId(), requestDto);
 
         return ResponseEntity.ok("자기소개 변경이 완료되었습니다.");
+    }
+
+    /**
+     * 사용자의 MBTI를 수정합니다.
+     */
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PutMapping("/me/mbti")
+    public ResponseEntity<String> updateMbti(
+            @AuthenticationPrincipal UserEntity user,
+            @Valid @RequestBody UserMbtiRequestDto requestDto) {
+
+        profileService.updateUserMbti(user.getId(), requestDto);
+
+        return ResponseEntity.ok("MBTI 변경이 완료되었습니다.");
     }
 }

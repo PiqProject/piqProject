@@ -12,6 +12,9 @@ public enum NotificationType {
     MATCH_SUCCESS, // 매칭 성공 (Sender에게)
     MATCH_FAIL, // 매칭 실패/거절 (Sender에게)
 
+    // === 계정 관련 ===
+    ACCOUNT_DISABLED, // 계정 정지
+
     // === 공지/이벤트 ===
     ANNOUNCEMENT, // 공지사항
     EVENT // 이벤트
