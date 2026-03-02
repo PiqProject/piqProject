@@ -70,9 +70,13 @@ public class DailyRecommendationService {
 
                 if (!existingRecommendations.isEmpty()) {
                         log.info("사용자 ID {} 에게 기존 추천 목록을 반환합니다.", user.getId());
+
+                        // 현재 사용자의 매칭/거절 상태 정보를 가져옴
+                        Set<Long> sentIds = matchingRepository.findReceiverIdsBySenderId(user.getId());
+                        Set<Long> passedIds = dislikeRepository.findToUserIdsByFromUserId(user.getId());
+
                         return existingRecommendations.stream()
-                                        // 추천 정보에서 userEntity를 가져와 사용자에게 간략한 정보를 전달하는 DTO로 변환하는 부분
-                                        .map(recommendation -> convertToDto(recommendation.getRecommendedUser()))
+                                        .map(rec -> convertToDto(rec, sentIds, passedIds))
                                         .collect(Collectors.toList());
                 }
 
@@ -80,9 +84,24 @@ public class DailyRecommendationService {
                 log.info("사용자 ID {} 에게 새로운 추천 목록을 생성합니다.", user.getId());
                 List<UserEntity> finalRecommendations = generateAndSaveNewRecommendations(user, isPremiumRequest);
 
+                // 새로 생성된 경우는 상태가 모두 NONE임
                 return finalRecommendations.stream()
-                                .map(this::convertToDto)
+                                .map(u -> new RecommendedUserResponseDto(u, false, "NONE"))
                                 .collect(Collectors.toList());
+        }
+
+        private RecommendedUserResponseDto convertToDto(DailyRecommendationEntity recommendation, Set<Long> sentIds,
+                        Set<Long> passedIds) {
+                UserEntity target = recommendation.getRecommendedUser();
+                String status = "NONE";
+
+                if (sentIds.contains(target.getId())) {
+                        status = "LIKED";
+                } else if (passedIds.contains(target.getId())) {
+                        status = "PASSED";
+                }
+
+                return new RecommendedUserResponseDto(target, recommendation.isActioned(), status);
         }
 
         /**
@@ -246,11 +265,5 @@ public class DailyRecommendationService {
                                 MatchingStatus.SUCCESS));
                 excludedIds.add(1L);// 관리자 계정 ID 제외
                 return excludedIds;
-        }
-
-        private RecommendedUserResponseDto convertToDto(UserEntity user) {
-                // ... UserEntity를 RecommendedUserResponseDto로 변환하는 로직 ...
-                // 예시: return RecommendedUserResponseDto.fromEntity(user);
-                return new RecommendedUserResponseDto(user);
         }
 }

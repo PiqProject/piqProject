@@ -69,4 +69,7 @@ public interface MatchingRepository extends JpaRepository<MatchingEntity, Long> 
         List<MatchingEntity> findByStatusAndCreatedAtBefore(
                         @Param("status") MatchingStatus status,
                         @Param("expiredBefore") LocalDateTime expiredBefore);
+
+        @Query("SELECT m.receiver.id FROM MatchingEntity m WHERE m.sender.id = :senderId")
+        Set<Long> findReceiverIdsBySenderId(@Param("senderId") Long senderId);
 }

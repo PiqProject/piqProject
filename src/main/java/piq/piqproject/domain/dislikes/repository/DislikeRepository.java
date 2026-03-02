@@ -25,5 +25,5 @@ public interface DislikeRepository extends JpaRepository<DislikeEntity, Long> {
     @Query("SELECT d.toUser.id" +
             " FROM DislikeEntity d " +
             "WHERE d.fromUser.id = :fromUserId")
-    Set<Long> findToUserIdsByFromUserId(Long fromUserId);
+    Set<Long> findToUserIdsByFromUserId(@org.springframework.data.repository.query.Param("fromUserId") Long fromUserId);
 }
