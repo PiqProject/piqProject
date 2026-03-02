@@ -20,13 +20,13 @@ public class PaymentCleanupScheduler {
      */
     @Scheduled(cron = "0 30 4 * * *")
     public void runDailyCleanup() {
-        log.info("[BATCH_JOB_START] 24시간 이상된 READY 상태의 결제 정리 작업을 시작합니다.");
+        log.info("[BATCH_JOB_START] Starting cleanup for READY payments older than 24 hours.");
 
         try {
             int updatedCount = paymentCleanupService.cleanupOldReadyPayments();
-            log.info("[BATCH_JOB_END] 총 {}건의 결제 정보를 EXPIRED 상태로 변경했습니다.", updatedCount);
+            log.info("[BATCH_JOB_END] Total of {} payment records changed to EXPIRED status.", updatedCount);
         } catch (Exception e) {
-            log.error("[BATCH_JOB_FAILED] 결제 정리 작업 중 오류가 발생했습니다.", e);
+            log.error("[BATCH_JOB_FAILED] Error occurred during payment cleanup job.", e);
         }
     }
 }

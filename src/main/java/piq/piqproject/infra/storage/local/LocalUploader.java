@@ -41,7 +41,7 @@ public class LocalUploader implements FileUploader {
             file.transferTo(targetFile);
             return uploadUrlPrefix + relativePath;
         } catch (Exception e) {
-            log.error("로컬 파일 업로드 실패", e.getMessage());
+            log.error("Local file upload failed: {}", e.getMessage());
             throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "로컬 파일 업로드 실패");
         }
     }
@@ -64,7 +64,7 @@ public class LocalUploader implements FileUploader {
 
             return uploadUrlPrefix + relativePath;
         } catch (Exception e) {
-            log.error("로컬 파일 업로드 실패 (File)", e);
+            log.error("Local file upload failed (File)", e);
             throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "로컬 파일 업로드 실패");
         }
     }
@@ -86,7 +86,7 @@ public class LocalUploader implements FileUploader {
                 file.delete();
             }
         } catch (Exception e) {
-            log.error("로컬 파일 삭제 실패: {}", fileUrl);
+            log.error("Local file deletion failed: {}", fileUrl);
         }
     }
 }

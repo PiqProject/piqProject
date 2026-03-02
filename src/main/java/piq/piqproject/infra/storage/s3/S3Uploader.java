@@ -50,7 +50,7 @@ public class S3Uploader implements FileUploader {
             // 업로드된 S3 키를 반환
             return key;
         } catch (IOException e) {
-            log.error("S3 파일 업로드 실패 (MultipartFile): {}", key, e);
+            log.error("S3 upload failed (MultipartFile): {}", key, e);
             throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "S3 파일 업로드 실패");
         }
     }
@@ -73,7 +73,7 @@ public class S3Uploader implements FileUploader {
             s3Client.putObject(putObjectRequest, RequestBody.fromFile(file));
             return key;
         } catch (Exception e) {
-            log.error("S3 파일 업로드 실패 (File): {}", key, e);
+            log.error("S3 upload failed (File): {}", key, e);
             throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "S3 파일 업로드 실패");
         }
     }
@@ -93,7 +93,7 @@ public class S3Uploader implements FileUploader {
 
             s3Client.deleteObject(deleteObjectRequest);
         } catch (Exception e) {
-            log.error("S3 파일 삭제 실패: {}", key, e);
+            log.error("S3 deletion failed: {}", key, e);
         }
     }
 }

@@ -30,13 +30,13 @@ public class WebhookController {
      */
     @PostMapping("/google")
     public ResponseEntity<Void> handleGoogleNotification(@RequestBody GooglePubSubMessage message) {
-        log.info("Google 웹훅 수신: messageId={}", message.getMessage().getMessageId());
+        log.info("Google webhook received: messageId={}", message.getMessage().getMessageId());
 
         try {
             googleWebhookService.processNotification(message);
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Google 웹훅 처리 실패", e);
+            log.error("Google webhook processing failed", e);
             // Pub/Sub는 200을 받지 못하면 재시도하므로, 일시적 오류는 500 반환
             return ResponseEntity.internalServerError().build();
         }
@@ -47,13 +47,13 @@ public class WebhookController {
      */
     @PostMapping("/apple")
     public ResponseEntity<Void> handleAppleNotification(@RequestBody AppleNotificationRequest request) {
-        log.info("Apple 웹훅 수신");
+        log.info("Apple webhook received");
 
         try {
             appleWebhookService.processNotification(request.getSignedPayload());
             return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Apple 웹훅 처리 실패", e);
+            log.error("Apple webhook processing failed", e);
             return ResponseEntity.internalServerError().build();
         }
     }

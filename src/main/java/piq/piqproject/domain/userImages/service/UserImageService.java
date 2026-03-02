@@ -107,10 +107,10 @@ public class UserImageService {
             public void afterCommit() {
                 try {
                     fileUploader.delete(imageUrl);
-                    log.info("S3 이미지 삭제 완료: {}", imageUrl);
+                    log.info("S3 image deletion completed: {}", imageUrl);
                 } catch (Exception e) {
                     // TODO: S3 이미지 삭제 실패 시 DB에 저장하고 스케쥴러로 정리하는 로직 필요
-                    log.error(" 이미지 삭제 실패. URL: {}", imageUrl, e);
+                    log.error("Image deletion failed. URL: {}", imageUrl, e);
                 }
             }
         });

@@ -24,6 +24,8 @@ import piq.piqproject.domain.admin.dto.response.UserAdminResponseDto;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.points.enums.PointType;
 import piq.piqproject.domain.points.service.PointService;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.users.enums.Gender;
 import piq.piqproject.domain.users.repository.UserRepository;
@@ -37,6 +39,7 @@ public class AdminUserService {
     private final UserRepository userRepository;
     private final FileUploader fileUploader;
     private final PointService pointService;
+    private final NotificationService notificationService;
 
     /**
      * 회원 목록 조회 (검색 지원)
@@ -72,6 +75,14 @@ public class AdminUserService {
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
 
         user.updateActiveStatus(requestDto.getIsActive());
+
+        // 계정이 비활성화(정지)되는 경우 알림 전송
+        if (Boolean.FALSE.equals(requestDto.getIsActive())) {
+            notificationService.notify(user, NotificationType.ACCOUNT_DISABLED,
+                    "계정 이용이 제한되었습니다.",
+                    "가이드라인 위반 및 운영 정책에 따라 계정이 비활성화되었습니다. 1:1 문의를 통해 해제요청을 남겨주시기 바랍니다.",
+                    "/inquiry");
+        }
     }
 
     /**

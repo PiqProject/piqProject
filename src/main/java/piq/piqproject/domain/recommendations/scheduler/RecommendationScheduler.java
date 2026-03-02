@@ -35,26 +35,27 @@ public class RecommendationScheduler {
     @Scheduled(cron = "${recommendation.scheduler.cron}")
     @Transactional
     public void processUnansweredRecommendations() {
-        log.info("===== [스케줄러 시작] 어제의 미응답 추천 '싫어요' 처리 작업을 시작합니다. =====");
+        log.info(
+                "===== [Scheduler Started] Starting process to mark yesterday's unanswered recommendations as 'disliked'. =====");
 
         // 1. '어제의 추천 하루'에 해당하는 정확한 시간 범위를 계산합니다.
         // 스케줄러가 새벽 4시에 실행되므로, '지금'이 바로 '어제 하루'가 끝나는 시점입니다.
         LocalDateTime endOfRange = LocalDateTime.now().withMinute(0).withSecond(0).withNano(0);
         LocalDateTime startOfRange = endOfRange.minusDays(1);
 
-        log.info("처리 대상 시간 범위: {} 부터 {} 까지", startOfRange, endOfRange);
+        log.info("Target time range: {} to {}", startOfRange, endOfRange);
 
         // 2. 해당 시간 범위 내에서 'actioned'가 false인 모든 추천 기록을 조회합니다.
         List<DailyRecommendationEntity> unansweredRecs = dailyRecommendationRepository
                 .findByActionedFalseAndCreatedAtBetween(startOfRange, endOfRange);
 
         if (unansweredRecs.isEmpty()) {
-            log.info("처리할 미응답 추천이 없습니다.");
-            log.info("===== [스케줄러 종료] 작업 완료. =====");
+            log.info("No unanswered recommendations to process.");
+            log.info("===== [Scheduler Ended] Process completed. =====");
             return;
         }
 
-        log.info("총 {} 건의 미응답 추천을 '싫어요'로 처리합니다.", unansweredRecs.size());
+        log.info("Processing {} unanswered recommendations as 'dislikes'.", unansweredRecs.size());
 
         // 3. 조회된 각 추천 기록을 '싫어요' 테이블에 추가합니다.
         for (DailyRecommendationEntity recommendation : unansweredRecs) {
@@ -69,13 +70,13 @@ public class RecommendationScheduler {
                         .toUser(toUser)
                         .build();
                 dislikeRepository.save(newDislike);
-                log.debug("Dislike 기록 생성됨: From {} To {}", fromUser.getId(), toUser.getId());
+                log.debug("Dislike record created: From {} To {}", fromUser.getId(), toUser.getId());
             } else {
-                log.warn("이미 Dislike 기록이 존재하여 건너뜁니다: From {} To {}", fromUser.getId(), toUser.getId());
+                log.warn("Dislike record already exists, skipping: From {} To {}", fromUser.getId(), toUser.getId());
             }
         }
 
         // TODO: 알림 전송 로직 필요 (오늘의 추천 도착)
-        log.info("===== [스케줄러 종료] 성공적으로 작업을 완료했습니다. =====");
+        log.info("===== [Scheduler Ended] Successfully completed process. =====");
     }
 }

@@ -8,6 +8,9 @@ import lombok.Getter;
  */
 @Getter
 public class ProductRequestDto {
+    @NotNull(message = "상품명을 입력해주세요.")
+    private String name;
+
     @NotNull(message = "가격을 입력해주세요.")
     private int price;
 

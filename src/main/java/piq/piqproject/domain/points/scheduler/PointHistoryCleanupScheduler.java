@@ -29,16 +29,17 @@ public class PointHistoryCleanupScheduler {
         // 1. 기준 날짜 계산 (현재 - 5년)
         LocalDateTime cutoffDate = LocalDateTime.now().minusYears(RETENTION_YEARS);
 
-        log.info("[Point History Cleanup] 포인트 이력 정리를 시작합니다. 기준일: {} ({}년 전)", cutoffDate, RETENTION_YEARS);
+        log.info("[Point History Cleanup] Starting point history cleanup. Cutoff date: {} ({} years ago)", cutoffDate,
+                RETENTION_YEARS);
 
         try {
             // 2. 삭제 실행
             // (앞으로 5년간은 삭제할 데이터가 0건이므로 0.001초 만에 끝납니다 -> 자원 소모 거의 없음)
             pointHistoryRepository.deleteExpiredHistories(cutoffDate);
 
-            log.info("[Point History Cleanup] 정리 완료.");
+            log.info("[Point History Cleanup] Cleanup completed.");
         } catch (Exception e) {
-            log.error("[Point History Cleanup] 포인트 이력 삭제 중 오류 발생", e);
+            log.error("[Point History Cleanup] Error occurred during point history deletion", e);
         }
     }
 }

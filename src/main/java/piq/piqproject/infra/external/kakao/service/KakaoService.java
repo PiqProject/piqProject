@@ -67,11 +67,11 @@ public class KakaoService {
                         "카카오 토큰 발급 응답이 비어 있습니다.");
             }
 
-            log.debug("카카오 토큰 발급 성공");
+            log.debug("Kakao token issued successfully");
             return response;
 
         } catch (RestClientResponseException e) {
-            log.error("카카오 토큰 발급 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Kakao token issue failed: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
 
             if (e.getStatusCode().value() == 400) {
                 throw new CustomException(ErrorCode.BAD_REQUEST,
@@ -81,7 +81,7 @@ public class KakaoService {
                     "카카오 토큰 발급 중 오류가 발생했습니다: " + e.getResponseBodyAsString());
 
         } catch (Exception e) {
-            log.error("카카오 토큰 발급 중 알 수 없는 오류: ", e);
+            log.error("Unknown error during Kakao token issue: ", e);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR,
                     "카카오 토큰 발급 중 알 수 없는 오류가 발생했습니다.");
         }
@@ -107,11 +107,12 @@ public class KakaoService {
                         "카카오 사용자 정보 응답이 비어 있습니다.");
             }
 
-            log.debug("카카오 사용자 정보 조회 성공: kakaoId={}", response.id());
+            log.debug("Kakao user info lookup successful: kakaoId={}", response.id());
             return response;
 
         } catch (RestClientResponseException e) {
-            log.error("카카오 사용자 정보 조회 실패: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
+            log.error("Kakao user info lookup failed: status={}, body={}", e.getStatusCode(),
+                    e.getResponseBodyAsString());
 
             if (e.getStatusCode().value() == 401) {
                 throw new CustomException(ErrorCode.BAD_REQUEST,
@@ -121,7 +122,7 @@ public class KakaoService {
                     "카카오 사용자 정보 조회 중 오류가 발생했습니다: " + e.getResponseBodyAsString());
 
         } catch (Exception e) {
-            log.error("카카오 사용자 정보 조회 중 알 수 없는 오류: ", e);
+            log.error("Unknown error during Kakao user info lookup: ", e);
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR,
                     "카카오 사용자 정보 조회 중 알 수 없는 오류가 발생했습니다.");
         }
@@ -147,13 +148,13 @@ public class KakaoService {
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (request, response) -> {
                         // 에러 발생 시 로그를 상세히 남기기 위해 핸들링 가능
-                        log.error("카카오 API 에러 발생: {}", response.getStatusCode());
+                        log.error("Kakao API error occurred: {}", response.getStatusCode());
                     })
                     .toBodilessEntity(); // 응답 바디가 필요 없을 때 사용
 
-            log.info("카카오 연결 끊기 성공: socialId={}", socialId);
+            log.info("Kakao unlink successful: socialId={}", socialId);
         } catch (Exception e) {
-            log.error("카카오 연결 끊기 실패: socialId={}, Error: {}", socialId, e.getMessage());
+            log.error("Kakao unlink failed: socialId={}, Error: {}", socialId, e.getMessage());
         }
     }
 

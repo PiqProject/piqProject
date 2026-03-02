@@ -27,11 +27,11 @@ public class PortOneClientService {
             // V2는 paymentId(구 impUid)와 storeId가 필수
             CompletableFuture<Payment> payment = portOneClient.getPayment().getPayment(paymentId);
 
-            log.info("PortOne V2 조회 성공: paymentId={}", paymentId);
+            log.info("PortOne V2 lookup successful: paymentId={}", paymentId);
             return payment.get();
 
         } catch (Exception e) {
-            log.error("PortOne 시스템 오류", e);
+            log.error("PortOne system error", e);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "포트원 통신 중 오류 발생");
         }
     }
@@ -41,9 +41,9 @@ public class PortOneClientService {
             // V2 SDK cancel 메서드 사용
             portOneClient.getPayment().cancelPayment(paymentId, null, null, null, reason, null, null, null, null,
                     null, null);
-            log.info("PortOne 결제 취소 성공: paymentId={}, reason={}", paymentId, reason);
+            log.info("PortOne payment cancellation successful: paymentId={}, reason={}", paymentId, reason);
         } catch (Exception e) {
-            log.error("PortOne 시스템 오류", e);
+            log.error("PortOne system error", e);
             throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "포트원 통신 중 오류 발생");
         }
     }

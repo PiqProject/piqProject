@@ -6,6 +6,7 @@ import piq.piqproject.domain.alarms.entity.DeviceTokenEntity;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface DeviceTokenRepository extends JpaRepository<DeviceTokenEntity, Long> {
@@ -13,5 +14,9 @@ public interface DeviceTokenRepository extends JpaRepository<DeviceTokenEntity, 
 
     Optional<DeviceTokenEntity> findByUserAndDeviceType(UserEntity user, String deviceType);
 
-    Optional<DeviceTokenEntity> findByUserId(Long userId);
+    List<DeviceTokenEntity> findByUserId(Long userId);
+
+    List<DeviceTokenEntity> findByUserIdOrderByCreatedAtAsc(Long userId);
+
+    Optional<DeviceTokenEntity> findByUserIdAndToken(Long userId, String token);
 }

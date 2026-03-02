@@ -92,7 +92,7 @@ public class VoiceService {
                 } catch (Exception e) {
                     // 삭제 실패는 로그만 남김 (이미 DB에서는 지워졌으므로 서비스 흐름엔 영향 X)
                     // TODO: 이런 로그를 모아놓은 Table을 만들고 scheduler를 통해 특정시점마다 삭제하는 로직 구현할 것
-                    log.error("S3 파일 삭제 중 오류 발생. DB에선 지워짐 URL: {}", voiceUrl, e);
+                    log.error("Error occurred while deleting file from S3 (Deleted from DB). URL: {}", voiceUrl, e);
                 }
             }
         });

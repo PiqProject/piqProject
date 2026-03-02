@@ -13,6 +13,7 @@ import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.domain.admin.dto.response.UserVerificationResponseDto;
+import piq.piqproject.domain.admin.dto.request.VerificationSearchRequestDto;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.userimages.repository.UserImageRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
@@ -37,8 +38,20 @@ public class AdminVerificationService {
     private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
-    public Page<UserVerificationResponseDto> getVerifications(Pageable pageable) {
-        Page<VerificationEntity> verifications = verificationRepository.findAll(pageable);
+    public Page<UserVerificationResponseDto> getVerifications(VerificationSearchRequestDto requestDto,
+            Pageable pageable) {
+        Page<VerificationEntity> verifications;
+
+        if (requestDto.getContentType() != null && requestDto.getStatus() != null) {
+            verifications = verificationRepository.findAllByContentTypeAndStatus(requestDto.getContentType(),
+                    requestDto.getStatus(), pageable);
+        } else if (requestDto.getContentType() != null) {
+            verifications = verificationRepository.findAllByContentType(requestDto.getContentType(), pageable);
+        } else if (requestDto.getStatus() != null) {
+            verifications = verificationRepository.findAllByStatus(requestDto.getStatus(), pageable);
+        } else {
+            verifications = verificationRepository.findAll(pageable);
+        }
 
         return verifications.map(UserVerificationResponseDto::of);
     }
@@ -68,9 +81,9 @@ public class AdminVerificationService {
             public void afterCommit() {
                 try {
                     fileUploader.delete(imageUrl);
-                    log.info("관리자에 의한 부적절 사진 삭제 완료. URL: {}", imageUrl);
+                    log.info("Admin deleted inappropriate image. URL: {}", imageUrl);
                 } catch (Exception e) {
-                    log.error("[S3_DELETE_FAIL] 관리자 사진 삭제 실패. URL: {}", imageUrl, e);
+                    log.error("[S3_DELETE_FAIL] Admin failed to delete image. URL: {}", imageUrl, e);
                 }
             }
         });
@@ -98,11 +111,11 @@ public class AdminVerificationService {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                log.info("관리자에 의한 음성 삭제 완료. S3 파일 삭제 시작. URL: {}", voiceUrl);
+                log.info("Admin deleted voice record. Starting S3 file deletion. URL: {}", voiceUrl);
                 try {
                     fileUploader.delete(voiceUrl);
                 } catch (Exception e) {
-                    log.error("[S3_DELETE_FAIL] 관리자 음성 삭제 실패. URL: {}", voiceUrl, e);
+                    log.error("[S3_DELETE_FAIL] Admin failed to delete voice record. URL: {}", voiceUrl, e);
                 }
             }
         });
@@ -131,7 +144,7 @@ public class AdminVerificationService {
         String contentValue = verification.getContentValue();
 
         // 검증이 완료되면 db에 이미지 저장
-        if (verification.getContentType() == ContentType.INTRO) {
+        if (verification.getContentType() == ContentType.INTRODUCE) {
             user.updateIntroduce(contentValue);
         }
 
@@ -160,7 +173,8 @@ public class AdminVerificationService {
 
         } catch (Exception e) {
             // 5. DB 저장 실패 시 방금 올린 S3 파일 삭제
-            log.error("DB 업데이트 실패. 업로드된 파일 롤백을 시도합니다. URL: {}", verification.getContentValue(), e);
+            log.error("DB update failed. Attempting to rollback uploaded file. URL: {}", verification.getContentValue(),
+                    e);
             fileUploader.delete(verification.getContentValue());
 
             // 예외를 다시 던져서 컨트롤러에게 알림
@@ -185,7 +199,7 @@ public class AdminVerificationService {
         return switch (type) {
             case IMAGE -> "사진";
             case VOICE -> "음성";
-            case INTRO -> "자기소개";
+            case INTRODUCE -> "자기소개";
             default -> "콘텐츠";
         };
     }

@@ -33,7 +33,7 @@ public class LogBackupService {
         LocalDate yesterday = LocalDate.now().minusDays(1);
         String dateStr = yesterday.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-        log.info("[LogBackup] {} 날짜의 로그 백업을 시작합니다.", dateStr);
+        log.info("[LogBackup] Starting log backup for date: {}", dateStr);
 
         // 1. Info 로그 처리 (폴더 구조: {LOG_ROOT_PATH}/history/info/info-날짜.log)
         processLogFile("info", "info-" + dateStr + ".log");
@@ -51,7 +51,7 @@ public class LogBackupService {
 
         // 파일이 없으면 스킵 (로그가 하나도 안 찍힌 날일 수 있음)
         if (!sourceFile.exists()) {
-            log.info("[LogBackup] 백업할 파일이 없습니다: {}", sourceFile.getAbsolutePath());
+            log.info("[LogBackup] No file to backup found: {}", sourceFile.getAbsolutePath());
             return;
         }
 
@@ -67,10 +67,10 @@ public class LogBackupService {
             String s3Key = generateS3Key(type);
             fileUploader.upload(compressedFile, s3Key);
 
-            log.info("[LogBackup] 업로드 성공: {} -> S3: {}", fileName, s3Key);
+            log.info("[LogBackup] Upload successful: {} -> S3: {}", fileName, s3Key);
 
         } catch (Exception e) {
-            log.error("[LogBackup] 백업 실패: {}", fileName, e);
+            log.error("[LogBackup] Backup failed for file: {}", fileName, e);
         } finally {
             // 3. 임시 압축 파일 삭제 (원본 로그는 남겨둠)
             if (compressedFile.exists()) {

@@ -37,22 +37,23 @@ public class AdminInitializer {
         // 필수 정보가 모두 설정되어 있는지 확인
         // 필수 정보가 모두 설정되어 있는지 확인
         if (!StringUtils.hasText(adminEmail) || !StringUtils.hasText(adminPassword)) {
-            log.error("초기 관리자 계정 생성을 위한 설정 정보가 부족합니다. (admin.initial.email, admin.initial.password)");
+            log.error(
+                    "Insufficient configuration for initial admin account creation. (admin.initial.email, admin.initial.password)");
             return;
         }
 
         // 이미 관리자 계정이 존재하는지 확인
         if (userRepository.findByEmail(adminEmail).isPresent()) {
-            log.info("이미 관리자 계정이 존재합니다.");
+            log.info("Admin account already exists.");
             return;
         }
 
         // 관리자 계정 생성 (비밀번호는 암호화되어야 함)
         try {
             userService.createAdminAccount(adminEmail, adminPassword);
-            log.info("초기 관리자 계정이 생성되었습니다: {}", adminEmail);
+            log.info("Initial admin account created: {}", adminEmail);
         } catch (Exception e) {
-            log.error("초기 관리자 계정 생성에 실패했습니다.", e);
+            log.error("Failed to create initial admin account.", e);
         }
     }
 }

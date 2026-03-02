@@ -1,5 +1,7 @@
 package piq.piqproject.domain.notifications.repository;
 
+import java.time.LocalDateTime;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -45,4 +47,11 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
          * 특정 사용자의 개인 알림 목록 (최신순)
          */
         Page<NotificationEntity> findAllByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
+        /**
+         * 생성된 지 특정 시간보다 이전인 알림 삭제
+         */
+        @Modifying(clearAutomatically = true)
+        @Query("DELETE FROM NotificationEntity n WHERE n.createdAt < :thresholdDate")
+        int deleteByCreatedAtBefore(LocalDateTime thresholdDate);
 }
