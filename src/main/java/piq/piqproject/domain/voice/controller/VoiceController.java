@@ -7,6 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.Map;
+
 import piq.piqproject.domain.users.entity.UserEntity;
 import piq.piqproject.domain.voice.service.VoiceService;
 
@@ -19,12 +21,15 @@ public class VoiceController {
     private final VoiceService voiceService;
 
     @PostMapping
-    public ResponseEntity<String> uploadVoice(
+    public ResponseEntity<Map<String, String>> uploadVoice(
             @AuthenticationPrincipal UserEntity user,
             @RequestPart("voiceFile") MultipartFile voiceFile) {
 
-        voiceService.uploadVoice(user, voiceFile);
-        return ResponseEntity.ok("Voice uploaded successfully.");
+        String voiceUrl = voiceService.uploadVoice(user, voiceFile);
+        return ResponseEntity.ok(Map.of(
+                "message", "Voice uploaded successfully.",
+                "voiceUrl", voiceUrl
+        ));
     }
 
     @PostMapping("/delete")

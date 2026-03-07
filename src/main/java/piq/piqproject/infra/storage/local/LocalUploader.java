@@ -10,6 +10,8 @@ import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.file.FileUploader;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Component
 @Slf4j
@@ -33,10 +35,13 @@ public class LocalUploader implements FileUploader {
     @Override
     public String upload(MultipartFile file, String relativePath) {
         try {
-            File targetFile = new File(uploadDir + relativePath);
+            Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            String normalizedRelativePath = relativePath.replaceFirst("^[\\/]+", "");
+            Path targetPath = baseDir.resolve(normalizedRelativePath).normalize();
+            File targetFile = targetPath.toFile();
             File parentDir = targetFile.getParentFile(); // 부모 디렉토리의 절대경로를 반환함
-            if (!parentDir.exists()) {
-                parentDir.mkdirs(); // 부모 디렉토리가 없으면 생성
+            if (!parentDir.exists() && !parentDir.mkdirs()) {
+                throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "로컬 업로드 경로 생성 실패");
             }
             file.transferTo(targetFile);
             return uploadUrlPrefix + relativePath;
@@ -52,10 +57,13 @@ public class LocalUploader implements FileUploader {
     @Override
     public String upload(File file, String relativePath) {
         try {
-            File targetFile = new File(uploadDir + relativePath);
+            Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            String normalizedRelativePath = relativePath.replaceFirst("^[\\/]+", "");
+            Path targetPath = baseDir.resolve(normalizedRelativePath).normalize();
+            File targetFile = targetPath.toFile();
             File parentDir = targetFile.getParentFile();
-            if (!parentDir.exists()) {
-                parentDir.mkdirs();
+            if (!parentDir.exists() && !parentDir.mkdirs()) {
+                throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "로컬 업로드 경로 생성 실패");
             }
 
             // 기존 파일 복사
@@ -69,11 +77,10 @@ public class LocalUploader implements FileUploader {
         }
     }
 
-    /*
+    /**
      * 파일을 로컬 디스크에서 삭제한다.
      * 
      * @param fileUrl 브라우저에서 접근가능한 url (예: /uploads/images/2025/09/17/~~~~.jpg)
-     * 
      * @return void
      */
     @Override
@@ -81,7 +88,9 @@ public class LocalUploader implements FileUploader {
         try {
             // fileUrl의 접두사를 제거해야 실제 파일 경로(relative Path)와 매칭됨
             String relativePath = fileUrl.replaceFirst(uploadUrlPrefix, "");
-            File file = new File(uploadDir + relativePath);
+            Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            String normalizedRelativePath = relativePath.replaceFirst("^[\\/]+", "");
+            File file = baseDir.resolve(normalizedRelativePath).normalize().toFile();
             if (file.exists()) {
                 file.delete();
             }

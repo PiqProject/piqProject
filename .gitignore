@@ -41,6 +41,7 @@ JWT동작방식.txt
 
 
 ### secret 파일 ###
+.env.properties
 src/main/resources/application-secret.properties
 application-secret.properties
 src/main/resources/keys/**
@@ -50,3 +51,7 @@ logs/
 
 ### firebase 파일 ###
 src/main/resources/firebase/serviceAccountKey.json
+
+
+#### 업로드 파일 ###
+uploads/
