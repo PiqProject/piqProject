@@ -35,9 +35,11 @@ public class VoiceService {
 
     /**
      * 음성 파일 업로드 및 교체
+     *
+     * @return 업로드된 파일에 접근 가능한 URL (예: /uploads/voice/2026/03/07/uuid.mp3)
      */
     @Transactional
-    public void uploadVoice(UserEntity principalUser, MultipartFile voiceFile) {
+    public String uploadVoice(UserEntity principalUser, MultipartFile voiceFile) {
         // 1. 파일 유효성 검사 (오디오 파일인지 확인)
         if (!fileUtil.isAudioFile(voiceFile)) {
             throw new InternalServerException(ErrorCode.FILE_UPLOAD_ERROR, "음성 파일(audio/*)만 업로드할 수 있습니다.");
@@ -46,6 +48,13 @@ public class VoiceService {
         // 2. 영속성 컨텍스트 유지를 위해 User 조회
         UserEntity user = userRepository.findById(principalUser.getId())
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
+
+        // 2-1. 기존 음성 파일이 있다면 삭제 (S3에서)
+        String existingVoiceUrl = user.getVoiceUrl();
+        if (existingVoiceUrl != null && !existingVoiceUrl.isEmpty()) {
+            fileUploader.delete(existingVoiceUrl);
+            log.info("Existing voice file deleted from S3. URL: {}", existingVoiceUrl);
+        }
 
         // 3. 업로드 경로 생성 및 S3 업로드
         String dirPath = fileUtil.createDirectoryPath("voice");
@@ -64,6 +73,8 @@ public class VoiceService {
         notificationService.notify(user, NotificationType.CONTENT_SUBMITTED,
                 "음성 업로드 완료", "음성 파일이 업로드되었습니다. 검수 후 프로필에 반영됩니다.",
                 "/profile");
+
+        return newVoiceUrl;
     }
 
     /**
@@ -91,7 +102,6 @@ public class VoiceService {
                     fileUploader.delete(voiceUrl);
                 } catch (Exception e) {
                     // 삭제 실패는 로그만 남김 (이미 DB에서는 지워졌으므로 서비스 흐름엔 영향 X)
-                    // TODO: 이런 로그를 모아놓은 Table을 만들고 scheduler를 통해 특정시점마다 삭제하는 로직 구현할 것
                     log.error("Error occurred while deleting file from S3 (Deleted from DB). URL: {}", voiceUrl, e);
                 }
             }

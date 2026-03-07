@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import piq.piqproject.common.annotation.RequireActiveUser;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.domain.dislikes.repository.DislikeRepository;

@@ -11,7 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileUtil {
 
     /**
-     * 날짜 기반의 디렉토리 경로를 생성합니다. (예: images/2025/09/17)
+     * 날짜 기반의 디렉토리 경로를 생성합니다.
+     * 예:
+     * baseDir = images => images/2025/09/17
      */
     public String createDirectoryPath(String baseDir) {
         LocalDate now = LocalDate.now();

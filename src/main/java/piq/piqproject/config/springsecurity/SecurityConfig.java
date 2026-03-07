@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import org.springframework.beans.factory.annotation.Value;
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.config.jwt.JwtFilter;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,6 +29,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Value("${cors.origins:http://localhost:3000}")
+    private String corsOrigins;
     // JWT 토큰 제공자 및 필터를 주입받습니다.
     private final JwtFilter jwtFilter;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
@@ -125,8 +129,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // 1. 리액트(프론트) 주소 허용
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        // 1. 리액트(프론트) 주소 허용 (CORS_ORIGINS 환경변수에서 읽음)
+        configuration.setAllowedOrigins(List.of(corsOrigins.split(",")));
 
         // 2. GET, POST, PUT, DELETE 등 허용
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
