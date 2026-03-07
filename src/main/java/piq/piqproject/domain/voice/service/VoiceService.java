@@ -86,23 +86,41 @@ public class VoiceService {
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND_USER));
 
         String voiceUrl = user.getVoiceUrl();
-        if (voiceUrl == null || voiceUrl.isEmpty()) {
+
+        // 검증 테이블에서 이 유저의 VOICE 항목 찾기
+        java.util.List<VerificationEntity> voiceVerifications = verificationRepository.findAllByUserId(user.getId())
+                .stream()
+                .filter(v -> v.getContentType() == ContentType.VOICE)
+                .collect(java.util.stream.Collectors.toList());
+
+        if ((voiceUrl == null || voiceUrl.isEmpty()) && voiceVerifications.isEmpty()) {
             throw new NotFoundException(ErrorCode.NOT_FOUND, "삭제할 음성 파일이 없습니다.");
         }
 
-        // 1. DB 업데이트 (URL 제거)
+        // 1. DB 업데이트 (User 엔티티 URL 제거)
         user.updateVoiceUrl(null);
 
-        // 2. 실제 S3 파일 삭제는 '트랜잭션이 커밋된 후'에 실행 (안전장치)
-        // 만약 DB 업데이트가 실패해서 롤백되면, 파일은 삭제하지 않아야 함 (데이터 복구를 위해)
+        // 2. 검증 테이블에서 제거
+        verificationRepository.deleteAll(voiceVerifications);
+
+        // 3. 수집된 URL들 (S3 삭제용)
+        java.util.Set<String> urlsToDelete = new java.util.HashSet<>();
+        if (voiceUrl != null && !voiceUrl.isEmpty())
+            urlsToDelete.add(voiceUrl);
+        for (VerificationEntity v : voiceVerifications) {
+            urlsToDelete.add(v.getContentValue());
+        }
+
+        // 4. 실제 S3 파일 삭제는 '트랜잭션이 커밋된 후'에 실행
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                try {
-                    fileUploader.delete(voiceUrl);
-                } catch (Exception e) {
-                    // 삭제 실패는 로그만 남김 (이미 DB에서는 지워졌으므로 서비스 흐름엔 영향 X)
-                    log.error("Error occurred while deleting file from S3 (Deleted from DB). URL: {}", voiceUrl, e);
+                for (String url : urlsToDelete) {
+                    try {
+                        fileUploader.delete(url);
+                    } catch (Exception e) {
+                        log.error("Error occurred while deleting file from S3 (Deleted from DB). URL: {}", url, e);
+                    }
                 }
             }
         });
