@@ -35,6 +35,7 @@ public class LocalUploader implements FileUploader {
     @Override
     public String upload(MultipartFile file, String relativePath) {
         try {
+            Thread.sleep(200);
             Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
             String normalizedRelativePath = relativePath.replaceFirst("^[\\/]+", "");
             Path targetPath = baseDir.resolve(normalizedRelativePath).normalize();
@@ -57,6 +58,7 @@ public class LocalUploader implements FileUploader {
     @Override
     public String upload(File file, String relativePath) {
         try {
+            Thread.sleep(200);
             Path baseDir = Paths.get(uploadDir).toAbsolutePath().normalize();
             String normalizedRelativePath = relativePath.replaceFirst("^[\\/]+", "");
             Path targetPath = baseDir.resolve(normalizedRelativePath).normalize();
