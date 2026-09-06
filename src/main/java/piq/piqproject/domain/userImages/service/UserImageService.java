@@ -14,9 +14,15 @@ import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.error.exception.NotFoundException;
 import piq.piqproject.common.error.exception.UnauthorizedException;
 import piq.piqproject.common.file.FileUploader;
+import piq.piqproject.domain.notifications.enums.NotificationType;
+import piq.piqproject.domain.notifications.service.NotificationService;
 import piq.piqproject.domain.userimages.entity.UserImageEntity;
 import piq.piqproject.domain.userimages.repository.UserImageRepository;
 import piq.piqproject.domain.users.entity.UserEntity;
+import piq.piqproject.domain.verification.entity.VerificationEntity;
+import piq.piqproject.domain.verification.enums.ContentType;
+import piq.piqproject.domain.verification.enums.VerificationStatus;
+import piq.piqproject.domain.verification.repository.VerificationRepository;
 
 @Service
 @RequiredArgsConstructor
@@ -24,14 +30,29 @@ import piq.piqproject.domain.users.entity.UserEntity;
 @Slf4j
 public class UserImageService {
 
+    private final NotificationService notificationService;
+    private final VerificationRepository verificationRepository;
     private final UserImageRepository userImageRepository;
     private final FileUploader fileUploader;
 
     private static final int MAX_IMAGE_COUNT = 4; // 비즈니스 규칙: 사용자당 최대 이미지 개수
 
+    @Transactional
+    public void registerImageVerification(UserEntity user, String imageUrl, boolean isMainImage) {
+        // 1. 비즈니스 규칙 검증
+        validateImageCount(user);
+        // 2. 검증 대기 엔티티 저장
+        VerificationEntity verification = VerificationEntity.of(user, ContentType.IMAGE, imageUrl,
+                VerificationStatus.PENDING, isMainImage);
+        verificationRepository.save(verification);
+        // 3. 알림 DB 저장 및 발송
+        notificationService.notify(user, NotificationType.CONTENT_SUBMITTED,
+                "사진 업로드 완료", "사진이 업로드되었습니다. 검수 후 프로필에 반영됩니다.",
+                "/profile/images");
+    }
+
     /**
      * [DB 저장 전용 메서드]
-     * Facade에서 호출되며, 이 메서드가 실행될 때 비로소 트랜잭션이 시작됩니다.
      * S3 업로드는 이미 끝난 상태입니다.
      *
      * @param user        이미지 소유자

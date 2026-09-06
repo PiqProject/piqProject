@@ -8,14 +8,8 @@ import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 import piq.piqproject.common.file.FileUploader;
 import piq.piqproject.common.file.FileUtil;
-import piq.piqproject.domain.notifications.enums.NotificationType;
-import piq.piqproject.domain.notifications.service.NotificationService;
 import piq.piqproject.domain.userimages.service.UserImageService;
 import piq.piqproject.domain.users.entity.UserEntity;
-import piq.piqproject.domain.verification.entity.VerificationEntity;
-import piq.piqproject.domain.verification.enums.ContentType;
-import piq.piqproject.domain.verification.enums.VerificationStatus;
-import piq.piqproject.domain.verification.repository.VerificationRepository;
 
 @Slf4j
 @Component
@@ -25,8 +19,6 @@ public class UserImageFacade {
     private final UserImageService userImageService;
     private final FileUtil fileUtil;
     private final FileUploader fileUploader;
-    private final VerificationRepository verificationRepository;
-    private final NotificationService notificationService;
 
     /**
      * [이미지 업로드 오케스트레이션]
@@ -48,18 +40,15 @@ public class UserImageFacade {
         // 3. S3 업로드 수행 (네트워크 I/O 발생 - 트랜잭션 밖에서 수행)
         String imageUrl = fileUploader.upload(imageFile, s3Path);
 
-        // 4. 비즈니스 규칙 검증 (이미지 개수 제한)
-        userImageService.validateImageCount(user);
+        // 4. [트랜잭션 안] DB 저장 위임 및 실패 시 S3 롤백 (보상)
+        try {
+            userImageService.registerImageVerification(user, imageUrl, isMainImage);
+        } catch (Exception e) {
+            log.error("DB 등록 실패로 인해 업로드된 S3 파일을 삭제합니다. Path: {}", s3Path, e);
+            fileUploader.delete(s3Path); // 보상 트랜잭션 수행!
+            throw e; // 클라이언트에게 에러 전파
+        }
 
-        // 이미지 검증 준비 (대표 이미지 여부도 함께 기록)
-        VerificationEntity verification = VerificationEntity.of(user, ContentType.IMAGE, imageUrl,
-                VerificationStatus.PENDING, isMainImage);
-        verificationRepository.save(verification);
-
-        // 알림: 사진이 검증 대기 중임을 사용자에게 알림
-        notificationService.notify(user, NotificationType.CONTENT_SUBMITTED,
-                "사진 업로드 완료", "사진이 업로드되었습니다. 검수 후 프로필에 반영됩니다.",
-                "/profile/images");
     }
 
     /**
