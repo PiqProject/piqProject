@@ -27,7 +27,7 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
      * Spring Data JPA가 메소드 이름을 분석하여 아래와 같은 JPQL을 자동으로 생성합니다.
      * "SELECT p FROM PaymentEntity p WHERE p.user = :user ORDER BY p.createdAt
      * DESC"
-     * 
+     *
      * @param user     조회할 사용자
      * @param pageable 페이징 및 정렬 정보
      * @return 페이징된 결제 내역
@@ -36,7 +36,7 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
 
     /**
      * 특정 상태(status)이면서, 특정 시간(dateTime) 이전에 생성된 모든 결제 정보를 조회합니다.
-     * 
+     *
      * @param status   조회할 결제 상태
      * @param dateTime 기준 시간
      * @return 조건에 맞는 결제 엔티티 리스트
@@ -48,6 +48,7 @@ public interface PaymentRepository extends JpaRepository<PaymentEntity, Long> {
      * PESSIMISTIC_WRITE: 해당 데이터에 '배타적 락(Exclusive Lock)'을 겁니다.
      * 트랜잭션이 끝날 때까지 다른 트랜잭션은 이 데이터를 읽거나 수정할 수 없습니다.
      * SQL: SELECT * FROM payments WHERE merchant_uid = ? FOR UPDATE
+     *
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select p from PaymentEntity p where p.merchantUid = :merchantUid")

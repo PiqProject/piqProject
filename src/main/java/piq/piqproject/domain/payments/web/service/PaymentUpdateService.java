@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import piq.piqproject.domain.payments.common.entity.PaymentEntity;
+import piq.piqproject.domain.payments.common.enums.PaymentStatus;
 import piq.piqproject.domain.payments.common.repository.PaymentRepository;
 import piq.piqproject.domain.points.enums.PointType;
 import piq.piqproject.domain.points.service.PointService;
@@ -26,6 +27,11 @@ public class PaymentUpdateService {
             throws InternalServerException {
         PaymentEntity payment = paymentRepository.findByMerchantUidWithLock(merchantUid)
                 .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "결제 정보 없음"));
+
+        // 상태 검증 (락 획득 후 멱등성 보장: 이미 결제 완료된 건이면 중복 처리 방지)
+        if (payment.getStatus() != PaymentStatus.READY) {
+            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 처리되었거나 유효하지 않은 결제 상태입니다.");
+        }
 
         // 금액 검증 로직을 여기서 수행 (트랜잭션 안에서 최종 확인)
         if (payment.getAmount().compareTo(actualAmount) != 0) {
