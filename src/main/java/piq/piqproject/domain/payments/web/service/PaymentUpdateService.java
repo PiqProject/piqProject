@@ -12,6 +12,7 @@ import piq.piqproject.domain.payments.common.repository.PaymentRepository;
 import piq.piqproject.domain.points.enums.PointType;
 import piq.piqproject.domain.points.service.PointService;
 import piq.piqproject.common.error.exception.NotFoundException;
+import piq.piqproject.common.error.exception.ConflictException;
 import piq.piqproject.common.error.exception.ErrorCode;
 import piq.piqproject.common.error.exception.InternalServerException;
 
@@ -30,7 +31,7 @@ public class PaymentUpdateService {
 
         // 상태 검증 (락 획득 후 멱등성 보장: 이미 결제 완료된 건이면 중복 처리 방지)
         if (payment.getStatus() != PaymentStatus.READY) {
-            throw new InternalServerException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 처리되었거나 유효하지 않은 결제 상태입니다.");
+            throw new ConflictException(ErrorCode.INTERNAL_SERVER_ERROR, "이미 처리되었거나 유효하지 않은 결제 상태입니다.");
         }
 
         // 금액 검증 로직을 여기서 수행 (트랜잭션 안에서 최종 확인)
