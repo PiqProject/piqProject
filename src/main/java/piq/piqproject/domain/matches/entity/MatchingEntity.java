@@ -12,7 +12,9 @@ import piq.piqproject.domain.users.entity.UserEntity;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "matching") // 실제 테이블명으로 지정
+@Table(name = "matching", indexes = {
+        @Index(name = "idx_matching_sender_created", columnList = "sender_id, created_at DESC")
+})
 public class MatchingEntity extends BaseEntity {
 
     @Id

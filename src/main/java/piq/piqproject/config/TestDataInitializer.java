@@ -72,9 +72,9 @@ public class TestDataInitializer implements CommandLineRunner {
                     return savedUser;
                 });
 
-        // 2. Receiver(수신자) 25명 및 매칭 데이터 25건 생성
+        // 2. Receiver(수신자) 2000명 및 매칭 데이터 2000건 생성
         int createdCount = 0;
-        for (int i = 1; i <= 25; i++) {
+        for (int i = 1; i <= 2000; i++) {
             String partnerEmail = "partner" + i + "@test.com";
 
             final int index = i;
