@@ -35,7 +35,7 @@ public class UserImageService {
     private final UserImageRepository userImageRepository;
     private final FileUploader fileUploader;
 
-    private static final int MAX_IMAGE_COUNT = 4; // 비즈니스 규칙: 사용자당 최대 이미지 개수
+    private static final int MAX_IMAGE_COUNT = 1000; // 비즈니스 규칙: 사용자당 최대 이미지 개수
 
     @Transactional
     public void registerImageVerification(UserEntity user, String imageUrl, boolean isMainImage) {
