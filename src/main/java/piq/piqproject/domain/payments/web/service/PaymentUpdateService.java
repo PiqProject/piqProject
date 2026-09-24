@@ -46,7 +46,7 @@ public class PaymentUpdateService {
     @Transactional
     public void updateFailure(String merchantUid) {
         PaymentEntity payment = paymentRepository.findByMerchantUidWithLock(merchantUid)
-                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "결제 정보     없음"));
+                .orElseThrow(() -> new NotFoundException(ErrorCode.NOT_FOUND, "결제 정보 없음"));
         payment.failPayment();
     }
 }

@@ -12,7 +12,7 @@ import piq.piqproject.domain.payments.common.dto.response.PaymentPrepareResponse
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentCancelRequestDto;
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentPrepareRequestDto;
 import piq.piqproject.domain.payments.web.dto.request.WebPaymentVerificationRequestDto;
-import piq.piqproject.domain.payments.web.service.WebPaymentService;
+import piq.piqproject.domain.payments.web.facade.WebPaymentFacade;
 import piq.piqproject.domain.users.entity.UserEntity;
 
 @RestController
@@ -20,7 +20,7 @@ import piq.piqproject.domain.users.entity.UserEntity;
 @RequiredArgsConstructor // final 필드에 대한 생성자를 자동으로 만들어줍니다.
 public class WebPaymentController {
 
-    private final WebPaymentService paymentService;
+    private final WebPaymentFacade paymentService;
 
     /**
      * 프론트엔드에서 결제이전에 결제정보를 전달
