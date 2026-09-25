@@ -85,7 +85,8 @@ public class GooglePaymentStrategy implements InAppPaymentStrategy {
                 user,
                 product.getPoint(),
                 PointType.CHARGE,
-                "Google 인앱 결제 충전 (상품: " + product.getId() + ")");
+                "Google 인앱 결제 충전 (상품: " + product.getId() + ")",
+                "PAYMENT_CHARGE:" + merchantUid);
 
         // 7. 구매 승인 (Acknowledge) - 중요: 승인하지 않으면 수일 내 자동 환불됨
         if (purchase.getAcknowledgementState() == 0) { // 0: yet to be acknowledged

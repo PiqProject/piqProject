@@ -39,12 +39,17 @@ public class PointHistoryEntity extends BaseEntity {
     @Column(nullable = false)
     private String description; // 상세 사유
 
+    @Column(name = "idempotency_key", unique = true, length = 150)
+    private String idempotencyKey;
+
     @Builder
-    public PointHistoryEntity(UserEntity user, PointType type, int amount, int balanceSnapshot, String description) {
+    public PointHistoryEntity(UserEntity user, PointType type, int amount, int balanceSnapshot, String description,
+            String idempotencyKey) {
         this.user = user;
         this.type = type;
         this.amount = amount;
         this.balanceSnapshot = balanceSnapshot;
         this.description = description;
+        this.idempotencyKey = idempotencyKey;
     }
 }

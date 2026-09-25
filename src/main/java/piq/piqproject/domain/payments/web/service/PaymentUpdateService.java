@@ -40,7 +40,8 @@ public class PaymentUpdateService {
         }
 
         payment.completePayment(paymentId);
-        pointService.chargePoints(payment.getUser(), payment.getProduct().getPoint(), PointType.CHARGE, "포인트 충전");
+        pointService.chargePoints(payment.getUser(), payment.getProduct().getPoint(), PointType.CHARGE, "포인트 충전",
+            "PAYMENT_CHARGE:" + payment.getMerchantUid());
     }
 
     @Transactional

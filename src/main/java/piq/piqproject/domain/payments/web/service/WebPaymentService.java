@@ -96,7 +96,8 @@ public class WebPaymentService {
         }
 
         pointService.usePoints(user, payment.getProduct().getPoint(),
-                "결제 취소 (주문번호: " + payment.getMerchantUid() + ")");
+            "결제 취소 (주문번호: " + payment.getMerchantUid() + ")",
+            "PAYMENT_REFUND:" + payment.getMerchantUid());
         payment.cancelPayment();
     }
 

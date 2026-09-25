@@ -31,6 +31,11 @@ public class PointService {
      */
     @Transactional
     public void usePoints(UserEntity user, int amount, String description) {
+        usePoints(user, amount, description, null);
+    }
+
+    @Transactional
+    public void usePoints(UserEntity user, int amount, String description, String idempotencyKey) {
         if (amount <= 0)
             throw new InvalidRequestException(ErrorCode.BAD_REQUEST, "사용 금액은 0보다 커야 합니다.");
 
@@ -42,7 +47,7 @@ public class PointService {
         user.deductPqPoints(amount); // 기존 메서드 재활용 (pqPoint -= amount)
 
         // 2. 히스토리 저장
-        saveHistory(user, PointType.USE, -amount, description);
+        saveHistory(user, PointType.USE, -amount, description, idempotencyKey);
 
         log.info("[POINT USE] User: {}, Amount: -{}, Reason: {}", user.getId(), amount, description);
     }
@@ -57,7 +62,7 @@ public class PointService {
 
         // 2. 히스토리 기록 (실제 차감된 만큼만)
         if (actualDeducted > 0)
-            saveHistory(user, PointType.REFUND, -actualDeducted, description);
+            saveHistory(user, PointType.REFUND, -actualDeducted, description, null);
     }
 
     /**
@@ -73,7 +78,7 @@ public class PointService {
         user.deductPqPoints(amount);
 
         // 히스토리 저장
-        saveHistory(user, PointType.USE, -amount, description);
+        saveHistory(user, PointType.USE, -amount, description, null);
 
         log.info("[POINT FORCE REVOKE] User: {}, Amount: -{}, Reason: {}", user.getId(), amount, description);
     }
@@ -83,6 +88,12 @@ public class PointService {
      */
     @Transactional
     public void chargePoints(UserEntity user, int amount, PointType type, String description) {
+        chargePoints(user, amount, type, description, null);
+    }
+
+    @Transactional
+    public void chargePoints(UserEntity user, int amount, PointType type, String description,
+            String idempotencyKey) {
         if (amount <= 0)
             throw new InvalidRequestException(ErrorCode.BAD_REQUEST, "충전 금액은 0보다 커야 합니다.");
 
@@ -90,7 +101,7 @@ public class PointService {
         user.refundPqPoints(amount); // 기존 메서드 재활용 (pqPoint += amount)
 
         // 2. 히스토리 저장
-        saveHistory(user, type, amount, description);
+        saveHistory(user, type, amount, description, idempotencyKey);
 
         log.info("[POINT CHARGE] User: {}, Amount: +{}, Type: {}", user.getId(), amount, type);
     }
@@ -155,13 +166,14 @@ public class PointService {
     }
 
     // 공통 저장 로직
-    private void saveHistory(UserEntity user, PointType type, int amount, String description) {
+    private void saveHistory(UserEntity user, PointType type, int amount, String description, String idempotencyKey) {
         PointHistoryEntity history = PointHistoryEntity.builder()
                 .user(user)
                 .type(type)
                 .amount(amount)
                 .balanceSnapshot(user.getPqPoint()) // 변경된 후의 잔액 저장
                 .description(description)
+                .idempotencyKey(idempotencyKey)
                 .build();
 
         pointHistoryRepository.save(history);

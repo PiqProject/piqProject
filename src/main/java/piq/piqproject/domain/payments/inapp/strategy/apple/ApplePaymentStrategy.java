@@ -100,7 +100,8 @@ public class ApplePaymentStrategy implements InAppPaymentStrategy {
                 user,
                 product.getPoint(),
                 PointType.CHARGE,
-                "Apple 인앱 결제 충전 (상품: " + product.getId() + ")");
+                "Apple 인앱 결제 충전 (상품: " + product.getId() + ")",
+                "PAYMENT_CHARGE:" + merchantUid);
 
         return InAppPaymentResult.builder()
                 .success(true)

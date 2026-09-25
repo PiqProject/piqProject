@@ -44,7 +44,7 @@ public class TestDataInitializer implements CommandLineRunner {
         log.info("==================================================================");
 
         // 1. 기준이 될 Sender(발신자) 계정 생성 또는 조회
-        UserEntity sender = userRepository.findByEmail("test@test.com")
+        UserEntity sender = userRepository.findByEmail("partner1@test.com")
                 .orElseGet(() -> {
                     UserEntity newUser = UserEntity.builder()
                             .email("test@test.com")
